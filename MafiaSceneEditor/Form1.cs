@@ -154,12 +154,6 @@ namespace MafiaSceneEditor
                                 i += 6;
                             }
 
-                            // FIXME: ugly fix
-                            if (tmpBuff[i - 1] == 0x21)
-                            {
-                                i--;
-                            }
-
                             // parse dncs object definitions
                             if (tmpBuff[i] == 0x21 && tmpBuff[i + 1] == 0xAE)
                             {
