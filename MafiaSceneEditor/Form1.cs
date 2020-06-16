@@ -93,8 +93,7 @@ namespace MafiaSceneEditor
                     {
                         // parse dncs objects
                         if (tmpBuff[i] == 0x10 && tmpBuff[i + 1] == 0x40)
-                        {
-                            // standard object
+                        {                            
                             Dnc currDnc = new Dnc
                             {
                                 objectType = ObjectIDs.Unknown,
@@ -122,6 +121,7 @@ namespace MafiaSceneEditor
                                 if (scene2Data.objectsDncs.Count != 0)
                                 {
                                     objectsParsed = true;
+                                    objectID = 0;
                                     i--;
                                 }
                             }
@@ -141,6 +141,7 @@ namespace MafiaSceneEditor
                                 if (i > (scene2Data.objectsDefinitionStartPosition + scene2Data.objectsDefinitionLength))
                                 {
                                     definitionsParsed = true;
+                                    objectID = 0;
                                 }
                             }
 
@@ -157,7 +158,6 @@ namespace MafiaSceneEditor
                             // parse dncs object definitions
                             if (tmpBuff[i] == 0x21 && tmpBuff[i + 1] == 0xAE)
                             {
-                                // standard object
                                 Dnc currDnc = new Dnc
                                 {
                                     objectType = ObjectIDs.Unknown,
@@ -172,6 +172,37 @@ namespace MafiaSceneEditor
                                 currDnc.ID = objectID;
 
                                 scene2Data.objectDefinitionsDncs.Add(currDnc);
+
+                                objectID++;
+                                i = i + IdLen + lenCurr;
+                                i--;
+                            }
+                        }
+
+                        if (definitionsParsed)
+                        {
+                            if (tmpBuff.Length <= i)
+                            {
+                                break;
+                            }
+
+                            // init scripts
+                            if (tmpBuff[i] == 0x51 && tmpBuff[i + 1] == 0xAE)
+                            {
+                                Dnc currDnc = new Dnc
+                                {
+                                    objectType = ObjectIDs.Unknown,
+                                };
+
+                                // get length
+                                int lenCurr = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(IdLen).Take(4).ToArray(), 0) - IdLen;
+
+                                currDnc.rawData = tmpBuff.Skip(i).Skip(IdLen).Take(lenCurr).ToArray();
+                                currDnc.definitionType = DefinitionIDs.InitScript;
+                                currDnc.name = GetNameByDefinitionID(currDnc);
+                                currDnc.ID = objectID;
+
+                                scene2Data.initScriptsDncs.Add(currDnc);
 
                                 objectID++;
                                 i = i + IdLen + lenCurr;
@@ -255,6 +286,43 @@ namespace MafiaSceneEditor
                 }
 
                 treeView1.Nodes.Add(defsTreeNode);
+
+                // init scripts
+                TreeNode initScriptTreeNode = new TreeNode("Init script");
+                foreach (var item in scene2Data.initScriptsDncs.GroupBy(x => x.definitionType))
+                {
+                    TreeNode treeNodeParent = new TreeNode(item.Key.ToString());
+
+                    i = 0;
+
+                    List<TreeNode> nodeList = new List<TreeNode>();
+                    foreach (var dnc in item)
+                    {
+                        TreeNode treeNode = new TreeNode();
+                        treeNode.Text = dnc.name; //$"{i} - {dnc.objectIDEnum}";
+                        treeNode.Tag = new NodeTag
+                        {
+                            id = dnc.ID,
+                            nodeType = NodeType.InitScript
+                        };
+
+                        nodeList.Add(treeNode);
+                        i++;
+                    }
+
+                    // sort nodes
+                    nodeList = nodeList.OrderBy(x => x.Text).ToList();
+
+                    foreach (var node2 in nodeList)
+                    {
+                        treeNodeParent.Nodes.Add(node2);
+                    }
+
+                    treeNodeParent.Text += $" [{nodeList.Count}]";
+                    initScriptTreeNode.Nodes.Add(treeNodeParent);
+                }
+
+                treeView1.Nodes.Add(initScriptTreeNode);
             }
         }
 
@@ -453,6 +521,15 @@ namespace MafiaSceneEditor
                     return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
                 case DefinitionIDs.Script:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
+                case DefinitionIDs.InitScript:
+
+                    var len = dnc.rawData[5];
+
+                    return Encoding.ASCII.GetString(dnc.rawData, 0x9, len);
+
+                    //return GetCStringFromByteArray(dnc.rawData.Skip(0x9).Take(maxObjectNameLength).ToArray());
+
+
                 case DefinitionIDs.PhysicalObject:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
                 case DefinitionIDs.Door:
@@ -496,6 +573,7 @@ namespace MafiaSceneEditor
                         hexEditor.Stream = new MemoryStream(scene2Data.objectDefinitionsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault().rawData);
                         break;
                     case NodeType.InitScript:
+                        hexEditor.Stream = new MemoryStream(scene2Data.initScriptsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault().rawData);
                         break;
                     default:
                         break;

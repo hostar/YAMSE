@@ -10,6 +10,7 @@ namespace MafiaSceneEditor.DataLayer
         MovableBridge,
         Car,
         Script,
+        InitScript,
         PhysicalObject,
         Door,
         Tram,

@@ -18,6 +18,7 @@ namespace MafiaSceneEditor.DataLayer
 
         public List<Dnc> objectsDncs = new List<Dnc>();
         public List<Dnc> objectDefinitionsDncs = new List<Dnc>();
+        public List<Dnc> initScriptsDncs = new List<Dnc>();
 
         public List<byte> rawDataHeader = new List<byte>();
 
