@@ -16,12 +16,17 @@ namespace MafiaSceneEditor.DataLayer
                 0x00,0x00,0x7A,0x44
             };
 
-        public List<Dnc> dncs = new List<Dnc>();
+        public List<Dnc> objectsDncs = new List<Dnc>();
+        public List<Dnc> objectDefinitionsDncs = new List<Dnc>();
 
         public List<byte> rawDataHeader = new List<byte>();
 
         public byte[] standardObjectsHeader = new byte[] { 0x00,0x40 /*,0xFF,0x00,0x00,0x00 */ };
 
+        public int standardObjectsStartPosition = 0;
         public int standardObjectsLength = 0;
+
+        public int objectsDefinitionStartPosition = 0;
+        public int objectsDefinitionLength = 0;
     }
 }

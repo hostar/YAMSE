@@ -4,10 +4,9 @@ using System.Text;
 
 namespace MafiaSceneEditor.DataLayer
 {
-    public enum IDs
+    public class NodeTag
     {
-        Unknown  = 0xFF,
-        LMAP     = 0x10,
-        Standard = 0x11,
+        public NodeType nodeType;
+        public int id;
     }
 }

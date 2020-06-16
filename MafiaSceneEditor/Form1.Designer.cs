@@ -58,7 +58,8 @@
             this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.listBox1 = new System.Windows.Forms.ListBox();
+            this.treeView1 = new System.Windows.Forms.TreeView();
+            this.listBoxOutput = new System.Windows.Forms.ListBox();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -283,23 +284,31 @@
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
             // 
-            // listBox1
+            // treeView1
             // 
-            this.listBox1.FormattingEnabled = true;
-            this.listBox1.ItemHeight = 20;
-            this.listBox1.Location = new System.Drawing.Point(12, 31);
-            this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(196, 564);
-            this.listBox1.TabIndex = 1;
-            this.listBox1.Click += new System.EventHandler(this.listBox1_Click);
-            this.listBox1.SelectedValueChanged += new System.EventHandler(this.listBox1_SelectedValueChanged);
+            this.treeView1.Location = new System.Drawing.Point(12, 31);
+            this.treeView1.Name = "treeView1";
+            this.treeView1.Size = new System.Drawing.Size(208, 567);
+            this.treeView1.TabIndex = 2;
+            this.treeView1.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.treeView1_AfterSelect);
+            this.treeView1.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
+            // 
+            // listBoxOutput
+            // 
+            this.listBoxOutput.FormattingEnabled = true;
+            this.listBoxOutput.ItemHeight = 20;
+            this.listBoxOutput.Location = new System.Drawing.Point(12, 604);
+            this.listBoxOutput.Name = "listBoxOutput";
+            this.listBoxOutput.Size = new System.Drawing.Size(1081, 144);
+            this.listBoxOutput.TabIndex = 3;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1105, 610);
-            this.Controls.Add(this.listBox1);
+            this.ClientSize = new System.Drawing.Size(1105, 758);
+            this.Controls.Add(this.listBoxOutput);
+            this.Controls.Add(this.treeView1);
             this.Controls.Add(this.menuStrip1);
             this.Name = "Form1";
             this.Text = "Form1";
@@ -341,7 +350,8 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator5;
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
-        private System.Windows.Forms.ListBox listBox1;
+        private System.Windows.Forms.TreeView treeView1;
+        private System.Windows.Forms.ListBox listBoxOutput;
     }
 }
 
