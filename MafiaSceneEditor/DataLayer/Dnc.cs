@@ -8,7 +8,7 @@ namespace MafiaSceneEditor.DataLayer
     {
         public int ID;
         public byte[] objectIDArr = new byte[2];
-        public ObjectIDs    objectType = ObjectIDs.Unknown;
+        public ObjectIDs     objectType = ObjectIDs.Unknown;
         public DefinitionIDs definitionType = DefinitionIDs.Unknown;
 
         public string name;
