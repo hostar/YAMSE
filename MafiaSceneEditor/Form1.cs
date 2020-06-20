@@ -11,6 +11,8 @@ using System.IO;
 using MafiaSceneEditor.DataLayer;
 using System.Windows.Interop;
 using WpfHexaEditor.Core.MethodExtention;
+using System.Xml.Linq;
+using System.Text.RegularExpressions;
 
 namespace MafiaSceneEditor
 {
@@ -19,19 +21,33 @@ namespace MafiaSceneEditor
         private const int maxObjectNameLength = 50;
         Scene2Data scene2Data = new Scene2Data();
         WpfHexaEditor.HexEditor hexEditor;
+        DiagramDesigner.DesignerCanvas designerCanvas;
+
+        FastColoredTextBoxNS.FastColoredTextBox fctb;
+
+        System.Windows.Forms.Integration.ElementHost elementHost2;
 
         public Form1()
         {
             InitializeComponent();
 
+            // create script editor
+            fctb = new FastColoredTextBoxNS.FastColoredTextBox();
+            fctb.Parent = this;
+            fctb.Location = new Point(250, 50);
+            fctb.Size = new Size(1000, 500);
+
+            fctb.Hide();
+
             // create hex editor
+            /*
             var elementHost = new System.Windows.Forms.Integration.ElementHost();
             hexEditor = new WpfHexaEditor.HexEditor();
 
             hexEditor.ForegroundSecondColor = System.Windows.Media.Brushes.Blue;
             hexEditor.TypeOfCharacterTable = WpfHexaEditor.Core.CharacterTableType.Ascii;
 
-            elementHost.Location = new Point(250, maxObjectNameLength);
+            elementHost.Location = new Point(250, 50);
             elementHost.Size = new Size(1000, 500);
             elementHost.Name = "elementHost";
             elementHost.Child = hexEditor;
@@ -41,9 +57,62 @@ namespace MafiaSceneEditor
             app.MainWindow = new System.Windows.Window();
 
             this.Controls.Add(elementHost);
+            */
+
+            // create diagram component
+            elementHost2 = new System.Windows.Forms.Integration.ElementHost();
+
+            designerCanvas = new DiagramDesigner.DesignerCanvas();
+
+            //designerCanvas.FocusVisualStyle = new System.Windows.Style()
+            //designerCanvas.RenderSize = new System.Windows.Size(500, 500);
+
+            elementHost2.Location = new Point(250, 50);
+            elementHost2.Size = new Size(1000, 500);
+            elementHost2.Name = "elementHost2";
+            elementHost2.Child = designerCanvas;
+            elementHost2.Parent = this;
+
+            this.Controls.Add(elementHost2);
+
             this.Invalidate();
 
             openToolStripMenuItem.Click += OpenToolStripMenuItem_Click;
+            toolStripMenuItem1.Click += ToolStripMenuItem1_Click;
+        }
+
+        private void ToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            elementHost2.BringToFront();
+            this.Invalidate();
+
+            //designerCanvas.RestoreDiagram(XElement.Load(@"d:\xml\bb"));
+            /*
+            var output = designerCanvas.StoreDiagram();
+            output.Save(@"d:\xml\bb");
+            */
+
+            Regex scriptExtract = new Regex("^(?!//)[ ]*findactor[ ]+([0-9]+),[ ]*\"([a-zA-Z0-9_-]+)\"");
+
+            foreach (var script in scene2Data.objectDefinitionsDncs.Where(x => x.definitionType == DefinitionIDs.Script))
+            {
+                // get references from scripts
+                // findactor xx, "name"
+                string[] strings = GetStringFromScript(script).Split("\r\n");
+
+                listBoxOutput.Items.Add(script.name);
+
+                foreach (var str in strings)
+                {
+                    foreach (Match scriptMatchResult in scriptExtract.Matches(str))
+                    {
+                        if (scriptMatchResult?.Groups.Count == 3)
+                        {
+                            listBoxOutput.Items.Add($"  {scriptMatchResult?.Groups[2]}");
+                        }
+                    }
+                }
+            }
         }
 
         private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
@@ -570,7 +639,20 @@ namespace MafiaSceneEditor
                         hexEditor.Stream = new MemoryStream(scene2Data.objectsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault().rawData);
                         break;
                     case NodeType.Definition:
-                        hexEditor.Stream = new MemoryStream(scene2Data.objectDefinitionsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault().rawData);
+
+                        var dnc = scene2Data.objectDefinitionsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+
+                        if (dnc.definitionType == DefinitionIDs.Script)
+                        {
+                            fctb.Text = GetStringFromScript(dnc);
+                            fctb.Show();
+                        }
+                        else
+                        {
+                            hexEditor.Stream = new MemoryStream(dnc.rawData);
+                            fctb.Hide();
+                        }
+                        
                         break;
                     case NodeType.InitScript:
                         hexEditor.Stream = new MemoryStream(scene2Data.initScriptsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault().rawData);
@@ -581,6 +663,11 @@ namespace MafiaSceneEditor
                 
                 treeView1.Focus();
             }
+        }
+
+        private static string GetStringFromScript(Dnc dnc)
+        {
+            return Encoding.UTF8.GetString(dnc.rawData.Skip(dnc.name.Length + 41).ToArray());
         }
 
         private void treeView1_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
