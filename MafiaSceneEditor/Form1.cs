@@ -31,8 +31,8 @@ namespace MafiaSceneEditor
 
         FastColoredTextBoxNS.FastColoredTextBox fctb;
 
-        System.Windows.Forms.Integration.ElementHost elementHost;
-        System.Windows.Forms.Integration.ElementHost elementHost2;
+        System.Windows.Forms.Integration.ElementHost elementHostHexEditor;
+        System.Windows.Forms.Integration.ElementHost elementHostDiagramEditor;
 
         public MainForm()
         {
@@ -48,25 +48,25 @@ namespace MafiaSceneEditor
 
             // create hex editor
 
-            elementHost = new System.Windows.Forms.Integration.ElementHost();
+            elementHostHexEditor = new System.Windows.Forms.Integration.ElementHost();
             hexEditor = new WpfHexaEditor.HexEditor();
 
             hexEditor.ForegroundSecondColor = System.Windows.Media.Brushes.Blue;
             hexEditor.TypeOfCharacterTable = WpfHexaEditor.Core.CharacterTableType.Ascii;
 
-            elementHost.Location = new Point(250, 50);
-            elementHost.Size = new Size(1000, 500);
-            elementHost.Name = "elementHost";
-            elementHost.Child = hexEditor;
-            elementHost.Parent = this;
+            elementHostHexEditor.Location = new Point(250, 50);
+            elementHostHexEditor.Size = new Size(1000, 500);
+            elementHostHexEditor.Name = nameof(elementHostHexEditor);
+            elementHostHexEditor.Child = hexEditor;
+            elementHostHexEditor.Parent = this;
 
             System.Windows.Application app = new System.Windows.Application();
             app.MainWindow = new System.Windows.Window();
 
-            this.Controls.Add(elementHost);
+            this.Controls.Add(elementHostHexEditor);
 
             // create diagram component
-            elementHost2 = new System.Windows.Forms.Integration.ElementHost();
+            elementHostDiagramEditor = new System.Windows.Forms.Integration.ElementHost();
             myDesigner = new MyDesigner();
 
             //designerCanvas = new DiagramDesigner.DesignerCanvas();
@@ -74,14 +74,14 @@ namespace MafiaSceneEditor
             //designerCanvas.FocusVisualStyle = new System.Windows.Style()
             //designerCanvas.RenderSize = new System.Windows.Size(500, 500);
 
-            elementHost2.Location = new Point(250, 50);
-            elementHost2.Size = new Size(1100, 500);
-            elementHost2.Name = "elementHost2";
-            elementHost2.Child = myDesigner;
-            elementHost2.Anchor = AnchorStyles.Left | AnchorStyles.Bottom | AnchorStyles.Top | AnchorStyles.Right;
-            elementHost2.Parent = this;
+            elementHostDiagramEditor.Location = new Point(250, 50);
+            elementHostDiagramEditor.Size = new Size(1100, 500);
+            elementHostDiagramEditor.Name = nameof(elementHostDiagramEditor);
+            elementHostDiagramEditor.Child = myDesigner;
+            elementHostDiagramEditor.Anchor = AnchorStyles.Left | AnchorStyles.Bottom | AnchorStyles.Top | AnchorStyles.Right;
+            elementHostDiagramEditor.Parent = this;
 
-            this.Controls.Add(elementHost2);
+            this.Controls.Add(elementHostDiagramEditor);
 
             this.Invalidate();
 
@@ -91,8 +91,8 @@ namespace MafiaSceneEditor
 
         private void ShowScriptDependencyDiagram(object sender, EventArgs e)
         {
-            elementHost2.Show();
-            elementHost2.BringToFront();
+            elementHostDiagramEditor.Show();
+            elementHostDiagramEditor.BringToFront();
             this.Invalidate();
 
             Root root = new Root();
@@ -782,8 +782,8 @@ namespace MafiaSceneEditor
                 {
                     case NodeType.Object:
                         fctb.Hide();
-                        elementHost.Show();
-                        elementHost2.Hide();
+                        elementHostHexEditor.Show();
+                        elementHostDiagramEditor.Hide();
                         hexEditor.Stream = new MemoryStream(scene2Data.objectsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault().rawData);
                         break;
                     case NodeType.Definition:
@@ -793,8 +793,8 @@ namespace MafiaSceneEditor
                         if (dnc.definitionType == DefinitionIDs.Script)
                         {
                             fctb.Text = GetStringFromScript(dnc);
-                            elementHost.Hide();
-                            elementHost2.Hide();
+                            elementHostHexEditor.Hide();
+                            elementHostDiagramEditor.Hide();
                             fctb.Show();
                         }
                         else
@@ -808,8 +808,8 @@ namespace MafiaSceneEditor
                         dnc = scene2Data.initScriptsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
 
                         fctb.Text = GetStringFromScript(dnc);
-                        elementHost.Hide();
-                        elementHost2.Hide();
+                        elementHostHexEditor.Hide();
+                        elementHostDiagramEditor.Hide();
                         fctb.Show();
                         break;
                     default:
