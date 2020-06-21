@@ -815,7 +815,7 @@ namespace MafiaSceneEditor
                     case NodeType.InitScript:
                         dnc = scene2Data.initScriptsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
 
-                        fctb.Text = GetStringFromScript(dnc);
+                        fctb.Text = GetStringFromInitScript(dnc);
                         elementHostHexEditor.Hide();
                         elementHostDiagramEditor.Hide();
                         fctb.Show();
@@ -831,6 +831,11 @@ namespace MafiaSceneEditor
         private static string GetStringFromScript(Dnc dnc)
         {
             return Encoding.UTF8.GetString(dnc.rawData.Skip(dnc.name.Length + 41).ToArray());
+        }
+
+        private static string GetStringFromInitScript(Dnc dnc)
+        {
+            return Encoding.UTF8.GetString(dnc.rawData.Skip(dnc.name.Length + 13).ToArray());
         }
 
         private void treeView1_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
