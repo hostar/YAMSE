@@ -24,66 +24,68 @@ namespace MafiaSceneEditor
     public partial class MainForm : Form
     {
         private const int maxObjectNameLength = 50;
-        Scene2Data scene2Data = new Scene2Data();
-        WpfHexaEditor.HexEditor hexEditor;
-        //DiagramDesigner.DesignerCanvas designerCanvas;
-        MyDesigner myDesigner;
+        readonly Scene2Data scene2Data = new Scene2Data();
 
-        FastColoredTextBoxNS.FastColoredTextBox fctb;
+        readonly MyDesigner myDesigner;
+        readonly WpfHexaEditor.HexEditor hexEditor;
 
-        System.Windows.Forms.Integration.ElementHost elementHostHexEditor;
-        System.Windows.Forms.Integration.ElementHost elementHostDiagramEditor;
+        readonly FastColoredTextBoxNS.FastColoredTextBox fctb;
+
+        readonly System.Windows.Forms.Integration.ElementHost elementHostHexEditor;
+        readonly System.Windows.Forms.Integration.ElementHost elementHostDiagramEditor;
 
         public MainForm()
         {
             InitializeComponent();
 
             // create script editor
-            fctb = new FastColoredTextBoxNS.FastColoredTextBox();
-            fctb.Parent = this;
-            fctb.Location = new Point(250, 50);
-            fctb.Size = new Size(1000, 500);
+            fctb = new FastColoredTextBoxNS.FastColoredTextBox
+            {
+                Parent = this,
+                Location = new Point(250, 50),
+                Size = new Size(1000, 500)
+            };
 
             fctb.Hide();
 
             // create hex editor
+            hexEditor = new WpfHexaEditor.HexEditor
+            {
+                ForegroundSecondColor = System.Windows.Media.Brushes.Blue,
+                TypeOfCharacterTable = WpfHexaEditor.Core.CharacterTableType.Ascii
+            };
 
-            elementHostHexEditor = new System.Windows.Forms.Integration.ElementHost();
-            hexEditor = new WpfHexaEditor.HexEditor();
-
-            hexEditor.ForegroundSecondColor = System.Windows.Media.Brushes.Blue;
-            hexEditor.TypeOfCharacterTable = WpfHexaEditor.Core.CharacterTableType.Ascii;
-
-            elementHostHexEditor.Location = new Point(250, 50);
-            elementHostHexEditor.Size = new Size(1000, 500);
+            elementHostHexEditor = new System.Windows.Forms.Integration.ElementHost
+            {
+                Location = new Point(250, 50),
+                Size = new Size(1000, 500)
+            };
             elementHostHexEditor.Name = nameof(elementHostHexEditor);
             elementHostHexEditor.Child = hexEditor;
             elementHostHexEditor.Parent = this;
 
-            System.Windows.Application app = new System.Windows.Application();
-            app.MainWindow = new System.Windows.Window();
+            System.Windows.Application app = new System.Windows.Application
+            {
+                MainWindow = new System.Windows.Window()
+            };
 
-            this.Controls.Add(elementHostHexEditor);
+            Controls.Add(elementHostHexEditor);
 
             // create diagram component
-            elementHostDiagramEditor = new System.Windows.Forms.Integration.ElementHost();
+
             myDesigner = new MyDesigner();
-
-            //designerCanvas = new DiagramDesigner.DesignerCanvas();
-
-            //designerCanvas.FocusVisualStyle = new System.Windows.Style()
-            //designerCanvas.RenderSize = new System.Windows.Size(500, 500);
-
-            elementHostDiagramEditor.Location = new Point(250, 50);
-            elementHostDiagramEditor.Size = new Size(1100, 500);
+            elementHostDiagramEditor = new System.Windows.Forms.Integration.ElementHost
+            {
+                Location = new Point(250, 50),
+                Size = new Size(1100, 500),
+                Child = myDesigner,
+                Anchor = AnchorStyles.Left | AnchorStyles.Bottom | AnchorStyles.Top | AnchorStyles.Right
+            };
             elementHostDiagramEditor.Name = nameof(elementHostDiagramEditor);
-            elementHostDiagramEditor.Child = myDesigner;
-            elementHostDiagramEditor.Anchor = AnchorStyles.Left | AnchorStyles.Bottom | AnchorStyles.Top | AnchorStyles.Right;
             elementHostDiagramEditor.Parent = this;
 
-            this.Controls.Add(elementHostDiagramEditor);
-
-            this.Invalidate();
+            Controls.Add(elementHostDiagramEditor);
+            Invalidate();
 
             openToolStripMenuItem.Click += Scene2FileLoad;
             toolStripMenuItem1.Click += ShowScriptDependencyDiagram;
@@ -436,12 +438,14 @@ namespace MafiaSceneEditor
                     List<TreeNode> nodeList = new List<TreeNode>();
                     foreach (var dnc in item)
                     {
-                        TreeNode treeNode = new TreeNode();
-                        treeNode.Text = dnc.name; //$"{i} - {dnc.objectIDEnum}";
-                        treeNode.Tag = new NodeTag 
-                        { 
-                            id = dnc.ID ,
-                            nodeType = NodeType.Object
+                        TreeNode treeNode = new TreeNode
+                        {
+                            Text = dnc.name,
+                            Tag = new NodeTag
+                            {
+                                id = dnc.ID,
+                                nodeType = NodeType.Object
+                            }
                         };
 
                         nodeList.Add(treeNode);
@@ -473,12 +477,14 @@ namespace MafiaSceneEditor
                     List<TreeNode> nodeList = new List<TreeNode>();
                     foreach (var dnc in item)
                     {
-                        TreeNode treeNode = new TreeNode();
-                        treeNode.Text = dnc.name; //$"{i} - {dnc.objectIDEnum}";
-                        treeNode.Tag = new NodeTag
+                        TreeNode treeNode = new TreeNode
                         {
-                            id = dnc.ID,
-                            nodeType = NodeType.Definition
+                            Text = dnc.name,
+                            Tag = new NodeTag
+                            {
+                                id = dnc.ID,
+                                nodeType = NodeType.Definition
+                            }
                         };
 
                         nodeList.Add(treeNode);
@@ -510,12 +516,14 @@ namespace MafiaSceneEditor
                     List<TreeNode> nodeList = new List<TreeNode>();
                     foreach (var dnc in item)
                     {
-                        TreeNode treeNode = new TreeNode();
-                        treeNode.Text = dnc.name; //$"{i} - {dnc.objectIDEnum}";
-                        treeNode.Tag = new NodeTag
+                        TreeNode treeNode = new TreeNode
                         {
-                            id = dnc.ID,
-                            nodeType = NodeType.InitScript
+                            Text = dnc.name,
+                            Tag = new NodeTag
+                            {
+                                id = dnc.ID,
+                                nodeType = NodeType.InitScript
+                            }
                         };
 
                         nodeList.Add(treeNode);
