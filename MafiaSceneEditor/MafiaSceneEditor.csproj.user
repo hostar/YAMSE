@@ -2,6 +2,9 @@
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup />
   <ItemGroup>
+    <Compile Update="Diagram\MyDesigner.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Diagram\Test1.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -10,6 +13,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Page Update="Diagram\MyDesigner.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Update="Diagram\Test1.xaml">
       <SubType>Designer</SubType>
     </Page>

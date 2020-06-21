@@ -13,21 +13,28 @@ using System.Windows.Interop;
 using WpfHexaEditor.Core.MethodExtention;
 using System.Xml.Linq;
 using System.Text.RegularExpressions;
+using System.Xml;
+using MafiaSceneEditor.Diagram.Classes;
+using System.Xml.Serialization;
+using DiagramDesigner;
+using MafiaSceneEditor.Diagram;
 
 namespace MafiaSceneEditor
 {
-    public partial class Form1 : Form
+    public partial class MainForm : Form
     {
         private const int maxObjectNameLength = 50;
         Scene2Data scene2Data = new Scene2Data();
         WpfHexaEditor.HexEditor hexEditor;
-        DiagramDesigner.DesignerCanvas designerCanvas;
+        //DiagramDesigner.DesignerCanvas designerCanvas;
+        MyDesigner myDesigner;
 
         FastColoredTextBoxNS.FastColoredTextBox fctb;
 
+        System.Windows.Forms.Integration.ElementHost elementHost;
         System.Windows.Forms.Integration.ElementHost elementHost2;
 
-        public Form1()
+        public MainForm()
         {
             InitializeComponent();
 
@@ -40,8 +47,8 @@ namespace MafiaSceneEditor
             fctb.Hide();
 
             // create hex editor
-            /*
-            var elementHost = new System.Windows.Forms.Integration.ElementHost();
+
+            elementHost = new System.Windows.Forms.Integration.ElementHost();
             hexEditor = new WpfHexaEditor.HexEditor();
 
             hexEditor.ForegroundSecondColor = System.Windows.Media.Brushes.Blue;
@@ -57,68 +64,181 @@ namespace MafiaSceneEditor
             app.MainWindow = new System.Windows.Window();
 
             this.Controls.Add(elementHost);
-            */
 
             // create diagram component
             elementHost2 = new System.Windows.Forms.Integration.ElementHost();
+            myDesigner = new MyDesigner();
 
-            designerCanvas = new DiagramDesigner.DesignerCanvas();
+            //designerCanvas = new DiagramDesigner.DesignerCanvas();
 
             //designerCanvas.FocusVisualStyle = new System.Windows.Style()
             //designerCanvas.RenderSize = new System.Windows.Size(500, 500);
 
             elementHost2.Location = new Point(250, 50);
-            elementHost2.Size = new Size(1000, 500);
+            elementHost2.Size = new Size(1100, 500);
             elementHost2.Name = "elementHost2";
-            elementHost2.Child = designerCanvas;
+            elementHost2.Child = myDesigner;
+            elementHost2.Anchor = AnchorStyles.Left | AnchorStyles.Bottom | AnchorStyles.Top | AnchorStyles.Right;
             elementHost2.Parent = this;
 
             this.Controls.Add(elementHost2);
 
             this.Invalidate();
 
-            openToolStripMenuItem.Click += OpenToolStripMenuItem_Click;
-            toolStripMenuItem1.Click += ToolStripMenuItem1_Click;
+            openToolStripMenuItem.Click += Scene2FileLoad;
+            toolStripMenuItem1.Click += ShowScriptDependencyDiagram;
         }
 
-        private void ToolStripMenuItem1_Click(object sender, EventArgs e)
+        private void ShowScriptDependencyDiagram(object sender, EventArgs e)
         {
+            elementHost2.Show();
             elementHost2.BringToFront();
             this.Invalidate();
 
-            //designerCanvas.RestoreDiagram(XElement.Load(@"d:\xml\bb"));
-            /*
-            var output = designerCanvas.StoreDiagram();
-            output.Save(@"d:\xml\bb");
-            */
+            Root root = new Root();
+
+            List<RootConnection> tmpList;
+
+            List<RootDesignerItem> designerItems = new List<RootDesignerItem>();
+            Dictionary<string, string> guidsForNames = new Dictionary<string, string>();
+
+            List<string> excludedNames = new List<string> { "Tommy" };
 
             Regex scriptExtract = new Regex("^(?!//)[ ]*findactor[ ]+([0-9]+),[ ]*\"([a-zA-Z0-9_-]+)\"");
 
+            int left = 0;
+            int top = 0;
             foreach (var script in scene2Data.objectDefinitionsDncs.Where(x => x.definitionType == DefinitionIDs.Script))
             {
                 // get references from scripts
                 // findactor xx, "name"
                 string[] strings = GetStringFromScript(script).Split("\r\n");
 
-                listBoxOutput.Items.Add(script.name);
+                //listBoxOutput.Items.Add(script.name);
 
+                bool hasAtLeastOneConnection = false;
+                List<RootConnection> connectionsForOneItem = new List<RootConnection>();
                 foreach (var str in strings)
                 {
                     foreach (Match scriptMatchResult in scriptExtract.Matches(str))
                     {
                         if (scriptMatchResult?.Groups.Count == 3)
                         {
-                            listBoxOutput.Items.Add($"  {scriptMatchResult?.Groups[2]}");
+                            var sinkName = scriptMatchResult?.Groups[2].ToString();
+                            //listBoxOutput.Items.Add($"  {sinkName}");
+
+                            connectionsForOneItem.Add(new RootConnection 
+                            {
+                                PathFinder = "OrthogonalPathFinder",
+                                Color = "#FF808080",
+                                SinkConnectorName = "Top",
+                                SinkArrowSymbol = "Arrow",
+                                zIndex = 2,
+                                StrokeThickness = 2,
+                                SourceConnectorName = "Bottom",
+                                SourceArrowSymbol = "None",
+                                SourceID = script.name,
+                                SinkID = sinkName,
+                            });
+
+                            if (!excludedNames.Contains(scriptMatchResult?.Groups[2].ToString()))
+                            {
+                                hasAtLeastOneConnection = true;
+                            }
                         }
                     }
                 }
+
+                if (hasAtLeastOneConnection)
+                {
+                    var guid = AddToDesignerItems(designerItems, left, top, script);
+                    guidsForNames.Add(script.name, guid);
+
+                    if (root.Connections == null)
+                    {
+                        root.Connections = connectionsForOneItem.ToArray();
+                    }
+                    else
+                    {
+                        tmpList = root.Connections.ToList();
+                        tmpList.AddRange(connectionsForOneItem);
+                        root.Connections = tmpList.ToArray();
+                    }
+
+                    left += 100;
+
+                    if (left == 500)
+                    {
+                        top += 100;
+                        left = 0;
+                    }
+                }
             }
+
+            root.DesignerItems = designerItems.ToArray();
+
+            // filter out invalid connections
+            List<string> connectionForDeletion = new List<string>();
+            foreach (RootConnection item in root.Connections)
+            {
+                if (!guidsForNames.ContainsKey(item.SinkID))
+                {
+                    connectionForDeletion.Add(item.SinkID);
+                    continue;
+                }
+                item.SourceID = guidsForNames[item.SourceID];
+                item.SinkID = guidsForNames[item.SinkID];
+            }
+
+            tmpList = root.Connections.ToList();
+            foreach (string item in connectionForDeletion)
+            {
+                foreach (var toDelete in root.Connections.Where(x => x.SinkID == item))
+                {
+                    tmpList.Remove(toDelete);
+                }
+            }
+            root.Connections = tmpList.ToArray();
+
+            MemoryStream memoryStream = new MemoryStream();
+            XmlWriter xmlWriter = XmlWriter.Create(memoryStream, new XmlWriterSettings { Encoding = Encoding.UTF8 });
+
+            XmlSerializer serializer = new XmlSerializer(typeof(Root));
+            serializer.Serialize(xmlWriter, root);
+
+            memoryStream.Position = 0;
+            StreamReader reader = new StreamReader(memoryStream);
+
+            //string diagram = reader.ReadToEnd();
+            //File.WriteAllText(@"d:\xml\cc", diagram);
+
+            myDesigner.MyDesignerCanvas.RestoreDiagram(XElement.Parse(reader.ReadToEnd()));
+            
         }
 
-        private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
+        private static string AddToDesignerItems(List<RootDesignerItem> designerItems, int left, int top, Dnc script)
         {
-            if(openFileDialog1.ShowDialog() == DialogResult.OK)
+            var guid = Guid.NewGuid().ToString();
+            designerItems.Add(new RootDesignerItem
             {
+                Content = Resources.Test1Content.Replace("Box_placeholder", script.name),
+                Left = left,
+                Top = top,
+                Width = 100,
+                Height = 100,
+                ParentID = "00000000-0000-0000-0000-000000000000",
+                ID = guid,
+                IsGroup = false,
+            });
+
+            return guid;
+        }
+
+        private void Scene2FileLoad(object sender, EventArgs e)
+        {
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                listBoxOutput.Items.Add("Loading file...");
                 MemoryStream memoryStream = new MemoryStream();
                 openFileDialog1.OpenFile().CopyTo(memoryStream);
 
@@ -131,16 +251,26 @@ namespace MafiaSceneEditor
                 bool definitionsParsed = false;
 
                 int i = 0;
-
                 int objectID = 0;
+
+                // loading
+                bool loadingHeaderShown = false;
+                bool loadingObjectsShown = false;
+                bool loadingObjectsDefinitionsShown = false;
+                bool loadingInitScriptsShown = false;
 
                 const int IdLen = 2; // length of ID
 
-                while(i < tmpBuff.Length)
+                while (i < tmpBuff.Length)
                 {
                     if (!headerParsed)
                     {
                         // parse header
+                        if (!loadingHeaderShown)
+                        {
+                            listBoxOutput.Items.Add("Loading header...");
+                            loadingHeaderShown = true;
+                        }
                         if (tmpBuff[i] == 0 && tmpBuff[i + 1] == 0x40)
                         {
                             headerParsed = true;
@@ -161,6 +291,11 @@ namespace MafiaSceneEditor
                     else
                     {
                         // parse dncs objects
+                        if (!loadingObjectsShown)
+                        {
+                            listBoxOutput.Items.Add("Loading objects...");
+                            loadingObjectsShown = true;
+                        }
                         if (tmpBuff[i] == 0x10 && tmpBuff[i + 1] == 0x40)
                         {                            
                             Dnc currDnc = new Dnc
@@ -201,8 +336,6 @@ namespace MafiaSceneEditor
                         }
 
                         // parse dncs definitions
-                        //scene2Data.standardObjectsLength = BitConverter.ToInt32(arr, 0);
-
                         if ((i >= scene2Data.standardObjectsLength) && !definitionsParsed)
                         {
                             if (scene2Data.objectsDefinitionStartPosition > 0)
@@ -225,6 +358,11 @@ namespace MafiaSceneEditor
                             }
 
                             // parse dncs object definitions
+                            if (!loadingObjectsDefinitionsShown)
+                            {
+                                listBoxOutput.Items.Add("Loading object definitions...");
+                                loadingObjectsDefinitionsShown = true;
+                            }
                             if (tmpBuff[i] == 0x21 && tmpBuff[i + 1] == 0xAE)
                             {
                                 Dnc currDnc = new Dnc
@@ -256,6 +394,11 @@ namespace MafiaSceneEditor
                             }
 
                             // init scripts
+                            if (!loadingInitScriptsShown)
+                            {
+                                listBoxOutput.Items.Add("Loading init scripts...");
+                                loadingInitScriptsShown = true;
+                            }
                             if (tmpBuff[i] == 0x51 && tmpBuff[i + 1] == 0xAE)
                             {
                                 Dnc currDnc = new Dnc
@@ -392,6 +535,8 @@ namespace MafiaSceneEditor
                 }
 
                 treeView1.Nodes.Add(initScriptTreeNode);
+
+                listBoxOutput.Items.Add("Loading of file done.");
             }
         }
 
@@ -629,22 +774,27 @@ namespace MafiaSceneEditor
 
         private void SelectedObjectChanged(TreeNode e)
         {
-            //scene2Data.dncs
+            Dnc dnc;
 
             if (e.Tag != null)
             {
                 switch (((NodeTag)e.Tag).nodeType)
                 {
                     case NodeType.Object:
+                        fctb.Hide();
+                        elementHost.Show();
+                        elementHost2.Hide();
                         hexEditor.Stream = new MemoryStream(scene2Data.objectsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault().rawData);
                         break;
                     case NodeType.Definition:
 
-                        var dnc = scene2Data.objectDefinitionsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+                        dnc = scene2Data.objectDefinitionsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
 
                         if (dnc.definitionType == DefinitionIDs.Script)
                         {
                             fctb.Text = GetStringFromScript(dnc);
+                            elementHost.Hide();
+                            elementHost2.Hide();
                             fctb.Show();
                         }
                         else
@@ -655,7 +805,12 @@ namespace MafiaSceneEditor
                         
                         break;
                     case NodeType.InitScript:
-                        hexEditor.Stream = new MemoryStream(scene2Data.initScriptsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault().rawData);
+                        dnc = scene2Data.initScriptsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+
+                        fctb.Text = GetStringFromScript(dnc);
+                        elementHost.Hide();
+                        elementHost2.Hide();
+                        fctb.Show();
                         break;
                     default:
                         break;
