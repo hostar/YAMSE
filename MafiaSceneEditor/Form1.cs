@@ -18,6 +18,9 @@ using MafiaSceneEditor.Diagram.Classes;
 using System.Xml.Serialization;
 using DiagramDesigner;
 using MafiaSceneEditor.Diagram;
+using System.Windows.Media;
+using System.Windows.Controls;
+using System.Runtime.InteropServices;
 
 namespace MafiaSceneEditor
 {
@@ -33,6 +36,10 @@ namespace MafiaSceneEditor
 
         readonly System.Windows.Forms.Integration.ElementHost elementHostHexEditor;
         readonly System.Windows.Forms.Integration.ElementHost elementHostDiagramEditor;
+
+        private List<MdiScriptEdit> mdiForms = new List<MdiScriptEdit>();
+
+        private TreeNode currentTreeNode;
 
         public MainForm()
         {
@@ -87,6 +94,45 @@ namespace MafiaSceneEditor
             Controls.Add(elementHostDiagramEditor);
             Invalidate();
 
+            this.IsMdiContainer = true;
+            //this.ClientRectangle.Left = 200;
+
+            MdiClient client = this.Controls
+                       .OfType<MdiClient>()
+                       .FirstOrDefault();
+
+            var padding = 250;
+            client.Anchor = mainPanel.Anchor;
+            client.Dock = mainPanel.Dock;
+
+            //client.Left = padding;
+            client.Size = mainPanel.Size;
+            client.Location = mainPanel.Location;
+
+            mainPanel.SendToBack();
+
+            /*
+            for (int i = 0; i < 5; i++)
+            {
+                var mdiForm = new Form { MdiParent = this, Width = 200, Height = 200, Visible = true };
+                mdiForm.Controls.Add(new System.Windows.Forms.Button { Text = i.ToString() });
+                mdiForms.Add(mdiForm);
+            }
+
+            
+            for (int i = 0; i < 5; i++)
+            {
+                mdiForms[i].BringToFront();
+                mdiForms[i].Left = mdiForms[i].MdiParent.ClientRectangle.X;
+            }
+            */
+
+            elementHostHexEditor.Hide();
+            elementHostDiagramEditor.Hide();
+
+
+            //Invalidate();
+
             openToolStripMenuItem.Click += Scene2FileLoad;
             toolStripMenuItem1.Click += ShowScriptDependencyDiagram;
         }
@@ -95,7 +141,16 @@ namespace MafiaSceneEditor
         {
             elementHostDiagramEditor.Show();
             elementHostDiagramEditor.BringToFront();
-            this.Invalidate();
+            Invalidate();
+
+            //var zoomSlider = myDesigner.ZoomBox.FindName("PART_ZoomSlider");
+            var count = VisualTreeHelper.GetChildrenCount(myDesigner.ZoomBox);
+
+            int iterator = 0;
+            var whatever = VisualTreeHelper.GetChild(myDesigner.ZoomBox, iterator);
+
+            ((((whatever as Border).Child as Expander).Header as Grid).Children[0] as Slider).Maximum = 100;
+            //whatever.Child.Header.Children[0].Maximum
 
             Root root = new Root();
 
@@ -167,11 +222,11 @@ namespace MafiaSceneEditor
                         root.Connections = tmpList.ToArray();
                     }
 
-                    left += 100;
+                    left += 150;
 
-                    if (left == 500)
+                    if (left >= 1000)
                     {
-                        top += 100;
+                        top += 120;
                         left = 0;
                     }
                 }
@@ -202,6 +257,82 @@ namespace MafiaSceneEditor
             }
             root.Connections = tmpList.ToArray();
 
+            // move nodes
+            foreach (var grouping in root.Connections.GroupBy(x => x.SourceID))
+            {
+                if (grouping.Count() > 2)
+                {
+                    int topIterator = 0;
+                    var srcNode = root.DesignerItems.First(x => x.ID == grouping.First().SourceID);
+                    srcNode.Left += 600;
+
+                    listBoxOutput.Items.Add($"{guidsForNames.First(x => x.Value == srcNode.ID).Key}: {grouping.Count()}");
+                    foreach (var connection in grouping)
+                    {
+                        listBoxOutput.Items.Add(topIterator);
+                        var tgtNode = root.DesignerItems.First(x => x.ID == connection.SinkID);
+                        tgtNode.Left = srcNode.Left - 200;
+                        tgtNode.Top = srcNode.Top + 150 + topIterator;
+                        topIterator += 150;
+                    }
+
+                    listBoxOutput.Items.Add($"---------------------");
+                }
+            }
+
+            // optimize nodes position
+            listBoxOutput.Items.Add($"---TOP-----");
+
+            var lastTop = 0;
+
+            var maxTop = root.DesignerItems.Max(x => x.Top);
+            while (maxTop > 2000)
+            {
+                foreach (var item in root.DesignerItems.Where(x => x.Top == maxTop))
+                {
+                    listBoxOutput.Items.Add($"{guidsForNames.First(x => x.Value == item.ID).Key} {item.Top}");
+                    item.Top = (item.Top / 2000)*100;
+
+                    if (lastTop == item.Top)
+                    {
+                        item.Top += 100;
+                    }
+
+                    lastTop = item.Top;
+                    listBoxOutput.Items.Add($"-----------");
+                }
+                lastTop = 0;
+                maxTop = root.DesignerItems.Max(x => x.Top);
+            }
+
+            // optimize nodes position - prevent overlaps
+            foreach (var item in root.DesignerItems)
+            {
+                foreach (var itemInner in root.DesignerItems)
+                {
+                    if (itemInner.ID != item.ID)
+                    {
+                        if (isNodeNear(itemInner.Left, item.Left) && isNodeNear(itemInner.Top, item.Top))
+                        {
+                            itemInner.Top += 150;
+                        }
+                    }
+                }
+            }
+
+            // optimize nodes position - check for long conenctions
+            foreach (var item in root.Connections)
+            {
+                // left
+                var leftSrc = root.DesignerItems.First(x => x.ID == item.SourceID).Left;
+                var leftSink = root.DesignerItems.First(x => x.ID == item.SinkID).Left;
+
+                if (Math.Abs(leftSrc - leftSink) > 500)
+                {
+                    root.DesignerItems.First(x => x.ID == item.SourceID).Left = root.DesignerItems.First(x => x.ID == item.SinkID).Left + 150;
+                }
+            }
+
             MemoryStream memoryStream = new MemoryStream();
             XmlWriter xmlWriter = XmlWriter.Create(memoryStream, new XmlWriterSettings { Encoding = Encoding.UTF8 });
 
@@ -215,7 +346,11 @@ namespace MafiaSceneEditor
             //File.WriteAllText(@"d:\xml\cc", diagram);
 
             myDesigner.MyDesignerCanvas.RestoreDiagram(XElement.Parse(reader.ReadToEnd()));
-            
+        }
+
+        private bool isNodeNear(int a, int b)
+        {
+            return Math.Abs(a - b) < 20;
         }
 
         private static string AddToDesignerItems(List<RootDesignerItem> designerItems, int left, int top, Dnc script)
@@ -226,8 +361,8 @@ namespace MafiaSceneEditor
                 Content = Resources.Test1Content.Replace("Box_placeholder", script.name),
                 Left = left,
                 Top = top,
-                Width = 100,
-                Height = 100,
+                Width = 100 + (script.name.Length - 5) * 7,
+                Height = 70,
                 ParentID = "00000000-0000-0000-0000-000000000000",
                 ID = guid,
                 IsGroup = false,
@@ -784,6 +919,12 @@ namespace MafiaSceneEditor
         {
             Dnc dnc;
 
+            if (currentTreeNode?.GetHashCode() == e.GetHashCode())
+            {
+                return;
+            }
+            currentTreeNode = e;
+
             if (e.Tag != null)
             {
                 switch (((NodeTag)e.Tag).nodeType)
@@ -800,10 +941,23 @@ namespace MafiaSceneEditor
 
                         if (dnc.definitionType == DefinitionIDs.Script)
                         {
-                            fctb.Text = GetStringFromScript(dnc);
+                            //fctb.Text = GetStringFromScript(dnc);
                             elementHostHexEditor.Hide();
                             elementHostDiagramEditor.Hide();
-                            fctb.Show();
+                            //fctb.Show();
+
+                            if (mdiForms.Any(x => (string)x.Tag == CreateInnerFormTag(dnc)))
+                            { 
+                                return;
+                            }
+
+                            var tmpForm = new MdiScriptEdit { MdiParent = this, Width = 400, Height = 400, Visible = true, Text = dnc.name, Tag = CreateInnerFormTag(dnc) };
+
+                            tmpForm.SetEditorText(GetStringFromScript(dnc));
+                            tmpForm.FormClosed += TmpForm_FormClosed;
+                            mdiForms.Add(tmpForm);
+
+                            tmpForm.BringToFront();
                         }
                         else
                         {
@@ -826,6 +980,18 @@ namespace MafiaSceneEditor
                 
                 treeView1.Focus();
             }
+        }
+
+        private void TmpForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            var foundForm = mdiForms.FirstOrDefault(x => x.Tag == (sender as MdiScriptEdit).Tag);
+            foundForm?.Dispose();
+            mdiForms.Remove(foundForm);
+        }
+
+        private static string CreateInnerFormTag(Dnc dnc)
+        {
+            return $"{DefinitionIDs.Script} ; {dnc.name}";
         }
 
         private static string GetStringFromScript(Dnc dnc)
