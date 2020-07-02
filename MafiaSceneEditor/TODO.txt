@@ -1,0 +1,12 @@
+﻿bugs to fix:
+  remove shadows of connections
+  test diagram auto-arrange more and make diagram more useful after auto-generation
+
+features to add:
+  save current diagram, so it can be loaded later
+  get from diagram to script
+
+  movable sub-forms with scripts
+  editing of city cars and pedestrians
+
+  saving of data
