@@ -191,6 +191,7 @@ namespace MafiaSceneEditor
                                 SinkConnectorName = "Top",
                                 SinkArrowSymbol = "Arrow",
                                 zIndex = 2,
+                                ShowShadow = false,
                                 StrokeThickness = 2,
                                 SourceConnectorName = "Bottom",
                                 SourceArrowSymbol = "None",
