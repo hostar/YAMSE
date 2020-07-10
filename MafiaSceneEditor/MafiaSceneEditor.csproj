@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DiagramDesigner" Version="2.0.7" />
+    <PackageReference Include="DiagramDesigner" Version="2.0.0" />
     <PackageReference Include="FCTB" Version="2.16.24" />
     <PackageReference Include="Sara-FCTB" Version="2.16.26.105" />
     <PackageReference Include="WPFHexaEditor" Version="2.0.2" />

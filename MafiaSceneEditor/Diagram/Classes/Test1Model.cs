@@ -222,6 +222,8 @@ namespace MafiaSceneEditor.Diagram.Classes
 
         private byte zIndexField;
 
+        private bool showShadow;
+
         /// <remarks/>
         public string SourceID
         {
@@ -349,6 +351,19 @@ namespace MafiaSceneEditor.Diagram.Classes
             set
             {
                 this.zIndexField = value;
+            }
+        }
+
+        /// <remarks/>
+        public bool ShowShadow
+        {
+            get
+            {
+                return this.showShadow;
+            }
+            set
+            {
+                this.showShadow = value;
             }
         }
     }
