@@ -32,7 +32,7 @@ namespace MafiaSceneEditor
         readonly MyDesigner myDesigner;
         readonly WpfHexaEditor.HexEditor hexEditor;
 
-        readonly FastColoredTextBoxNS.FastColoredTextBox fctb;
+        //readonly FastColoredTextBoxNS.FastColoredTextBox fctb;
 
         readonly System.Windows.Forms.Integration.ElementHost elementHostHexEditor;
         readonly System.Windows.Forms.Integration.ElementHost elementHostDiagramEditor;
@@ -46,6 +46,7 @@ namespace MafiaSceneEditor
             InitializeComponent();
 
             // create script editor
+            /*
             fctb = new FastColoredTextBoxNS.FastColoredTextBox
             {
                 Parent = this,
@@ -54,6 +55,7 @@ namespace MafiaSceneEditor
             };
 
             fctb.Hide();
+            */
 
             // create hex editor
             hexEditor = new WpfHexaEditor.HexEditor
@@ -931,7 +933,6 @@ namespace MafiaSceneEditor
                 switch (((NodeTag)e.Tag).nodeType)
                 {
                     case NodeType.Object:
-                        fctb.Hide();
                         elementHostHexEditor.Show();
                         elementHostDiagramEditor.Hide();
                         hexEditor.Stream = new MemoryStream(scene2Data.objectsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault().rawData);
@@ -942,38 +943,36 @@ namespace MafiaSceneEditor
 
                         if (dnc.definitionType == DefinitionIDs.Script)
                         {
-                            //fctb.Text = GetStringFromScript(dnc);
                             elementHostHexEditor.Hide();
                             elementHostDiagramEditor.Hide();
-                            //fctb.Show();
 
                             if (mdiForms.Any(x => (string)x.Tag == CreateInnerFormTag(dnc)))
-                            { 
+                            {
                                 return;
                             }
 
-                            var tmpForm = new MdiScriptEdit { MdiParent = this, Width = 400, Height = 400, Visible = true, Text = dnc.name, Tag = CreateInnerFormTag(dnc) };
-
-                            tmpForm.SetEditorText(GetStringFromScript(dnc));
-                            tmpForm.FormClosed += TmpForm_FormClosed;
-                            mdiForms.Add(tmpForm);
-
-                            tmpForm.BringToFront();
+                            CreateMdiForm(dnc, GetStringFromScript(dnc));
                         }
                         else
                         {
                             hexEditor.Stream = new MemoryStream(dnc.rawData);
-                            fctb.Hide();
+                            elementHostHexEditor.Show();
                         }
                         
                         break;
                     case NodeType.InitScript:
                         dnc = scene2Data.initScriptsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
 
-                        fctb.Text = GetStringFromInitScript(dnc);
+                        //fctb.Text = GetStringFromInitScript(dnc);
                         elementHostHexEditor.Hide();
                         elementHostDiagramEditor.Hide();
-                        fctb.Show();
+
+                        if (mdiForms.Any(x => (string)x.Tag == CreateInnerFormTag(dnc)))
+                        {
+                            return;
+                        }
+
+                        CreateMdiForm(dnc, GetStringFromInitScript(dnc));
                         break;
                     default:
                         break;
@@ -983,6 +982,17 @@ namespace MafiaSceneEditor
             }
         }
 
+        private void CreateMdiForm(Dnc dnc, string text)
+        {
+            var tmpForm = new MdiScriptEdit { MdiParent = this, Width = 400, Height = 400, Visible = true, Text = dnc.name, Tag = CreateInnerFormTag(dnc) };
+
+            tmpForm.SetEditorText(text);
+            tmpForm.FormClosed += TmpForm_FormClosed;
+            mdiForms.Add(tmpForm);
+
+            tmpForm.BringToFront();
+        }
+
         private void TmpForm_FormClosed(object sender, FormClosedEventArgs e)
         {
             var foundForm = mdiForms.FirstOrDefault(x => x.Tag == (sender as MdiScriptEdit).Tag);
@@ -990,9 +1000,14 @@ namespace MafiaSceneEditor
             mdiForms.Remove(foundForm);
         }
 
+        /// <summary>
+        /// Creates a tag for MDI form for future identification
+        /// </summary>
+        /// <param name="dnc"></param>
+        /// <returns></returns>
         private static string CreateInnerFormTag(Dnc dnc)
         {
-            return $"{DefinitionIDs.Script} ; {dnc.name}";
+            return $"{dnc.definitionType} ; {dnc.name}";
         }
 
         private static string GetStringFromScript(Dnc dnc)
