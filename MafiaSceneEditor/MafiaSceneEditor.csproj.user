@@ -8,7 +8,7 @@
     <Compile Update="Diagram\Test1.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Form1.cs">
+    <Compile Update="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="MdiScriptEdit.cs">
