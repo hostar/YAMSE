@@ -16,6 +16,11 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Update="MdiScriptEdit.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
     <Page Update="Diagram\MyDesigner.xaml">
       <SubType>Designer</SubType>
     </Page>
