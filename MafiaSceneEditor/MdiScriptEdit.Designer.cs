@@ -58,12 +58,12 @@
             this.toolStrip1.TabIndex = 3;
             this.toolStrip1.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.toolStrip1_ItemClicked);
             // 
-            // toolStripButton1
+            // toolStripUndo
             // 
             this.toolStripUndo.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.toolStripUndo.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton1.Image")));
+            this.toolStripUndo.Image = ((System.Drawing.Image)(resources.GetObject("toolStripUndo.Image")));
             this.toolStripUndo.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripUndo.Name = "toolStripButton1";
+            this.toolStripUndo.Name = "toolStripUndo";
             this.toolStripUndo.Size = new System.Drawing.Size(29, 24);
             this.toolStripUndo.Text = "Undo";
             // 
