@@ -72,10 +72,12 @@ namespace MafiaSceneEditor
             elementHostHexEditor.Child = hexEditor;
             elementHostHexEditor.Parent = this;
 
+            /*
             System.Windows.Application app = new System.Windows.Application
             {
                 MainWindow = new System.Windows.Window()
             };
+            */
 
             Controls.Add(elementHostHexEditor);
 
@@ -112,25 +114,8 @@ namespace MafiaSceneEditor
 
             mainPanel.SendToBack();
 
-            /*
-            for (int i = 0; i < 5; i++)
-            {
-                var mdiForm = new Form { MdiParent = this, Width = 200, Height = 200, Visible = true };
-                mdiForm.Controls.Add(new System.Windows.Forms.Button { Text = i.ToString() });
-                mdiForms.Add(mdiForm);
-            }
-
-            
-            for (int i = 0; i < 5; i++)
-            {
-                mdiForms[i].BringToFront();
-                mdiForms[i].Left = mdiForms[i].MdiParent.ClientRectangle.X;
-            }
-            */
-
             elementHostHexEditor.Hide();
             elementHostDiagramEditor.Hide();
-
 
             //Invalidate();
 
