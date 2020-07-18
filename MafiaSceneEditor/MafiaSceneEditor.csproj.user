@@ -16,6 +16,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Update="MainForm.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Update="MdiScriptEdit.resx">
       <SubType>Designer</SubType>
     </EmbeddedResource>
