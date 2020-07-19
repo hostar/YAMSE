@@ -40,6 +40,8 @@ namespace MafiaSceneEditor
 
         private TreeNode currentTreeNode;
 
+        private bool scene2FileLoaded = false;
+
         public MainForm()
         {
             InitializeComponent();
@@ -72,13 +74,6 @@ namespace MafiaSceneEditor
             elementHostHexEditor.Child = hexEditor;
             elementHostHexEditor.Parent = this;
 
-            /*
-            System.Windows.Application app = new System.Windows.Application
-            {
-                MainWindow = new System.Windows.Window()
-            };
-            */
-
             Controls.Add(elementHostHexEditor);
 
             // create diagram component
@@ -104,7 +99,6 @@ namespace MafiaSceneEditor
                        .OfType<MdiClient>()
                        .FirstOrDefault();
 
-            var padding = 250;
             client.Anchor = mainPanel.Anchor;
             client.Dock = mainPanel.Dock;
 
@@ -125,6 +119,11 @@ namespace MafiaSceneEditor
 
         private void ShowScriptDependencyDiagram(object sender, EventArgs e)
         {
+            if (!scene2FileLoaded)
+            {
+                MessageBox.Show("First open Scene2 file");
+                return;
+            }
             elementHostDiagramEditor.Show();
             elementHostDiagramEditor.BringToFront();
             Invalidate();
@@ -366,6 +365,7 @@ namespace MafiaSceneEditor
         {
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
+                scene2FileLoaded = true;
                 listBoxOutput.Items.Add("Loading file...");
 
                 MemoryStream memoryStream = new MemoryStream();

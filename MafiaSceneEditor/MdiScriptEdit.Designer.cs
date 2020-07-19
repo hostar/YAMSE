@@ -104,6 +104,7 @@
             this.btnRevert.TabIndex = 2;
             this.btnRevert.Text = "Revert";
             this.btnRevert.UseVisualStyleBackColor = true;
+            this.btnRevert.Click += new System.EventHandler(this.btnRevert_Click);
             // 
             // MdiScriptEdit
             // 
