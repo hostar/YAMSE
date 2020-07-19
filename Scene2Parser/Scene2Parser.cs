@@ -8,11 +8,12 @@ using WpfHexaEditor.Core.MethodExtention;
 
 namespace MafiaSceneEditor
 {
-    public class Scene2Parser
+    public static class Scene2Parser
     {
         private const int maxObjectNameLength = 50;
+        private const int IdLen = 2; // length of ID
 
-        public void LoadScene(MemoryStream inputStream, ref Scene2Data scene2Data, IList loggingList)
+        public static void LoadScene(MemoryStream inputStream, ref Scene2Data scene2Data, IList loggingList)
         {
             byte[] tmpBuff = inputStream.ToArray();
 
@@ -195,7 +196,85 @@ namespace MafiaSceneEditor
             }
         }
 
-        private string GetNameByDefinitionID(Dnc dnc)
+        public static void SaveScene(Stream outputStream, ref Scene2Data scene2Data, IList loggingList)
+        {
+            //StreamWriter streamWriter = new StreamWriter(outputStream);
+            outputStream.Write(scene2Data.rawDataHeader.ToArray(), 0, scene2Data.rawDataHeader.ToArray().Length);
+
+            var sectionID = new byte[] { 0x00, 0x40 };
+
+            // objects
+            outputStream.Write(sectionID, 0, sectionID.Length);
+
+            var sumOfLengths = scene2Data.objectsDncs.Sum(x => x.rawData.Length + IdLen);
+
+            var standardObjectsLengthArr = BitConverter.GetBytes(sumOfLengths + 6 /* 6 is length of section start */);
+
+            outputStream.Write(standardObjectsLengthArr, 0, standardObjectsLengthArr.Length);
+
+            var objectsID = new byte[] { 0x10, 0x40 };
+
+            foreach (Dnc dnc in scene2Data.objectsDncs)
+            {
+                outputStream.Write(objectsID, 0, objectsID.Length);
+                outputStream.Write(dnc.rawData, 0, dnc.rawData.Length);
+            }
+
+            // object definitions
+            var sectionIDdefs = new byte[] { 0x20, 0xAE };
+
+            outputStream.Write(sectionIDdefs, 0, sectionIDdefs.Length);
+
+            sumOfLengths = scene2Data.objectDefinitionsDncs.Sum(x => x.rawData.Length + IdLen);
+            var objectsDefsLengthArr = BitConverter.GetBytes(sumOfLengths + 6 /* 6 is length of section start */);
+
+            outputStream.Write(objectsDefsLengthArr, 0, objectsDefsLengthArr.Length);
+
+            var objectDefsID = new byte[] { 0x21, 0xAE };
+
+            foreach (Dnc dnc in scene2Data.objectDefinitionsDncs)
+            {
+                outputStream.Write(objectDefsID, 0, objectDefsID.Length);
+                outputStream.Write(dnc.rawData, 0, dnc.rawData.Length);
+            }
+
+            //mysterious section
+            var mystery = new byte[] { 0x02, 0xae, 0x06, 0x00, 0x00, 0x00 };
+            outputStream.Write(mystery, 0, mystery.Length);
+
+            // init scripts
+            var sectionInitScripts = new byte[] { 0x50, 0xAE };
+
+            outputStream.Write(sectionInitScripts, 0, sectionInitScripts.Length);
+
+            sumOfLengths = scene2Data.initScriptsDncs.Sum(x => x.rawData.Length + IdLen);
+            var initScriptsLengthArr = BitConverter.GetBytes(sumOfLengths + 6 /* 6 is length of section start */);
+
+            outputStream.Write(initScriptsLengthArr, 0, initScriptsLengthArr.Length);
+
+            var initScriptsID = new byte[] { 0x51, 0xAE };
+
+            foreach (Dnc dnc in scene2Data.initScriptsDncs)
+            {
+                outputStream.Write(initScriptsID, 0, initScriptsID.Length);
+                outputStream.Write(dnc.rawData, 0, dnc.rawData.Length);
+            }
+            
+
+            /*
+            
+            objectsDncs
+            objectDefinitionsDncs
+            initScriptsDncs
+
+             */
+
+            outputStream.Close();
+            //streamWriter.Write(scene2Data.rawDataHeader);
+            //streamWriter.Close();
+        }
+
+        private static string GetNameByDefinitionID(Dnc dnc)
         {
             switch (dnc.definitionType)
             {
@@ -239,12 +318,12 @@ namespace MafiaSceneEditor
             }
         }
 
-        private string GetCStringFromByteArray(byte[] arr)
+        private static string GetCStringFromByteArray(byte[] arr)
         {
             return Encoding.ASCII.GetString(arr, 0, Array.IndexOf(arr, (byte)0));
         }
 
-        private ObjectIDs GetObjectType(Dnc dnc)
+        private static ObjectIDs GetObjectType(Dnc dnc)
         {
             if (dnc.rawData[4] == 0x10)
             { // either LMAP or sector
@@ -312,7 +391,7 @@ namespace MafiaSceneEditor
             }
         }
 
-        private string GetNameByID(Dnc dnc)
+        private static string GetNameByID(Dnc dnc)
         {
             switch (dnc.objectType)
             {
@@ -341,7 +420,7 @@ namespace MafiaSceneEditor
             }
         }
 
-        private DefinitionIDs GetObjectDefinitionType(Dnc dnc)
+        private static DefinitionIDs GetObjectDefinitionType(Dnc dnc)
         {
             if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x04 }).Any())
             {

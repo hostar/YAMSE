@@ -114,6 +114,7 @@ namespace MafiaSceneEditor
             //Invalidate();
 
             openToolStripMenuItem.Click += Scene2FileLoad;
+            saveToolStripMenuItem.Click += Scene2FileSave;
             toolStripMenuItem1.Click += ShowScriptDependencyDiagram;
         }
 
@@ -371,8 +372,7 @@ namespace MafiaSceneEditor
                 MemoryStream memoryStream = new MemoryStream();
                 openFileDialog1.OpenFile().CopyTo(memoryStream);
 
-                Scene2Parser scene2Parser = new Scene2Parser();
-                scene2Parser.LoadScene(memoryStream, ref scene2Data, listBoxOutput.Items);
+                Scene2Parser.LoadScene(memoryStream, ref scene2Data, listBoxOutput.Items);
 
                 // put into treeview
                 // objects
@@ -496,6 +496,13 @@ namespace MafiaSceneEditor
                 treeView1.Nodes.Add(initScriptTreeNode);
 
                 listBoxOutput.Items.Add("Loading of file done.");
+            }
+        }
+        private void Scene2FileSave(object sender, EventArgs e)
+        {
+            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                Scene2Parser.SaveScene(saveFileDialog1.OpenFile(), ref scene2Data, listBoxOutput.Items);
             }
         }
 
