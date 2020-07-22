@@ -21,6 +21,7 @@ namespace MafiaSceneEditor
         private Scintilla scintillaTextEditor;
 
         private Regex wordSplitRegex = new Regex("[a-zA-Z0-9_]+");
+        private bool initDone = false;
 
         public MdiScriptEdit()
         {
@@ -77,6 +78,7 @@ namespace MafiaSceneEditor
 
             scintillaTextEditor.MouseDwellTime = 500;
             scintillaTextEditor.DwellStart += ScintillaTextEditor_DwellStart;
+            scintillaTextEditor.TextChanged += ScintillaTextEditor_TextChanged;
 
             //mainPanel.Controls.Add(textEditor);
             mainPanel.Controls.Add(scintillaTextEditor);
@@ -87,6 +89,15 @@ namespace MafiaSceneEditor
             FormClosed += MdiScriptEdit_FormClosed;
 
             this.Show();
+        }
+
+        private void ScintillaTextEditor_TextChanged(object sender, EventArgs e)
+        {
+            if (!initDone)
+            {
+                return;
+            }
+            ScintillaTextHighlight(scintillaTextEditor.Lines[scintillaTextEditor.LineFromPosition(scintillaTextEditor.CurrentPosition)].Text, scintillaTextEditor.CurrentPosition);
         }
 
         private void ScintillaTextEditor_DwellStart(object sender, DwellEventArgs e)
@@ -114,6 +125,7 @@ namespace MafiaSceneEditor
         {
             //textEditor.Text = text;
             scintillaTextEditor.Text = text;
+            initDone = true;
             try
             {
                 SetStyle();
@@ -127,18 +139,22 @@ namespace MafiaSceneEditor
             scintillaTextEditor.Styles[2].ForeColor = System.Drawing.Color.Crimson;
             scintillaTextEditor.Styles[3].ForeColor = System.Drawing.Color.Blue;
             scintillaTextEditor.Styles[4].ForeColor = System.Drawing.Color.Green;
+            ScintillaTextHighlight(scintillaTextEditor.Text, 0);
+        }
 
+        private void ScintillaTextHighlight(string textInput, int startPosition)
+        {
             int index = 0;
-            
-            scintillaTextEditor.StartStyling(0);
+            int indexInScintilla = startPosition;
 
-            foreach (var word in scintillaTextEditor.Text.Split(null))
+            scintillaTextEditor.StartStyling(indexInScintilla);
+
+            foreach (var word in textInput.Split(null))
             {
                 Debug.WriteLine(word);
-                var currIndex = scintillaTextEditor.Text.IndexOf(word, index);
+                var currIndex = scintillaTextEditor.Text.IndexOf(word, indexInScintilla);
 
                 var toAdd = currIndex - index;
-                //scintillaTextEditor.SetStyling(toAdd, 3);
 
                 scintillaTextEditor.StartStyling(currIndex);
                 if (TextHighlight.Commands.Contains(word))
