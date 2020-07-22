@@ -198,7 +198,7 @@ namespace MafiaSceneEditor
 
         public static void SaveScene(Stream outputStream, ref Scene2Data scene2Data, IList loggingList)
         {
-            //StreamWriter streamWriter = new StreamWriter(outputStream);
+            loggingList.Add("Starting to save the file.");
             outputStream.Write(scene2Data.rawDataHeader.ToArray(), 0, scene2Data.rawDataHeader.ToArray().Length);
 
             var sectionID = new byte[] { 0x00, 0x40 };
@@ -219,6 +219,7 @@ namespace MafiaSceneEditor
                 outputStream.Write(objectsID, 0, objectsID.Length);
                 outputStream.Write(dnc.rawData, 0, dnc.rawData.Length);
             }
+            loggingList.Add("Objects saved.");
 
             // object definitions
             var sectionIDdefs = new byte[] { 0x20, 0xAE };
@@ -237,6 +238,8 @@ namespace MafiaSceneEditor
                 outputStream.Write(objectDefsID, 0, objectDefsID.Length);
                 outputStream.Write(dnc.rawData, 0, dnc.rawData.Length);
             }
+
+            loggingList.Add("Object definitions saved.");
 
             //mysterious section
             var mystery = new byte[] { 0x02, 0xae, 0x06, 0x00, 0x00, 0x00 };
@@ -259,7 +262,7 @@ namespace MafiaSceneEditor
                 outputStream.Write(initScriptsID, 0, initScriptsID.Length);
                 outputStream.Write(dnc.rawData, 0, dnc.rawData.Length);
             }
-            
+            loggingList.Add("Init scripts saved.");
 
             /*
             
@@ -270,6 +273,7 @@ namespace MafiaSceneEditor
              */
 
             outputStream.Close();
+            loggingList.Add("File saving done.");
             //streamWriter.Write(scene2Data.rawDataHeader);
             //streamWriter.Close();
         }
