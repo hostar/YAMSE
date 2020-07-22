@@ -155,7 +155,7 @@ namespace MafiaSceneEditor
             {
                 // get references from scripts
                 // findactor xx, "name"
-                string[] strings = GetStringFromScript(script).Split("\r\n");
+                string[] strings = Scene2Parser.GetStringFromDnc(script).Split("\r\n");
 
                 //listBoxOutput.Items.Add(script.name);
 
@@ -539,7 +539,7 @@ namespace MafiaSceneEditor
                                 return;
                             }
 
-                            CreateMdiForm(dnc, GetStringFromScript(dnc));
+                            CreateMdiForm(dnc, Scene2Parser.GetStringFromDnc(dnc));
                         }
                         else
                         {
@@ -572,7 +572,7 @@ namespace MafiaSceneEditor
 
         private void CreateMdiForm(Dnc dnc, string text)
         {
-            var tmpForm = new MdiScriptEdit { MdiParent = this, Width = 400, Height = 400, Visible = true, Text = dnc.name, Tag = CreateInnerFormTag(dnc) };
+            var tmpForm = new MdiScriptEdit { MdiParent = this, Width = 400, Height = 400, Visible = true, Text = dnc.name, Tag = CreateInnerFormTag(dnc), Dnc = dnc, Scene2Data = scene2Data };
 
             tmpForm.SetEditorText(text);
             tmpForm.FormClosed += TmpForm_FormClosed;
@@ -596,11 +596,6 @@ namespace MafiaSceneEditor
         private static string CreateInnerFormTag(Dnc dnc)
         {
             return $"{dnc.definitionType} ; {dnc.name}";
-        }
-
-        private static string GetStringFromScript(Dnc dnc)
-        {
-            return Encoding.UTF8.GetString(dnc.rawData.Skip(dnc.name.Length + 41).ToArray());
         }
 
         private static string GetStringFromInitScript(Dnc dnc)
