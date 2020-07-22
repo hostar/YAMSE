@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Media;
+using MafiaSceneEditor.DataLayer;
 //using FastColoredTextBoxNS;
 using ScintillaNET;
 
@@ -22,6 +23,9 @@ namespace MafiaSceneEditor
 
         private Regex wordSplitRegex = new Regex("[a-zA-Z0-9_]+");
         private bool initDone = false;
+
+        public Dnc Dnc;
+        public Scene2Data Scene2Data;
 
         public MdiScriptEdit()
         {
@@ -188,6 +192,11 @@ namespace MafiaSceneEditor
         private void btnRevert_Click(object sender, EventArgs e)
         {
             
+        }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            Scene2Parser.UpdateStringInDnc(Dnc, scintillaTextEditor.Text);
         }
     }
 }

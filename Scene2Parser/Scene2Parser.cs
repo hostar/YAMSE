@@ -278,6 +278,26 @@ namespace MafiaSceneEditor
             //streamWriter.Close();
         }
 
+        public static string GetStringFromDnc(Dnc dnc)
+        {
+            return Encoding.UTF8.GetString(dnc.rawData.Skip(dnc.name.Length + 41).ToArray());
+        }
+
+        public static void UpdateStringInDnc(Dnc dnc, string text)
+        {
+            var startArray = dnc.rawData.Take(dnc.name.Length + 41).ToArray();
+
+            // recalculate array length
+            var textInBytes = Encoding.UTF8.GetBytes(text);
+            var bytesLen = BitConverter.GetBytes(textInBytes.Length + startArray.Length + IdLen);
+
+            for (int i = 0; i < bytesLen.Length; i++)
+            {
+                startArray[i] = bytesLen[i];
+            }
+            dnc.rawData = startArray.Concat(textInBytes).ToArray();
+        }
+
         private static string GetNameByDefinitionID(Dnc dnc)
         {
             switch (dnc.definitionType)
