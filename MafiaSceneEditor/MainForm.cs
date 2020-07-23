@@ -74,6 +74,12 @@ namespace MafiaSceneEditor
             elementHostHexEditor.Child = hexEditor;
             elementHostHexEditor.Parent = this;
 
+            // this is essential, do not delete
+            System.Windows.Application app = new System.Windows.Application
+            {
+                MainWindow = new System.Windows.Window()
+            };
+
             Controls.Add(elementHostHexEditor);
 
             // create diagram component
