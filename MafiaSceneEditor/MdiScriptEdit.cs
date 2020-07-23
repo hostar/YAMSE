@@ -47,7 +47,8 @@ namespace MafiaSceneEditor
                 //WrapMode = WrapMode.Word, 
                 //IndentationGuides = IndentView.LookBoth, 
                 //Parent = mainPanel, 
-                Dock = DockStyle.Fill
+                Dock = DockStyle.Fill,
+                ScrollWidth = 200
             };
 
             scintillaTextEditor.Styles[ScintillaNET.Style.Default].Font = "Consolas";
