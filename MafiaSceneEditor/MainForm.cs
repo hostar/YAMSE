@@ -117,11 +117,16 @@ namespace MafiaSceneEditor
             elementHostHexEditor.Hide();
             elementHostDiagramEditor.Hide();
 
-            //Invalidate();
-
             openToolStripMenuItem.Click += Scene2FileLoad;
             saveToolStripMenuItem.Click += Scene2FileSave;
+            saveAsToolStripMenuItem.Click += Scene2FileSaveAs;
+            exitToolStripMenuItem.Click += ExitToolStripMenuItem_Click;
             toolStripMenuItem1.Click += ShowScriptDependencyDiagram;
+        }
+
+        private void ExitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Close();
         }
 
         private void ShowScriptDependencyDiagram(object sender, EventArgs e)
@@ -506,12 +511,19 @@ namespace MafiaSceneEditor
                 listBoxOutput.Items.Add("Loading of file done.");
             }
         }
-        private void Scene2FileSave(object sender, EventArgs e)
+        private void Scene2FileSaveAs(object sender, EventArgs e)
         {
             if (saveFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 Scene2Parser.SaveScene(saveFileDialog1.OpenFile(), ref scene2Data, listBoxOutput.Items);
             }
+        }
+
+        private void Scene2FileSave(object sender, EventArgs e)
+        {
+            var tmpStream = new FileStream(openFileDialog1.FileName, FileMode.Create);
+            Scene2Parser.SaveScene(tmpStream, ref scene2Data, listBoxOutput.Items);
+            tmpStream.Close();
         }
 
         private void SelectedObjectChanged(TreeNode e)
