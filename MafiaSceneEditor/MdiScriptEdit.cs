@@ -27,6 +27,9 @@ namespace MafiaSceneEditor
         public Dnc Dnc;
         public Scene2Data Scene2Data;
 
+        readonly System.Windows.Forms.Integration.ElementHost elementHostHexEditor;
+        readonly WpfHexaEditor.HexEditor hexEditor;
+
         public MdiScriptEdit()
         {
             InitializeComponent();
@@ -91,6 +94,29 @@ namespace MafiaSceneEditor
             tableLayoutPanel1.SetColumnSpan(mainPanel, 3);
             tableLayoutPanel1.SetRowSpan(mainPanel, 1);
 
+            // create hex editor
+            hexEditor = new WpfHexaEditor.HexEditor
+            {
+                ForegroundSecondColor = System.Windows.Media.Brushes.Blue,
+                TypeOfCharacterTable = WpfHexaEditor.Core.CharacterTableType.Ascii,
+                AllowExtend = true,
+                AppendNeedConfirmation = false
+            };
+
+            elementHostHexEditor = new System.Windows.Forms.Integration.ElementHost
+            {
+                Dock = DockStyle.Fill
+                //Location = new Point(250, 50),
+                //Size = new Size(1000, 500)
+            };
+            elementHostHexEditor.Name = nameof(elementHostHexEditor);
+            elementHostHexEditor.Child = hexEditor;
+            elementHostHexEditor.Parent = this;
+
+            mainPanel.Controls.Add(elementHostHexEditor);
+
+            elementHostHexEditor.Hide();
+
             FormClosed += MdiScriptEdit_FormClosed;
 
             this.Show();
@@ -129,6 +155,8 @@ namespace MafiaSceneEditor
         public void SetEditorText(string text)
         {
             //textEditor.Text = text;
+            scintillaTextEditor.Show();
+            elementHostHexEditor.Hide();
             scintillaTextEditor.Text = text;
             initDone = true;
             try
@@ -136,6 +164,16 @@ namespace MafiaSceneEditor
                 SetStyle();
             }
             catch { }
+        }
+
+        internal void SetHexEditorContent(Dnc dnc)
+        {
+            scintillaTextEditor.Hide();
+            elementHostHexEditor.Show();
+
+            var tmpStream = new MemoryStream();
+            new MemoryStream(dnc.rawData).CopyTo(tmpStream); // needed in order to allow expanding
+            hexEditor.Stream = tmpStream;
         }
 
         private void SetStyle()
@@ -156,7 +194,7 @@ namespace MafiaSceneEditor
 
             foreach (var word in textInput.Split(null))
             {
-                Debug.WriteLine(word);
+                //Debug.WriteLine(word);
                 var currIndex = scintillaTextEditor.Text.IndexOf(word, indexInScintilla);
 
                 var toAdd = currIndex - index;

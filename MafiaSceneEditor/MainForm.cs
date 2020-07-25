@@ -378,6 +378,8 @@ namespace MafiaSceneEditor
                 MemoryStream memoryStream = new MemoryStream();
                 openFileDialog1.OpenFile().CopyTo(memoryStream);
 
+                scene2Data = new Scene2Data();
+
                 Scene2Parser.LoadScene(memoryStream, ref scene2Data, listBoxOutput.Items);
 
                 // put into treeview
@@ -527,14 +529,57 @@ namespace MafiaSceneEditor
                 switch (((NodeTag)e.Tag).nodeType)
                 {
                     case NodeType.Object:
-                        elementHostHexEditor.Show();
+                        //elementHostHexEditor.Show();
                         elementHostDiagramEditor.Hide();
-                        hexEditor.Stream = new MemoryStream(scene2Data.objectsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault().rawData);
+                        //hexEditor.Stream = new MemoryStream(scene2Data.objectsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault().rawData);
+                        dnc = scene2Data.objectsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+
+                        if (mdiForms.Any(x => (string)x.Tag == CreateInnerFormTag(dnc)))
+                        {
+                            return;
+                        }
+
+                        CreateMdiForm(dnc);
                         break;
                     case NodeType.Definition:
 
                         dnc = scene2Data.objectDefinitionsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
 
+                        switch (dnc.definitionType)
+                        {
+                            case DefinitionIDs.Script:
+                                elementHostHexEditor.Hide();
+                                elementHostDiagramEditor.Hide();
+
+                                if (mdiForms.Any(x => (string)x.Tag == CreateInnerFormTag(dnc)))
+                                {
+                                    return;
+                                }
+
+                                CreateMdiForm(dnc, Scene2Parser.GetStringFromDnc(dnc));
+                                break;
+
+                            case DefinitionIDs.PhysicalObject:
+                            case DefinitionIDs.Door:
+                            case DefinitionIDs.Tram:
+                            case DefinitionIDs.GasStation:
+                            case DefinitionIDs.PedestrianSetup:
+                            case DefinitionIDs.Enemy:
+                            case DefinitionIDs.Plane:
+                            case DefinitionIDs.Player:
+                            case DefinitionIDs.TrafficSetup:
+                            case DefinitionIDs.Unknown:
+                            case DefinitionIDs.MovableBridge:
+                            case DefinitionIDs.Car:
+                            default:
+                                if (mdiForms.Any(x => (string)x.Tag == CreateInnerFormTag(dnc)))
+                                {
+                                    return;
+                                }
+
+                                CreateMdiForm(dnc);
+                                break;
+                        }
                         if (dnc.definitionType == DefinitionIDs.Script)
                         {
                             elementHostHexEditor.Hide();
@@ -549,8 +594,18 @@ namespace MafiaSceneEditor
                         }
                         else
                         {
-                            hexEditor.Stream = new MemoryStream(dnc.rawData);
-                            elementHostHexEditor.Show();
+                            //hexEditor.Stream = new MemoryStream(dnc.rawData);
+                            //elementHostHexEditor.Show();
+
+                            //elementHostHexEditor.Hide();
+                            //elementHostDiagramEditor.Hide();
+
+                            if (mdiForms.Any(x => (string)x.Tag == CreateInnerFormTag(dnc)))
+                            {
+                                return;
+                            }
+
+                            CreateMdiForm(dnc);
                         }
                         
                         break;
@@ -581,6 +636,17 @@ namespace MafiaSceneEditor
             var tmpForm = new MdiScriptEdit { MdiParent = this, Width = 400, Height = 400, Visible = true, Text = dnc.name, Tag = CreateInnerFormTag(dnc), Dnc = dnc, Scene2Data = scene2Data };
 
             tmpForm.SetEditorText(text);
+            tmpForm.FormClosed += TmpForm_FormClosed;
+            mdiForms.Add(tmpForm);
+
+            tmpForm.BringToFront();
+        }
+
+        private void CreateMdiForm(Dnc dnc)
+        {
+            var tmpForm = new MdiScriptEdit { MdiParent = this, Width = 400, Height = 400, Visible = true, Text = dnc.name, Tag = CreateInnerFormTag(dnc), Dnc = dnc, Scene2Data = scene2Data };
+
+            tmpForm.SetHexEditorContent(dnc);
             tmpForm.FormClosed += TmpForm_FormClosed;
             mdiForms.Add(tmpForm);
 
