@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Scene2Parser.DataLayer;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -17,10 +18,12 @@ namespace MafiaSceneEditor.DataLayer
             };
 
         public List<Dnc> objectsDncs { get; set; } = new List<Dnc>();
+
         public List<Dnc> objectDefinitionsDncs { get; set; } = new List<Dnc>();
+
         public List<Dnc> initScriptsDncs { get; set; } = new List<Dnc>();
 
-        public List<byte> rawDataHeader = new List<byte>();
+        public Header header { get; set; } = new Header();
 
         public byte[] standardObjectsHeader = new byte[] { 0x00,0x40 /*,0xFF,0x00,0x00,0x00 */ };
 
