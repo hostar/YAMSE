@@ -4,7 +4,6 @@ using System.Collections;
 using System.IO;
 using System.Linq;
 using System.Text;
-using WpfHexaEditor.Core.MethodExtention;
 
 namespace MafiaSceneEditor
 {
@@ -45,7 +44,10 @@ namespace MafiaSceneEditor
                     if (tmpBuff[i] == 0 && tmpBuff[i + 1] == 0x40)
                     {
                         headerParsed = true;
-                        scene2Data.rawDataHeader = tmpBuff.Take(i).ToList();
+
+                        scene2Data.header.Magic = tmpBuff.Take(2).ToList();
+                        scene2Data.header.Size = tmpBuff.Skip(2).Take(4).ToList();
+                        scene2Data.header.Content = tmpBuff.Skip(6).Take(i - 6).ToList();
 
                         var arr = tmpBuff.Skip(i).Skip(2).Take(4).ToArray();
 
@@ -199,16 +201,35 @@ namespace MafiaSceneEditor
         public static void SaveScene(Stream outputStream, ref Scene2Data scene2Data, IList loggingList)
         {
             loggingList.Add("Starting to save the file.");
-            outputStream.Write(scene2Data.rawDataHeader.ToArray(), 0, scene2Data.rawDataHeader.ToArray().Length);
+
+            outputStream.Write(scene2Data.header.Magic.ToArray(), 0, scene2Data.header.Magic.ToArray().Length);
+
+            //  pre-calculate section sizes and  calculate filesize
+            int fileSize = 12;
+            var sumOfLengths = scene2Data.objectsDncs.Sum(x => x.rawData.Length + IdLen);
+
+            fileSize += sumOfLengths + 6;
+            var standardObjectsLengthArr = BitConverter.GetBytes(sumOfLengths + 6 /* 6 is length of section start */);
+
+            sumOfLengths = scene2Data.objectDefinitionsDncs.Sum(x => x.rawData.Length + IdLen);
+
+            fileSize += sumOfLengths + 6;
+            var objectsDefsLengthArr = BitConverter.GetBytes(sumOfLengths + 6 /* 6 is length of section start */);
+
+            sumOfLengths = scene2Data.initScriptsDncs.Sum(x => x.rawData.Length + IdLen);
+
+            fileSize += sumOfLengths + 6;
+            var initScriptsLengthArr = BitConverter.GetBytes(sumOfLengths + 6 /* 6 is length of section start */);
+
+            var fileSizeLengthArr = BitConverter.GetBytes(fileSize + scene2Data.header.Content.Count);
+            outputStream.Write(fileSizeLengthArr, 0, fileSizeLengthArr.Length);
+            
+            outputStream.Write(scene2Data.header.Content.ToArray(), 0, scene2Data.header.Content.ToArray().Length);
 
             var sectionID = new byte[] { 0x00, 0x40 };
 
             // objects
             outputStream.Write(sectionID, 0, sectionID.Length);
-
-            var sumOfLengths = scene2Data.objectsDncs.Sum(x => x.rawData.Length + IdLen);
-
-            var standardObjectsLengthArr = BitConverter.GetBytes(sumOfLengths + 6 /* 6 is length of section start */);
 
             outputStream.Write(standardObjectsLengthArr, 0, standardObjectsLengthArr.Length);
 
@@ -225,9 +246,6 @@ namespace MafiaSceneEditor
             var sectionIDdefs = new byte[] { 0x20, 0xAE };
 
             outputStream.Write(sectionIDdefs, 0, sectionIDdefs.Length);
-
-            sumOfLengths = scene2Data.objectDefinitionsDncs.Sum(x => x.rawData.Length + IdLen);
-            var objectsDefsLengthArr = BitConverter.GetBytes(sumOfLengths + 6 /* 6 is length of section start */);
 
             outputStream.Write(objectsDefsLengthArr, 0, objectsDefsLengthArr.Length);
 
@@ -250,9 +268,6 @@ namespace MafiaSceneEditor
 
             outputStream.Write(sectionInitScripts, 0, sectionInitScripts.Length);
 
-            sumOfLengths = scene2Data.initScriptsDncs.Sum(x => x.rawData.Length + IdLen);
-            var initScriptsLengthArr = BitConverter.GetBytes(sumOfLengths + 6 /* 6 is length of section start */);
-
             outputStream.Write(initScriptsLengthArr, 0, initScriptsLengthArr.Length);
 
             var initScriptsID = new byte[] { 0x51, 0xAE };
@@ -274,8 +289,6 @@ namespace MafiaSceneEditor
 
             outputStream.Close();
             loggingList.Add("File saving done.");
-            //streamWriter.Write(scene2Data.rawDataHeader);
-            //streamWriter.Close();
         }
 
         public static string GetStringFromDnc(Dnc dnc)
@@ -295,6 +308,20 @@ namespace MafiaSceneEditor
             {
                 startArray[i] = bytesLen[i];
             }
+
+            // recalculate additional size
+            bytesLen = BitConverter.GetBytes(textInBytes.Length);
+            for (int i = 0; i < bytesLen.Length; i++)
+            {
+                startArray[dnc.name.Length + 37 + i] = bytesLen[i];
+            }
+
+            bytesLen = BitConverter.GetBytes(textInBytes.Length + 20);
+            for (int i = 0; i < bytesLen.Length; i++)
+            {
+                startArray[dnc.name.Length + 23 + i] = bytesLen[i];
+            }
+
             dnc.rawData = startArray.Concat(textInBytes).ToArray();
         }
 
