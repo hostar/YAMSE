@@ -376,7 +376,9 @@ namespace MafiaSceneEditor
                 listBoxOutput.Items.Add("Loading file...");
 
                 MemoryStream memoryStream = new MemoryStream();
-                openFileDialog1.OpenFile().CopyTo(memoryStream);
+                var tmpStream = openFileDialog1.OpenFile();
+                tmpStream.CopyTo(memoryStream);
+                tmpStream.Close();
 
                 Scene2Parser.LoadScene(memoryStream, ref scene2Data, listBoxOutput.Items);
 
