@@ -31,7 +31,7 @@ namespace MafiaSceneEditor
         readonly MyDesigner myDesigner;
         readonly WpfHexaEditor.HexEditor hexEditor;
 
-        //readonly FastColoredTextBoxNS.FastColoredTextBox fctb;
+        //readonly FastColoredTextBoxNS.FastColoredTextBox fctb; // test
 
         readonly System.Windows.Forms.Integration.ElementHost elementHostHexEditor;
         readonly System.Windows.Forms.Integration.ElementHost elementHostDiagramEditor;
