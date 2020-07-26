@@ -24,11 +24,13 @@ namespace MafiaSceneEditor
         private Regex wordSplitRegex = new Regex("[a-zA-Z0-9_]+");
         private bool initDone = false;
 
+        private MdiKind mdiKind;
+
         public Dnc Dnc;
         public Scene2Data Scene2Data;
 
-        readonly System.Windows.Forms.Integration.ElementHost elementHostHexEditor;
-        readonly WpfHexaEditor.HexEditor hexEditor;
+        private System.Windows.Forms.Integration.ElementHost elementHostHexEditor;
+        private WpfHexaEditor.HexEditor hexEditor;
 
         public MdiScriptEdit()
         {
@@ -45,55 +47,49 @@ namespace MafiaSceneEditor
             };
             */
 
-            scintillaTextEditor = new Scintilla
-            {
-                //WrapMode = WrapMode.Word, 
-                //IndentationGuides = IndentView.LookBoth, 
-                //Parent = mainPanel, 
-                Dock = DockStyle.Fill,
-                ScrollWidth = 200
-            };
-
-            scintillaTextEditor.Styles[ScintillaNET.Style.Default].Font = "Consolas";
-            scintillaTextEditor.Styles[ScintillaNET.Style.Default].Size = 10;
-
-            scintillaTextEditor.Lexer = Lexer.Null;
-
-            /*
-            scintillaTextEditor.Styles[1].ForeColor = System.Drawing.Color.Red;
-            scintillaTextEditor.Styles[Style.Cpp.Identifier].ForeColor = IntToColor(0xD0DAE2);
-            scintillaTextEditor.Styles[Style.Cpp.Comment].ForeColor = IntToColor(0x000000);
-            scintillaTextEditor.Styles[Style.Cpp.CommentLine].ForeColor = IntToColor(0x000000);
-            scintillaTextEditor.Styles[Style.Cpp.CommentDoc].ForeColor = IntToColor(0x000000);
-            scintillaTextEditor.Styles[Style.Cpp.Number].ForeColor = IntToColor(0x000000);
-            scintillaTextEditor.Styles[Style.Cpp.String].ForeColor = IntToColor(0x000000);
-            scintillaTextEditor.Styles[Style.Cpp.Character].ForeColor = IntToColor(0x000000);
-            scintillaTextEditor.Styles[Style.Cpp.Preprocessor].ForeColor = IntToColor(0x000000);
-            scintillaTextEditor.Styles[Style.Cpp.Operator].ForeColor = IntToColor(0x000000);
-            scintillaTextEditor.Styles[Style.Cpp.Regex].ForeColor = IntToColor(0x000000);
-            scintillaTextEditor.Styles[Style.Cpp.CommentLineDoc].ForeColor = IntToColor(0x000000);
-            scintillaTextEditor.Styles[Style.Cpp.Word].ForeColor = IntToColor(0x000000);
-            scintillaTextEditor.Styles[Style.Cpp.Word2].ForeColor = IntToColor(0x000000);
-            scintillaTextEditor.Styles[Style.Cpp.CommentDocKeyword].ForeColor = IntToColor(0x000000);
-            scintillaTextEditor.Styles[Style.Cpp.CommentDocKeywordError].ForeColor = IntToColor(0x000000);
-            scintillaTextEditor.Styles[Style.Cpp.GlobalClass].ForeColor = IntToColor(0x000000);
-            */
-
-            //scintillaTextEditor.AssignCmdKey(Keys.Control | Keys.C , Command.)
-            //scintillaTextEditor.ExecuteCmd(ScintillaNET.Command.)
-
-            scintillaTextEditor.Margins[0].Width = 32;
-
-            scintillaTextEditor.MouseDwellTime = 500;
-            scintillaTextEditor.DwellStart += ScintillaTextEditor_DwellStart;
-            scintillaTextEditor.TextChanged += ScintillaTextEditor_TextChanged;
-
-            //mainPanel.Controls.Add(textEditor);
-            mainPanel.Controls.Add(scintillaTextEditor);
-
             tableLayoutPanel1.SetColumnSpan(mainPanel, 3);
             tableLayoutPanel1.SetRowSpan(mainPanel, 1);
 
+            CreateHexEditor();
+
+            FormClosed += MdiScriptEdit_FormClosed;
+
+            this.Show();
+        }
+
+        #region Public Methods
+        public void SetEditorText(string text)
+        {
+            mdiKind = MdiKind.Text;
+            CreateTextEditor();
+
+            scintillaTextEditor.Show();
+            //elementHostHexEditor.Hide();
+            scintillaTextEditor.Text = text;
+            initDone = true;
+            try
+            {
+                SetStyle();
+            }
+            catch { }
+        }
+
+        public void SetHexEditorContent(Dnc dnc)
+        {
+            mdiKind = MdiKind.Hex;
+            CreateHexEditor();
+
+            //scintillaTextEditor.Hide();
+            elementHostHexEditor.Show();
+
+            var tmpStream = new MemoryStream();
+            new MemoryStream(dnc.rawData).CopyTo(tmpStream); // needed in order to allow expanding
+            hexEditor.Stream = tmpStream;
+        }
+        #endregion
+
+        private void CreateHexEditor()
+        {
             // create hex editor
             hexEditor = new WpfHexaEditor.HexEditor
             {
@@ -116,10 +112,35 @@ namespace MafiaSceneEditor
             mainPanel.Controls.Add(elementHostHexEditor);
 
             elementHostHexEditor.Hide();
+        }
 
-            FormClosed += MdiScriptEdit_FormClosed;
+        private void CreateTextEditor()
+        {
+            scintillaTextEditor = new Scintilla
+            {
+                //WrapMode = WrapMode.Word, 
+                //IndentationGuides = IndentView.LookBoth, 
+                //Parent = mainPanel, 
+                Dock = DockStyle.Fill,
+                ScrollWidth = 200
+            };
 
-            this.Show();
+            scintillaTextEditor.Styles[ScintillaNET.Style.Default].Font = "Consolas";
+            scintillaTextEditor.Styles[ScintillaNET.Style.Default].Size = 10;
+
+            scintillaTextEditor.Lexer = Lexer.Null;
+
+            //scintillaTextEditor.AssignCmdKey(Keys.Control | Keys.C , Command.)
+            //scintillaTextEditor.ExecuteCmd(ScintillaNET.Command.)
+
+            scintillaTextEditor.Margins[0].Width = 32;
+
+            scintillaTextEditor.MouseDwellTime = 500;
+            scintillaTextEditor.DwellStart += ScintillaTextEditor_DwellStart;
+            scintillaTextEditor.TextChanged += ScintillaTextEditor_TextChanged;
+
+            //mainPanel.Controls.Add(textEditor);
+            mainPanel.Controls.Add(scintillaTextEditor);
         }
 
         private void ScintillaTextEditor_TextChanged(object sender, EventArgs e)
@@ -141,7 +162,7 @@ namespace MafiaSceneEditor
             
         }
 
-        public static System.Drawing.Color IntToColor(int rgb)
+        private static System.Drawing.Color IntToColor(int rgb)
         {
             return System.Drawing.Color.FromArgb(255, (byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
         }
@@ -150,30 +171,6 @@ namespace MafiaSceneEditor
         {
             //textEditor.Undo();
             scintillaTextEditor.Undo();
-        }
-
-        public void SetEditorText(string text)
-        {
-            //textEditor.Text = text;
-            scintillaTextEditor.Show();
-            elementHostHexEditor.Hide();
-            scintillaTextEditor.Text = text;
-            initDone = true;
-            try
-            {
-                SetStyle();
-            }
-            catch { }
-        }
-
-        internal void SetHexEditorContent(Dnc dnc)
-        {
-            scintillaTextEditor.Hide();
-            elementHostHexEditor.Show();
-
-            var tmpStream = new MemoryStream();
-            new MemoryStream(dnc.rawData).CopyTo(tmpStream); // needed in order to allow expanding
-            hexEditor.Stream = tmpStream;
         }
 
         private void SetStyle()
@@ -235,7 +232,23 @@ namespace MafiaSceneEditor
 
         private void btnSave_Click(object sender, EventArgs e)
         {
-            Scene2Parser.UpdateStringInDnc(Dnc, scintillaTextEditor.Text);
+            switch (mdiKind)
+            {
+                case MdiKind.Text:
+                    Scene2Parser.UpdateStringInDnc(Dnc, scintillaTextEditor.Text);
+                    break;
+                case MdiKind.Hex:
+                    Dnc.rawData = hexEditor.GetAllBytes(true);
+                    break;
+                default:
+                    break;
+            }
         }
+    }
+
+    public enum MdiKind
+    {
+        Text,
+        Hex
     }
 }
