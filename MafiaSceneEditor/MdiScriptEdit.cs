@@ -10,11 +10,11 @@ using System.Text.RegularExpressions;
 using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Media;
-using MafiaSceneEditor.DataLayer;
+using YAMSE.DataLayer;
 //using FastColoredTextBoxNS;
 using ScintillaNET;
 
-namespace MafiaSceneEditor
+namespace YAMSE
 {
     public partial class MdiScriptEdit : Form
     {

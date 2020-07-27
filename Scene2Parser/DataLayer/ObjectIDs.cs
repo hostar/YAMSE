@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MafiaSceneEditor.DataLayer
+namespace YAMSE.DataLayer
 {
     public enum ObjectIDs
     {

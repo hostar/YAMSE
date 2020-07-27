@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text;
 
-namespace MafiaSceneEditor.DataLayer
+namespace YAMSE.DataLayer
 {
     public class DncCollection
     {

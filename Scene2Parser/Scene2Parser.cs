@@ -1,11 +1,11 @@
-﻿using MafiaSceneEditor.DataLayer;
+﻿using YAMSE.DataLayer;
 using System;
 using System.Collections;
 using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace MafiaSceneEditor
+namespace YAMSE
 {
     public static class Scene2Parser
     {

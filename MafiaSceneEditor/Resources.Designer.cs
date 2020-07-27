@@ -61,12 +61,13 @@ namespace YAMSE {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &lt;Test1 Visibility=&quot;Visible&quot; IsHitTestVisible=&quot;False&quot; xmlns=&quot;clr-namespace:MafiaSceneEditor.Diagram;assembly=MafiaSceneEditor&quot; 
+        ///   Looks up a localized string similar to &lt;Test1 Visibility=&quot;Visible&quot; IsHitTestVisible=&quot;False&quot; xmlns=&quot;clr-namespace:YAMSE.Diagram;assembly=YAMSE&quot; 
         ///xmlns:av=&quot;http://schemas.microsoft.com/winfx/2006/xaml/presentation&quot; xmlns:dd=&quot;urn:diagram-designer-ns&quot; xmlns:ddc=&quot;clr-namespace:DiagramDesigner.Controls;assembly=DiagramDesigner&quot;&gt;
         ///	&lt;dd:DesignerItem.DragThumbTemplate&gt;
         ///		&lt;av:ControlTemplate&gt;
         ///			&lt;av:Grid Background=&quot;#FFF0F8FF&quot;&gt;
-        ///				&lt;av:Path Data=&quot;M0,0L60,0 60,40 0,40z&quot; Stretch=&quot;Fill&quot; Fill=&quot;#00FFFFFF&quot; Stroke=&quot;#00FFFFFF&quot; IsHitTestV [rest of string was truncated]&quot;;.
+        ///				&lt;av:Path Data=&quot;M0,0L60,0 60,40 0,40z&quot; Stretch=&quot;Fill&quot; Fill=&quot;#00FFFFFF&quot; Stroke=&quot;#00FFFFFF&quot; IsHitTestVisible=&quot;True&quot;/&gt;
+        ///				&lt; [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string Test1Content {
             get {

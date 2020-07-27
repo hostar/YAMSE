@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MafiaSceneEditor.Diagram.Classes
+namespace YAMSE.Diagram.Classes
 {
     public class Test1Model
     {

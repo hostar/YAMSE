@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Test1Content" xml:space="preserve">
-    <value>&lt;Test1 Visibility="Visible" IsHitTestVisible="False" xmlns="clr-namespace:MafiaSceneEditor.Diagram;assembly=MafiaSceneEditor" 
+    <value>&lt;Test1 Visibility="Visible" IsHitTestVisible="False" xmlns="clr-namespace:YAMSE.Diagram;assembly=YAMSE" 
 xmlns:av="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:dd="urn:diagram-designer-ns" xmlns:ddc="clr-namespace:DiagramDesigner.Controls;assembly=DiagramDesigner"&gt;
 	&lt;dd:DesignerItem.DragThumbTemplate&gt;
 		&lt;av:ControlTemplate&gt;

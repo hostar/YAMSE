@@ -8,21 +8,21 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
-using MafiaSceneEditor.DataLayer;
+using YAMSE.DataLayer;
 using System.Windows.Interop;
 using WpfHexaEditor.Core.MethodExtention;
 using System.Xml.Linq;
 using System.Text.RegularExpressions;
 using System.Xml;
-using MafiaSceneEditor.Diagram.Classes;
+using YAMSE.Diagram.Classes;
 using System.Xml.Serialization;
 using DiagramDesigner;
-using MafiaSceneEditor.Diagram;
+using YAMSE.Diagram;
 using System.Windows.Media;
 using System.Windows.Controls;
 using System.Runtime.InteropServices;
 
-namespace MafiaSceneEditor
+namespace YAMSE
 {
     public partial class MainForm : Form
     {

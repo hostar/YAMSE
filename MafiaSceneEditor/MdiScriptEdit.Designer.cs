@@ -1,4 +1,4 @@
-﻿namespace MafiaSceneEditor
+﻿namespace YAMSE
 {
     partial class MdiScriptEdit
     {
