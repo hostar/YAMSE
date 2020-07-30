@@ -647,7 +647,7 @@ namespace YAMSE
 
         private void CreateMdiForm(Dnc dnc, string text)
         {
-            var tmpForm = new MdiScriptEdit { MdiParent = this, Width = 400, Height = 400, Visible = true, Text = dnc.name, Tag = CreateInnerFormTag(dnc), Dnc = dnc, Scene2Data = scene2Data };
+            var tmpForm = CreateMdiFormInner(dnc);
 
             tmpForm.SetEditorText(text);
             tmpForm.FormClosed += TmpForm_FormClosed;
@@ -658,13 +658,18 @@ namespace YAMSE
 
         private void CreateMdiForm(Dnc dnc)
         {
-            var tmpForm = new MdiScriptEdit { MdiParent = this, Width = 400, Height = 400, Visible = true, Text = dnc.name, Tag = CreateInnerFormTag(dnc), Dnc = dnc, Scene2Data = scene2Data };
+            MdiScriptEdit tmpForm = CreateMdiFormInner(dnc);
 
             tmpForm.SetHexEditorContent(dnc);
             tmpForm.FormClosed += TmpForm_FormClosed;
             mdiForms.Add(tmpForm);
 
             tmpForm.BringToFront();
+        }
+
+        private MdiScriptEdit CreateMdiFormInner(Dnc dnc)
+        {
+            return new MdiScriptEdit { MdiParent = this, Width = 800, Height = 400, Visible = true, Text = dnc.name, Tag = CreateInnerFormTag(dnc), Dnc = dnc, Scene2Data = scene2Data };
         }
 
         private void TmpForm_FormClosed(object sender, FormClosedEventArgs e)

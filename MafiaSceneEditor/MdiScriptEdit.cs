@@ -50,8 +50,6 @@ namespace YAMSE
             tableLayoutPanel1.SetColumnSpan(mainPanel, 3);
             tableLayoutPanel1.SetRowSpan(mainPanel, 1);
 
-            CreateHexEditor();
-
             FormClosed += MdiScriptEdit_FormClosed;
 
             this.Show();
