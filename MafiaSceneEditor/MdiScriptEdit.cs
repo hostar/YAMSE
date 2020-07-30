@@ -182,15 +182,24 @@ namespace YAMSE
 
         private void ScintillaTextHighlight(string textInput, int startPosition)
         {
-            int index = 0;
-            int indexInScintilla = startPosition;
+            int index = startPosition;
 
-            scintillaTextEditor.StartStyling(indexInScintilla);
+            scintillaTextEditor.StartStyling(index);
 
             foreach (var word in textInput.Split(null))
             {
+                if (string.IsNullOrWhiteSpace(word))
+                {
+                    continue;
+                }
                 //Debug.WriteLine(word);
-                var currIndex = scintillaTextEditor.Text.IndexOf(word, indexInScintilla);
+
+                var currIndex = scintillaTextEditor.Text.IndexOf(word, index, 20);
+                while(currIndex == -1)
+                {
+                    index = scintillaTextEditor.Lines[scintillaTextEditor.LineFromPosition(index)].Position;
+                    currIndex = scintillaTextEditor.Text.IndexOf(word, index);
+                }
 
                 var toAdd = currIndex - index;
 
