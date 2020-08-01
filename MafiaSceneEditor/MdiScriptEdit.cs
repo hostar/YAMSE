@@ -152,7 +152,7 @@ namespace YAMSE
 
         private void ScintillaTextEditor_DwellStart(object sender, DwellEventArgs e)
         {
-            scintillaTextEditor.CallTipShow(e.Position, "This feature is not implemented yet.");
+            // scintillaTextEditor.CallTipShow(e.Position, "This feature is not implemented yet.");
         }
 
         private void MdiScriptEdit_FormClosed(object sender, FormClosedEventArgs e)
