@@ -1,15 +1,18 @@
 ﻿bugs to fix:
   remove shadows of connections - done
   test diagram auto-arrange more and make diagram more useful after auto-generation
-  syntax highlighting does not work when editing
+  syntax highlighting does not work when editing - done
 
 features to add:
-  saving of data - priority
   save current diagram, so it can be loaded later
   ability to click-through from diagram to script
 
-  movable sub-forms with scripts - in progress
-  script syntax highlighting - in progress
-  editing of city cars and pedestrians
+  adding new objects
+  searching in objects
+  mdi should ask if is trying to be closed without saving
+  editing of city cars and pedestrians - low priority
 
-  put hex editor to MDI form
+  movable sub-forms with scripts - done
+  script syntax highlighting - done
+  saving of data - done
+  put hex editor to MDI form - done
