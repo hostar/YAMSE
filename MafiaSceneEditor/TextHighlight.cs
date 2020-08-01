@@ -70,6 +70,16 @@ namespace YAMSE
             "actor_setdir",
             "frm_seton",
             "person_stopanim",
+            "citycaching_tick",
+            "settimeoutevent",
+            "timeron",
+            "down",
+            "timeroff",
+            "setcompass",
+            "car_enableus",
+            "detector_setsignal",
+            "mission_objectives",
+            "freeride_enablecar",
         };
     }
 }
