@@ -80,6 +80,10 @@ namespace YAMSE
                         int lenCurr = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(IdLen).Take(4).ToArray(), 0) - IdLen;
 
                         currDnc.rawData = tmpBuff.Skip(i).Skip(IdLen).Take(lenCurr).ToArray();
+
+                        currDnc.rawDataBackup = new byte[currDnc.rawData.Length];
+                        currDnc.rawData.CopyTo(currDnc.rawDataBackup, 0);
+
                         currDnc.objectType = GetObjectType(currDnc);
                         currDnc.name = GetNameByID(currDnc);
                         currDnc.ID = objectID;
@@ -147,6 +151,10 @@ namespace YAMSE
                             int lenCurr = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(IdLen).Take(4).ToArray(), 0) - IdLen;
 
                             currDnc.rawData = tmpBuff.Skip(i).Skip(IdLen).Take(lenCurr).ToArray();
+
+                            currDnc.rawDataBackup = new byte[currDnc.rawData.Length];
+                            currDnc.rawData.CopyTo(currDnc.rawDataBackup, 0);
+
                             currDnc.definitionType = GetObjectDefinitionType(currDnc);
                             currDnc.name = GetNameByDefinitionID(currDnc);
                             currDnc.ID = objectID;
@@ -183,6 +191,10 @@ namespace YAMSE
                             int lenCurr = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(IdLen).Take(4).ToArray(), 0) - IdLen;
 
                             currDnc.rawData = tmpBuff.Skip(i).Skip(IdLen).Take(lenCurr).ToArray();
+
+                            currDnc.rawDataBackup = new byte[currDnc.rawData.Length];
+                            currDnc.rawData.CopyTo(currDnc.rawDataBackup, 0);
+
                             currDnc.definitionType = DefinitionIDs.InitScript;
                             currDnc.name = GetNameByDefinitionID(currDnc);
                             currDnc.ID = objectID;
@@ -291,8 +303,12 @@ namespace YAMSE
             loggingList.Add("File saving done.");
         }
 
-        public static string GetStringFromDnc(Dnc dnc)
+        public static string GetStringFromDnc(Dnc dnc, bool useBackup = false)
         {
+            if (useBackup)
+            {
+                return Encoding.UTF8.GetString(dnc.rawDataBackup.Skip(dnc.name.Length + 41).ToArray());
+            }
             return Encoding.UTF8.GetString(dnc.rawData.Skip(dnc.name.Length + 41).ToArray());
         }
 

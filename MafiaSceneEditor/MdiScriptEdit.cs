@@ -194,7 +194,7 @@ namespace YAMSE
                 }
                 //Debug.WriteLine(word);
 
-                var currIndex = scintillaTextEditor.Text.IndexOf(word, index, 20);
+                var currIndex = scintillaTextEditor.Text.IndexOf(word, index, (scintillaTextEditor.Text.Length - index) <= 20 ? (scintillaTextEditor.Text.Length - index) : 20);
                 while(currIndex == -1)
                 {
                     index = scintillaTextEditor.Lines[scintillaTextEditor.LineFromPosition(index)].Position;
@@ -234,7 +234,22 @@ namespace YAMSE
 
         private void btnRevert_Click(object sender, EventArgs e)
         {
-            
+            switch (mdiKind)
+            {
+                case MdiKind.Text:
+                    scintillaTextEditor.Text = Scene2Parser.GetStringFromDnc(Dnc, true);
+                    ScintillaTextHighlight(scintillaTextEditor.Text, 0);
+                    break;
+                case MdiKind.Hex:
+                    Dnc.rawDataBackup.CopyTo(Dnc.rawData, 0);
+
+                    var tmpStream = new MemoryStream();
+                    new MemoryStream(Dnc.rawData).CopyTo(tmpStream); // needed in order to allow expanding
+                    hexEditor.Stream = tmpStream;
+                    break;
+                default:
+                    break;
+            }
         }
 
         private void btnSave_Click(object sender, EventArgs e)

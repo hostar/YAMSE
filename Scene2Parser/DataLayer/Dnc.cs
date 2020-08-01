@@ -14,5 +14,6 @@ namespace YAMSE.DataLayer
         public string name;
 
         public byte[] rawData;
+        public byte[] rawDataBackup;
     }
 }
