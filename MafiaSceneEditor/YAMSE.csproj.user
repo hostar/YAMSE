@@ -11,6 +11,9 @@
     <Compile Update="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="MainForm2.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="MdiScriptEdit.cs">
       <SubType>Form</SubType>
     </Compile>
