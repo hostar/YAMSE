@@ -10,15 +10,19 @@ using YAMSE.DataLayer;
 using System;
 using System.IO;
 using System.Linq;
+using ScintillaNET;
 
 namespace YAMSE
 {
     public partial class MainForm2 : KryptonForm
     {
+        KryptonManager kryptonManager = new KryptonManager();
+
         KryptonWorkspace kryptonWorkspaceTreeView = new KryptonWorkspace();
         KryptonWorkspace kryptonWorkspaceContent = new KryptonWorkspace();
 
-        private KryptonSplitContainer splitContainer = new KryptonSplitContainer();
+        KryptonSplitContainer splitContainerInner = new KryptonSplitContainer();
+        KryptonSplitContainer splitContainerOuter = new KryptonSplitContainer();
 
         KryptonRibbon kryptonRibbon = new KryptonRibbon();
 
@@ -35,11 +39,20 @@ namespace YAMSE
         KryptonRibbonGroup kryptonRibbonGroup1 = new KryptonRibbonGroup();
         KryptonRibbonGroupTriple kryptonRibbonGroupTriple1 = new KryptonRibbonGroupTriple();
 
+        KryptonRibbonTab kryptonRibbonTab2 = new KryptonRibbonTab();
+        KryptonRibbonGroup kryptonRibbonGroup2 = new KryptonRibbonGroup();
+        KryptonRibbonGroupTriple kryptonRibbonGroupTriple2 = new KryptonRibbonGroupTriple();
+
         KryptonRibbonGroupButton kryptonRibbonGroupButtonShowDiagram = new KryptonRibbonGroupButton();
+        KryptonRibbonGroupButton kryptonRibbonGroupButtonWorkspaceArrange = new KryptonRibbonGroupButton();
 
         KryptonListBox listBoxOutput = new KryptonListBox();
 
+        TreeNode currentTreeNode;
+
         OpenFileDialog openFileDialog1 = new OpenFileDialog();
+
+        //KryptonWorkspaceCell workspaceMain = new KryptonWorkspaceCell();
 
         bool isDirty = false;
         bool scene2FileLoaded = false;
@@ -51,6 +64,9 @@ namespace YAMSE
             // KryptonExplorer
             InitializeComponent();
             SuspendLayout();
+
+            kryptonManager.GlobalPaletteMode = PaletteModeManager.Office2010Blue;
+
             ((ISupportInitialize)kryptonWorkspaceTreeView).BeginInit();
             //Controls.Add(kryptonWorkspaceTreeView);
             kryptonWorkspaceTreeView.Dock = DockStyle.Fill;
@@ -62,16 +78,28 @@ namespace YAMSE
 
             ((ISupportInitialize)kryptonWorkspaceContent).BeginInit();
             kryptonWorkspaceContent.Dock = DockStyle.Fill;
+
+            //workspaceMain.NavigatorMode = NavigatorMode.BarTabGroup;
+            //cell.Pages.Add(CreatePage(pageName));
+
+            //kryptonWorkspaceContent.Root.Children.Add(workspaceMain);
             ((ISupportInitialize)kryptonWorkspaceContent).EndInit();
 
             //kryptonWorkspaceContent.Root.Children.Add(CreateCell(2));
 
-            Controls.Add(splitContainer);
+            Controls.Add(splitContainerOuter);
             Controls.Add(kryptonRibbon);
 
-            splitContainer.Dock = DockStyle.Fill;
-            splitContainer.Panel1.Controls.Add(kryptonWorkspaceTreeView);
-            splitContainer.Panel2.Controls.Add(kryptonWorkspaceContent);
+            listBoxOutput.Dock = DockStyle.Fill;
+
+            splitContainerInner.Dock = DockStyle.Fill;
+            splitContainerInner.Panel1.Controls.Add(kryptonWorkspaceTreeView);
+            splitContainerInner.Panel2.Controls.Add(kryptonWorkspaceContent);
+
+            splitContainerOuter.Dock = DockStyle.Fill;
+            splitContainerOuter.Orientation = Orientation.Horizontal;
+            splitContainerOuter.Panel1.Controls.Add(splitContainerInner);
+            splitContainerOuter.Panel2.Controls.Add(listBoxOutput);
 
             FormClosing += MainForm_Close;
 
@@ -102,12 +130,13 @@ namespace YAMSE
 
             kryptonContextMenuItemExit.Text = "Exit";
             kryptonContextMenuItemExit.Image = (Image)resources.GetObject("ImageExit");
-            kryptonContextMenuItemExit.Click += ((sender, e) => { this.Close(); });
+            kryptonContextMenuItemExit.Click += (sender, e) => { Close(); };
 
             kryptonRibbon.HideRibbonSize = new Size(100, 250);
             kryptonRibbon.QATLocation = QATLocation.Hidden;
 
             kryptonRibbonTab1.Text = "Tools";
+            kryptonRibbonTab2.Text = "Workspace";
 
             kryptonRibbon.RibbonAppButton.AppButtonMenuItems.AddRange(new KryptonContextMenuItemBase[] {
             kryptonContextMenuItem1,
@@ -118,7 +147,8 @@ namespace YAMSE
             kryptonContextMenuItemExit});
 
             kryptonRibbon.RibbonTabs.AddRange(new KryptonRibbonTab[] {
-            kryptonRibbonTab1});
+            kryptonRibbonTab1,
+            kryptonRibbonTab2});
 
             kryptonRibbonGroup1.DialogBoxLauncher = false;
             kryptonRibbonGroup1.TextLine1 = "Visualization";
@@ -133,6 +163,22 @@ namespace YAMSE
 
             kryptonRibbonGroupTriple1.Items.AddRange(new KryptonRibbonGroupItem[] {
             kryptonRibbonGroupButtonShowDiagram});
+
+            kryptonRibbonGroup2.DialogBoxLauncher = false;
+            kryptonRibbonGroup2.MinimumWidth = 200;
+            kryptonRibbonGroup2.TextLine1 = "Arrange";
+
+            kryptonRibbonGroupButtonWorkspaceArrange.Click += (sender, e) => { kryptonWorkspaceContent.ApplyGridPages(); };
+            kryptonRibbonGroupButtonWorkspaceArrange.TextLine1 = "Grid";
+
+            kryptonRibbonGroupTriple2.Items.AddRange(new KryptonRibbonGroupItem[] {
+            kryptonRibbonGroupButtonWorkspaceArrange});
+
+            kryptonRibbonGroup2.Items.AddRange(new KryptonRibbonGroupContainer[] {
+            kryptonRibbonGroupTriple2});
+
+            kryptonRibbonTab2.Groups.AddRange(new KryptonRibbonGroup[] {
+            kryptonRibbonGroup2});
         }
 
         private void MainForm_Close(object sender, FormClosingEventArgs e)
@@ -171,11 +217,180 @@ namespace YAMSE
 
             treeView1.Dock = DockStyle.Fill;
 
+            treeView1.AfterSelect += (sender, e) => { SelectedObjectChanged(e.Node); };
+            treeView1.NodeMouseClick += (sender, e) => { SelectedObjectChanged(e.Node); };
+
             // Add rich text box as the contents of the page
             page.Padding = new Padding(5);
             page.Controls.Add(treeView1);
 
             return page;
+        }
+
+        private KryptonPage CreatePageText(Dnc dnc, string text)
+        {
+            var pageName = dnc.name;
+
+            // Create a new page and give it a name and image
+            KryptonPage page = new KryptonPage();
+            page.Text = pageName;
+            page.TextTitle = pageName;
+            page.TextDescription = pageName;
+            //page.ImageSmall = imageList.Images[_count % imageList.Images.Count];
+            page.MinimumSize = new Size(200, 250);
+
+            Scintilla scintillaTextEditor = new Scintilla
+            {
+                //WrapMode = WrapMode.Word, 
+                //IndentationGuides = IndentView.LookBoth, 
+                //Parent = mainPanel, 
+                Dock = DockStyle.Fill,
+                ScrollWidth = 200
+            };
+
+            scintillaTextEditor.Styles[Style.Default].Font = "Consolas";
+            scintillaTextEditor.Styles[Style.Default].Size = 10;
+
+            scintillaTextEditor.Lexer = Lexer.Null;
+
+            scintillaTextEditor.Text = text;
+
+            // Add rich text box as the contents of the page
+            page.Padding = new Padding(5);
+            page.Controls.Add(scintillaTextEditor);
+
+            //workspaceMain.Pages.Add(page);
+            kryptonWorkspaceContent.FirstCell().Pages.Add(page);
+            return page;
+        }
+
+        private void SelectedObjectChanged(TreeNode e)
+        {
+            Dnc dnc;
+
+            if (currentTreeNode?.GetHashCode() == e.GetHashCode())
+            {
+                return;
+            }
+            currentTreeNode = e;
+
+            if (e.Tag != null)
+            {
+                switch (((NodeTag)e.Tag).nodeType)
+                {
+                    case NodeType.Object:
+                        //elementHostHexEditor.Show();
+                        //elementHostDiagramEditor.Hide();
+                        //hexEditor.Stream = new MemoryStream(scene2Data.objectsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault().rawData);
+                        dnc = scene2Data.objectsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+
+                        /*
+                        if (mdiForms.Any(x => (string)x.Tag == CreateInnerFormTag(dnc)))
+                        {
+                            return;
+                        }
+                        */
+
+                        //CreateMdiForm(dnc);
+                        break;
+                    case NodeType.Definition:
+
+                        dnc = scene2Data.objectDefinitionsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+
+                        switch (dnc.definitionType)
+                        {
+                            case DefinitionIDs.Script:
+                                //elementHostHexEditor.Hide();
+                                //elementHostDiagramEditor.Hide();
+                                /*
+                                if (mdiForms.Any(x => (string)x.Tag == CreateInnerFormTag(dnc)))
+                                {
+                                    return;
+                                }
+
+                                CreateMdiForm(dnc, Scene2Parser.GetStringFromDnc(dnc));
+                                */
+                                CreatePageText(dnc, Scene2Parser.GetStringFromDnc(dnc));
+                                break;
+
+                            case DefinitionIDs.PhysicalObject:
+                            case DefinitionIDs.Door:
+                            case DefinitionIDs.Tram:
+                            case DefinitionIDs.GasStation:
+                            case DefinitionIDs.PedestrianSetup:
+                            case DefinitionIDs.Enemy:
+                            case DefinitionIDs.Plane:
+                            case DefinitionIDs.Player:
+                            case DefinitionIDs.TrafficSetup:
+                            case DefinitionIDs.Unknown:
+                            case DefinitionIDs.MovableBridge:
+                            case DefinitionIDs.Car:
+                            default:
+                                /*
+                                if (mdiForms.Any(x => (string)x.Tag == CreateInnerFormTag(dnc)))
+                                {
+                                    return;
+                                }
+
+                                CreateMdiForm(dnc);
+                                */
+                                break;
+                        }
+                        if (dnc.definitionType == DefinitionIDs.Script)
+                        {
+                            //elementHostHexEditor.Hide();
+                            //elementHostDiagramEditor.Hide();
+                            /*
+                            if (mdiForms.Any(x => (string)x.Tag == CreateInnerFormTag(dnc)))
+                            {
+                                return;
+                            }
+
+                            CreateMdiForm(dnc, Scene2Parser.GetStringFromDnc(dnc));
+                            */
+                        }
+                        else
+                        {
+                            //hexEditor.Stream = new MemoryStream(dnc.rawData);
+                            //elementHostHexEditor.Show();
+
+                            //elementHostHexEditor.Hide();
+                            //elementHostDiagramEditor.Hide();
+
+                            /*
+                            if (mdiForms.Any(x => (string)x.Tag == CreateInnerFormTag(dnc)))
+                            {
+                                return;
+                            }
+
+                            CreateMdiForm(dnc);
+                            */
+                        }
+
+                        break;
+                    case NodeType.InitScript:
+                        dnc = scene2Data.initScriptsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+
+                        //fctb.Text = GetStringFromInitScript(dnc);
+
+                        /*
+                        elementHostHexEditor.Hide();
+                        elementHostDiagramEditor.Hide();
+
+                        if (mdiForms.Any(x => (string)x.Tag == CreateInnerFormTag(dnc)))
+                        {
+                            return;
+                        }
+
+                        CreateMdiForm(dnc, GetStringFromInitScript(dnc));
+                        */
+                        break;
+                    default:
+                        break;
+                }
+
+                treeView1.Focus();
+            }
         }
 
         private void Scene2FileLoad(object sender, EventArgs e)
