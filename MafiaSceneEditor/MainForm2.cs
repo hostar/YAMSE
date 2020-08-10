@@ -52,6 +52,8 @@ namespace YAMSE
 
         OpenFileDialog openFileDialog1 = new OpenFileDialog();
 
+        List<string> activeDncs = new List<string>();
+
         //KryptonWorkspaceCell workspaceMain = new KryptonWorkspaceCell();
 
         bool isDirty = false;
@@ -79,10 +81,14 @@ namespace YAMSE
             ((ISupportInitialize)kryptonWorkspaceContent).BeginInit();
             kryptonWorkspaceContent.Dock = DockStyle.Fill;
 
+            kryptonWorkspaceContent.ContextMenus.ShowContextMenu = false;
             //workspaceMain.NavigatorMode = NavigatorMode.BarTabGroup;
             //cell.Pages.Add(CreatePage(pageName));
 
             //kryptonWorkspaceContent.Root.Children.Add(workspaceMain);
+
+            kryptonWorkspaceContent.WorkspaceCellAdding += kryptonWorkspace_WorkspaceCellAdding;
+
             ((ISupportInitialize)kryptonWorkspaceContent).EndInit();
 
             //kryptonWorkspaceContent.Root.Children.Add(CreateCell(2));
@@ -189,6 +195,16 @@ namespace YAMSE
             }
         }
 
+        private void kryptonWorkspace_WorkspaceCellAdding(object sender, WorkspaceCellEventArgs e)
+        {
+            // Do not show any navigator level buttons
+            e.Cell.Button.CloseButtonDisplay = ButtonDisplay.Hide;
+            e.Cell.Button.ButtonDisplayLogic = ButtonDisplayLogic.None;
+
+            // Do not need the secondary header for header modes
+            e.Cell.Header.HeaderVisibleSecondary = false;
+        }
+
         private KryptonWorkspaceCell CreateCell(string pageName, NavigatorMode mode = NavigatorMode.BarTabGroup)
         {
             // Create new cell instance
@@ -236,6 +252,7 @@ namespace YAMSE
             page.Text = pageName;
             page.TextTitle = pageName;
             page.TextDescription = pageName;
+            page.Tag = CreatePageID(dnc);
             //page.ImageSmall = imageList.Images[_count % imageList.Images.Count];
             page.MinimumSize = new Size(200, 250);
 
@@ -255,6 +272,13 @@ namespace YAMSE
 
             scintillaTextEditor.Text = text;
 
+            // Create a close button for the page
+            ButtonSpecAny bsa = new ButtonSpecAny();
+            bsa.Tag = page;
+            bsa.Type = PaletteButtonSpecStyle.Close;
+            bsa.Click += PageClose;
+            page.ButtonSpecs.Add(bsa);
+
             // Add rich text box as the contents of the page
             page.Padding = new Padding(5);
             page.Controls.Add(scintillaTextEditor);
@@ -262,6 +286,13 @@ namespace YAMSE
             //workspaceMain.Pages.Add(page);
             kryptonWorkspaceContent.FirstCell().Pages.Add(page);
             return page;
+        }
+
+        private void PageClose(object sender, EventArgs e)
+        {
+            var page = (sender as ButtonSpecAny).Tag as KryptonPage;
+            activeDncs.Remove(page.Tag.ToString());
+            kryptonWorkspaceContent.FirstCell().Pages.Remove(page);
         }
 
         private void SelectedObjectChanged(TreeNode e)
@@ -301,15 +332,14 @@ namespace YAMSE
                         {
                             case DefinitionIDs.Script:
                                 //elementHostHexEditor.Hide();
-                                //elementHostDiagramEditor.Hide();
-                                /*
-                                if (mdiForms.Any(x => (string)x.Tag == CreateInnerFormTag(dnc)))
+
+                                var currId = CreatePageID(dnc);
+                                if (activeDncs.Any(x => x == currId))
                                 {
                                     return;
                                 }
 
-                                CreateMdiForm(dnc, Scene2Parser.GetStringFromDnc(dnc));
-                                */
+                                activeDncs.Add(currId);
                                 CreatePageText(dnc, Scene2Parser.GetStringFromDnc(dnc));
                                 break;
 
@@ -532,6 +562,16 @@ namespace YAMSE
 
                 listBoxOutput.Items.Add("Loading of file done.");
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dnc"></param>
+        /// <returns></returns>
+        private static string CreatePageID(Dnc dnc)
+        {
+            return $"{dnc.definitionType} ; {dnc.name}";
         }
     }
 }
