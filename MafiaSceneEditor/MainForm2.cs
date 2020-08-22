@@ -1,16 +1,16 @@
 ﻿using ComponentFactory.Krypton.Navigator;
+using ComponentFactory.Krypton.Ribbon;
 using ComponentFactory.Krypton.Toolkit;
 using ComponentFactory.Krypton.Workspace;
-using ComponentFactory.Krypton.Ribbon;
+using ScintillaNET;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
-using System.Windows.Forms;
-using System.Collections.Generic;
-using YAMSE.DataLayer;
-using System;
 using System.IO;
 using System.Linq;
-using ScintillaNET;
+using System.Windows.Forms;
+using YAMSE.DataLayer;
 
 namespace YAMSE
 {
@@ -130,6 +130,7 @@ namespace YAMSE
 
             kryptonContextMenuItem3.Text = "Save";
             kryptonContextMenuItem3.Image = (Image)resources.GetObject("ImageSave");
+            kryptonContextMenuItem3.Click += Scene2FileSave;
 
             kryptonContextMenuItem4.Text = "Save As";
             kryptonContextMenuItem4.Image = (Image)resources.GetObject("ImageSaveAs");
@@ -245,16 +246,7 @@ namespace YAMSE
 
         private KryptonPage CreatePageText(Dnc dnc, string text)
         {
-            var pageName = dnc.name;
-
-            // Create a new page and give it a name and image
-            KryptonPage page = new KryptonPage();
-            page.Text = pageName;
-            page.TextTitle = pageName;
-            page.TextDescription = pageName;
-            page.Tag = CreatePageID(dnc);
-            //page.ImageSmall = imageList.Images[_count % imageList.Images.Count];
-            page.MinimumSize = new Size(200, 250);
+            string pageName = dnc.name;
 
             Scintilla scintillaTextEditor = new Scintilla
             {
@@ -265,12 +257,61 @@ namespace YAMSE
                 ScrollWidth = 200
             };
 
+            var pageId = new KryptonPageId { Dnc = dnc, PanelKind = PanelKind.Text, ScintillaTextEditor = scintillaTextEditor };
+            // Create a new page and give it a name and image
+            KryptonPage page = new KryptonPage();
+            page.Text = pageName;
+            page.TextTitle = pageName;
+            page.TextDescription = pageName;
+            page.Tag = pageId;
+            //page.ImageSmall = imageList.Images[_count % imageList.Images.Count];
+            page.MinimumSize = new Size(200, 250);
+
             scintillaTextEditor.Styles[Style.Default].Font = "Consolas";
             scintillaTextEditor.Styles[Style.Default].Size = 10;
 
             scintillaTextEditor.Lexer = Lexer.Null;
 
             scintillaTextEditor.Text = text;
+
+            try
+            {
+                scintillaTextEditor.Styles[1].ForeColor = Color.Blue;
+                scintillaTextEditor.Styles[2].ForeColor = Color.Crimson;
+                scintillaTextEditor.Styles[3].ForeColor = Color.Blue;
+                scintillaTextEditor.Styles[4].ForeColor = Color.Green;
+                DncMethods.ScintillaTextHighlight(text, 0, scintillaTextEditor);
+            }
+            catch { }
+
+            scintillaTextEditor.TextChanged += (sender, eargs) => 
+            {
+                DncMethods.ScintillaTextHighlight(scintillaTextEditor.Lines[scintillaTextEditor.LineFromPosition(scintillaTextEditor.CurrentPosition)].Text, scintillaTextEditor.CurrentPosition, scintillaTextEditor);
+            };
+
+            TableLayoutPanel tableLayoutPanel1 = new TableLayoutPanel();
+
+            tableLayoutPanel1.ColumnCount = 3;
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 114F));
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 114F));
+            
+            tableLayoutPanel1.Controls.Add(CreateSaveButton(pageId), 0, 1);
+            tableLayoutPanel1.Controls.Add(CreateRevertButton(pageId), 2, 1);
+
+            tableLayoutPanel1.Controls.Add(scintillaTextEditor, 0, 0);
+
+            tableLayoutPanel1.Dock = DockStyle.Fill;
+            tableLayoutPanel1.Location = new Point(0, 27);
+            tableLayoutPanel1.Name = "tableLayoutPanel1";
+            tableLayoutPanel1.RowCount = 2;
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
+            tableLayoutPanel1.Size = new Size(1149, 533);
+            tableLayoutPanel1.TabIndex = 0;
+
+            tableLayoutPanel1.SetColumnSpan(scintillaTextEditor, 3);
+            tableLayoutPanel1.SetRowSpan(scintillaTextEditor, 1);
 
             // Create a close button for the page
             ButtonSpecAny bsa = new ButtonSpecAny();
@@ -281,16 +322,53 @@ namespace YAMSE
 
             // Add rich text box as the contents of the page
             page.Padding = new Padding(5);
-            page.Controls.Add(scintillaTextEditor);
+            //page.Controls.Add(scintillaTextEditor);
+            page.Controls.Add(tableLayoutPanel1);
 
             //workspaceMain.Pages.Add(page);
             kryptonWorkspaceContent.FirstCell().Pages.Add(page);
             return page;
         }
 
+        private Button CreateRevertButton(KryptonPageId pageId)
+        {
+            Button btnRevert = new Button
+            {
+                Anchor = AnchorStyles.Bottom,
+                Location = new Point(3, 486),
+                Name = "btnRevert",
+                Size = new Size(108, 44),
+                TabIndex = 1,
+                Text = "Revert",
+                Tag = pageId,
+                UseVisualStyleBackColor = true
+            };
+            btnRevert.Click += new EventHandler(DncMethods.BtnRevertClick);
+
+            return btnRevert;
+        }
+
+        private Button CreateSaveButton(KryptonPageId kryptonPageId)
+        {
+            Button btnSave = new Button
+            {
+                Anchor = AnchorStyles.Bottom,
+                Location = new Point(3, 486),
+                Name = "btnSave",
+                Size = new Size(108, 44),
+                TabIndex = 1,
+                Text = "Save",
+                Tag = kryptonPageId,
+                UseVisualStyleBackColor = true
+            };
+            btnSave.Click += new EventHandler(DncMethods.BtnSaveClick);
+
+            return btnSave;
+        }
+
         private void PageClose(object sender, EventArgs e)
         {
-            var page = (sender as ButtonSpecAny).Tag as KryptonPage;
+            KryptonPage page = (sender as ButtonSpecAny).Tag as KryptonPage;
             activeDncs.Remove(page.Tag.ToString());
             kryptonWorkspaceContent.FirstCell().Pages.Remove(page);
         }
@@ -299,10 +377,12 @@ namespace YAMSE
         {
             Dnc dnc;
 
+            /*
             if (currentTreeNode?.GetHashCode() == e.GetHashCode())
             {
                 return;
             }
+            */
             currentTreeNode = e;
 
             if (e.Tag != null)
@@ -333,7 +413,7 @@ namespace YAMSE
                             case DefinitionIDs.Script:
                                 //elementHostHexEditor.Hide();
 
-                                var currId = CreatePageID(dnc);
+                                string currId = DncMethods.CreatePageID(dnc);
                                 if (activeDncs.Any(x => x == currId))
                                 {
                                     return;
@@ -431,7 +511,7 @@ namespace YAMSE
                 listBoxOutput.Items.Add("Loading file...");
 
                 MemoryStream memoryStream = new MemoryStream();
-                var tmpStream = openFileDialog1.OpenFile();
+                Stream tmpStream = openFileDialog1.OpenFile();
                 tmpStream.CopyTo(memoryStream);
                 tmpStream.Close();
 
@@ -445,7 +525,7 @@ namespace YAMSE
 
                 int i = 0;
                 TreeNode objectsTreeNode = new TreeNode("Objects");
-                foreach (var item in scene2Data.objectsDncs.GroupBy(x => x.objectType))
+                foreach (IGrouping<ObjectIDs, Dnc> item in scene2Data.objectsDncs.GroupBy(x => x.objectType))
                 {
                     TreeNode treeNodeParent = new TreeNode(item.Key.ToString());
 
@@ -471,7 +551,7 @@ namespace YAMSE
                     // sort nodes
                     nodeList = nodeList.OrderBy(x => x.Text).ToList();
 
-                    foreach (var node2 in nodeList)
+                    foreach (TreeNode node2 in nodeList)
                     {
                         treeNodeParent.Nodes.Add(node2);
                     }
@@ -484,14 +564,14 @@ namespace YAMSE
 
                 // definitions
                 TreeNode defsTreeNode = new TreeNode("Object Definitions");
-                foreach (var item in scene2Data.objectDefinitionsDncs.GroupBy(x => x.definitionType))
+                foreach (IGrouping<DefinitionIDs, Dnc> item in scene2Data.objectDefinitionsDncs.GroupBy(x => x.definitionType))
                 {
                     TreeNode treeNodeParent = new TreeNode(item.Key.ToString());
 
                     i = 0;
 
                     List<TreeNode> nodeList = new List<TreeNode>();
-                    foreach (var dnc in item)
+                    foreach (Dnc dnc in item)
                     {
                         TreeNode treeNode = new TreeNode
                         {
@@ -510,7 +590,7 @@ namespace YAMSE
                     // sort nodes
                     nodeList = nodeList.OrderBy(x => x.Text).ToList();
 
-                    foreach (var node2 in nodeList)
+                    foreach (TreeNode node2 in nodeList)
                     {
                         treeNodeParent.Nodes.Add(node2);
                     }
@@ -523,14 +603,14 @@ namespace YAMSE
 
                 // init scripts
                 TreeNode initScriptTreeNode = new TreeNode("Init script");
-                foreach (var item in scene2Data.initScriptsDncs.GroupBy(x => x.definitionType))
+                foreach (IGrouping<DefinitionIDs, Dnc> item in scene2Data.initScriptsDncs.GroupBy(x => x.definitionType))
                 {
                     TreeNode treeNodeParent = new TreeNode(item.Key.ToString());
 
                     i = 0;
 
                     List<TreeNode> nodeList = new List<TreeNode>();
-                    foreach (var dnc in item)
+                    foreach (Dnc dnc in item)
                     {
                         TreeNode treeNode = new TreeNode
                         {
@@ -549,7 +629,7 @@ namespace YAMSE
                     // sort nodes
                     nodeList = nodeList.OrderBy(x => x.Text).ToList();
 
-                    foreach (var node2 in nodeList)
+                    foreach (TreeNode node2 in nodeList)
                     {
                         treeNodeParent.Nodes.Add(node2);
                     }
@@ -564,14 +644,11 @@ namespace YAMSE
             }
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="dnc"></param>
-        /// <returns></returns>
-        private static string CreatePageID(Dnc dnc)
+        private void Scene2FileSave(object sender, EventArgs e)
         {
-            return $"{dnc.definitionType} ; {dnc.name}";
+            var tmpStream = new FileStream(openFileDialog1.FileName, FileMode.Create);
+            Scene2Parser.SaveScene(tmpStream, ref scene2Data, listBoxOutput.Items);
+            tmpStream.Close();
         }
     }
 }
