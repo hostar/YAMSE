@@ -33,6 +33,8 @@ namespace YAMSE
 
         public Scintilla ScintillaTextEditor { get; set; }
 
+        public WpfHexaEditor.HexEditor HexEditor { get; set; }
+
         public override string ToString()
         {
             return DncMethods.CreatePageID(dnc);

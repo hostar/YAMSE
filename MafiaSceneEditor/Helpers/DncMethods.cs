@@ -19,7 +19,7 @@ namespace YAMSE
                     Scene2Parser.UpdateStringInDnc(pageId.Dnc, pageId.ScintillaTextEditor.Text);
                     break;
                 case PanelKind.Hex:
-                    //Dnc.rawData = hexEditor.GetAllBytes(true);
+                    pageId.Dnc.rawData = pageId.HexEditor.GetAllBytes(true);
                     break;
                 default:
                     break;

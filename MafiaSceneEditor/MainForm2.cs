@@ -111,7 +111,12 @@ namespace YAMSE
 
             MinimumSize = new Size(500, 500);
 
-            //InitMenus();
+            // this is essential, do not delete
+            System.Windows.Application app = new System.Windows.Application
+            {
+                MainWindow = new System.Windows.Window()
+            };
+
             InitRibbon();
 
             ResumeLayout();
@@ -244,20 +249,78 @@ namespace YAMSE
             return page;
         }
 
-        private KryptonPage CreatePageText(Dnc dnc, string text)
+        private KryptonPage CreatePage(Dnc dnc, PanelKind panelKind, string text = "")
         {
             string pageName = dnc.name;
 
-            Scintilla scintillaTextEditor = new Scintilla
-            {
-                //WrapMode = WrapMode.Word, 
-                //IndentationGuides = IndentView.LookBoth, 
-                //Parent = mainPanel, 
-                Dock = DockStyle.Fill,
-                ScrollWidth = 200
-            };
+            var pageId = new KryptonPageId { Dnc = dnc, PanelKind = panelKind };
 
-            var pageId = new KryptonPageId { Dnc = dnc, PanelKind = PanelKind.Text, ScintillaTextEditor = scintillaTextEditor };
+            switch (panelKind)
+            {
+                case PanelKind.Text:
+                    Scintilla scintillaTextEditor = new Scintilla
+                    {
+                        //WrapMode = WrapMode.Word, 
+                        //IndentationGuides = IndentView.LookBoth, 
+                        //Parent = mainPanel, 
+                        Dock = DockStyle.Fill,
+                        ScrollWidth = 200
+                    };
+
+                    scintillaTextEditor.Styles[Style.Default].Font = "Consolas";
+                    scintillaTextEditor.Styles[Style.Default].Size = 10;
+
+                    scintillaTextEditor.Lexer = Lexer.Null;
+
+                    scintillaTextEditor.Text = text;
+
+                    try
+                    {
+                        scintillaTextEditor.Styles[1].ForeColor = Color.Blue;
+                        scintillaTextEditor.Styles[2].ForeColor = Color.Crimson;
+                        scintillaTextEditor.Styles[3].ForeColor = Color.Blue;
+                        scintillaTextEditor.Styles[4].ForeColor = Color.Green;
+                        DncMethods.ScintillaTextHighlight(text, 0, scintillaTextEditor);
+                    }
+                    catch { }
+
+                    scintillaTextEditor.TextChanged += (sender, eargs) =>
+                    {
+                        DncMethods.ScintillaTextHighlight(scintillaTextEditor.Lines[scintillaTextEditor.LineFromPosition(scintillaTextEditor.CurrentPosition)].Text, scintillaTextEditor.CurrentPosition, scintillaTextEditor);
+                    };
+
+                    pageId.ScintillaTextEditor = scintillaTextEditor;
+                    return CreatePageInternal(pageName, pageId, scintillaTextEditor);
+                case PanelKind.Hex:
+
+                    var hexEditor = new WpfHexaEditor.HexEditor
+                    {
+                        ForegroundSecondColor = System.Windows.Media.Brushes.Blue,
+                        TypeOfCharacterTable = WpfHexaEditor.Core.CharacterTableType.Ascii
+                    };
+
+                    var elementHostHexEditor = new System.Windows.Forms.Integration.ElementHost
+                    {
+                        Location = new Point(250, 50),
+                        Size = new Size(1000, 500)
+                    };
+                    elementHostHexEditor.Name = nameof(elementHostHexEditor);
+                    elementHostHexEditor.Child = hexEditor;
+
+                    var tmpStream = new MemoryStream();
+                    new MemoryStream(dnc.rawData).CopyTo(tmpStream); // needed in order to allow expanding
+                    hexEditor.Stream = tmpStream;
+
+                    pageId.HexEditor = hexEditor;
+
+                    return CreatePageInternal(pageName, pageId, elementHostHexEditor);
+                default:
+                    throw new InvalidOperationException(nameof(CreatePage));
+            }
+        }
+
+        private KryptonPage CreatePageInternal(string pageName, KryptonPageId pageId, Control mainComponent)
+        {
             // Create a new page and give it a name and image
             KryptonPage page = new KryptonPage();
             page.Text = pageName;
@@ -267,39 +330,17 @@ namespace YAMSE
             //page.ImageSmall = imageList.Images[_count % imageList.Images.Count];
             page.MinimumSize = new Size(200, 250);
 
-            scintillaTextEditor.Styles[Style.Default].Font = "Consolas";
-            scintillaTextEditor.Styles[Style.Default].Size = 10;
-
-            scintillaTextEditor.Lexer = Lexer.Null;
-
-            scintillaTextEditor.Text = text;
-
-            try
-            {
-                scintillaTextEditor.Styles[1].ForeColor = Color.Blue;
-                scintillaTextEditor.Styles[2].ForeColor = Color.Crimson;
-                scintillaTextEditor.Styles[3].ForeColor = Color.Blue;
-                scintillaTextEditor.Styles[4].ForeColor = Color.Green;
-                DncMethods.ScintillaTextHighlight(text, 0, scintillaTextEditor);
-            }
-            catch { }
-
-            scintillaTextEditor.TextChanged += (sender, eargs) => 
-            {
-                DncMethods.ScintillaTextHighlight(scintillaTextEditor.Lines[scintillaTextEditor.LineFromPosition(scintillaTextEditor.CurrentPosition)].Text, scintillaTextEditor.CurrentPosition, scintillaTextEditor);
-            };
-
             TableLayoutPanel tableLayoutPanel1 = new TableLayoutPanel();
 
             tableLayoutPanel1.ColumnCount = 3;
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 114F));
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 114F));
-            
-            tableLayoutPanel1.Controls.Add(CreateSaveButton(pageId), 0, 1);
-            tableLayoutPanel1.Controls.Add(CreateRevertButton(pageId), 2, 1);
 
-            tableLayoutPanel1.Controls.Add(scintillaTextEditor, 0, 0);
+            tableLayoutPanel1.Controls.Add(CreateButton(pageId, DncMethods.BtnSaveClick, "Save"), 0, 1);
+            tableLayoutPanel1.Controls.Add(CreateButton(pageId, DncMethods.BtnRevertClick, "Revert"), 2, 1);
+
+            tableLayoutPanel1.Controls.Add(mainComponent, 0, 0);
 
             tableLayoutPanel1.Dock = DockStyle.Fill;
             tableLayoutPanel1.Location = new Point(0, 27);
@@ -310,8 +351,8 @@ namespace YAMSE
             tableLayoutPanel1.Size = new Size(1149, 533);
             tableLayoutPanel1.TabIndex = 0;
 
-            tableLayoutPanel1.SetColumnSpan(scintillaTextEditor, 3);
-            tableLayoutPanel1.SetRowSpan(scintillaTextEditor, 1);
+            tableLayoutPanel1.SetColumnSpan(mainComponent, 3);
+            tableLayoutPanel1.SetRowSpan(mainComponent, 1);
 
             // Create a close button for the page
             ButtonSpecAny bsa = new ButtonSpecAny();
@@ -330,40 +371,22 @@ namespace YAMSE
             return page;
         }
 
-        private Button CreateRevertButton(KryptonPageId pageId)
+        private Control CreateButton(KryptonPageId kryptonPageId, EventHandler eventHandler, string btnName)
         {
-            Button btnRevert = new Button
+            KryptonButton btnObj = new KryptonButton
             {
                 Anchor = AnchorStyles.Bottom,
                 Location = new Point(3, 486),
-                Name = "btnRevert",
+                Name = $"btn{btnName}",
                 Size = new Size(108, 44),
                 TabIndex = 1,
-                Text = "Revert",
-                Tag = pageId,
-                UseVisualStyleBackColor = true
-            };
-            btnRevert.Click += new EventHandler(DncMethods.BtnRevertClick);
-
-            return btnRevert;
-        }
-
-        private Button CreateSaveButton(KryptonPageId kryptonPageId)
-        {
-            Button btnSave = new Button
-            {
-                Anchor = AnchorStyles.Bottom,
-                Location = new Point(3, 486),
-                Name = "btnSave",
-                Size = new Size(108, 44),
-                TabIndex = 1,
-                Text = "Save",
+                Text = btnName,
                 Tag = kryptonPageId,
-                UseVisualStyleBackColor = true
+                PaletteMode = PaletteMode.Office2010Blue
             };
-            btnSave.Click += new EventHandler(DncMethods.BtnSaveClick);
+            btnObj.Click += eventHandler;
 
-            return btnSave;
+            return btnObj;
         }
 
         private void PageClose(object sender, EventArgs e)
@@ -376,6 +399,7 @@ namespace YAMSE
         private void SelectedObjectChanged(TreeNode e)
         {
             Dnc dnc;
+            string currId = string.Empty;
 
             /*
             if (currentTreeNode?.GetHashCode() == e.GetHashCode())
@@ -393,34 +417,34 @@ namespace YAMSE
                         //elementHostHexEditor.Show();
                         //elementHostDiagramEditor.Hide();
                         //hexEditor.Stream = new MemoryStream(scene2Data.objectsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault().rawData);
-                        dnc = scene2Data.objectsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
 
-                        /*
-                        if (mdiForms.Any(x => (string)x.Tag == CreateInnerFormTag(dnc)))
+                        dnc = scene2Data.objectsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+                        currId = DncMethods.CreatePageID(dnc);
+
+                        if (activeDncs.Any(x => x == currId))
                         {
                             return;
                         }
-                        */
 
-                        //CreateMdiForm(dnc);
+                        activeDncs.Add(currId);
+                        CreatePage(dnc, PanelKind.Hex);
                         break;
                     case NodeType.Definition:
 
                         dnc = scene2Data.objectDefinitionsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+                        currId = DncMethods.CreatePageID(dnc);
+
+                        if (activeDncs.Any(x => x == currId))
+                        {
+                            return;
+                        }
 
                         switch (dnc.definitionType)
                         {
                             case DefinitionIDs.Script:
                                 //elementHostHexEditor.Hide();
-
-                                string currId = DncMethods.CreatePageID(dnc);
-                                if (activeDncs.Any(x => x == currId))
-                                {
-                                    return;
-                                }
-
                                 activeDncs.Add(currId);
-                                CreatePageText(dnc, Scene2Parser.GetStringFromDnc(dnc));
+                                CreatePage(dnc, PanelKind.Text, Scene2Parser.GetStringFromDnc(dnc));
                                 break;
 
                             case DefinitionIDs.PhysicalObject:
@@ -436,16 +460,11 @@ namespace YAMSE
                             case DefinitionIDs.MovableBridge:
                             case DefinitionIDs.Car:
                             default:
-                                /*
-                                if (mdiForms.Any(x => (string)x.Tag == CreateInnerFormTag(dnc)))
-                                {
-                                    return;
-                                }
-
-                                CreateMdiForm(dnc);
-                                */
+                                activeDncs.Add(currId);
+                                CreatePage(dnc, PanelKind.Hex);
                                 break;
                         }
+
                         if (dnc.definitionType == DefinitionIDs.Script)
                         {
                             //elementHostHexEditor.Hide();
@@ -494,6 +513,16 @@ namespace YAMSE
 
                         CreateMdiForm(dnc, GetStringFromInitScript(dnc));
                         */
+
+                        currId = DncMethods.CreatePageID(dnc);
+
+                        if (activeDncs.Any(x => x == currId))
+                        {
+                            return;
+                        }
+
+                        activeDncs.Add(currId);
+                        CreatePage(dnc, PanelKind.Text, Scene2Parser.GetStringFromInitScript(dnc));
                         break;
                     default:
                         break;

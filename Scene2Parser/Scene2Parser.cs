@@ -312,6 +312,15 @@ namespace YAMSE
             return Encoding.UTF8.GetString(dnc.rawData.Skip(dnc.name.Length + 41).ToArray());
         }
 
+        public static string GetStringFromInitScript(Dnc dnc, bool useBackup = false)
+        {
+            if (useBackup)
+            {
+                return Encoding.UTF8.GetString(dnc.rawDataBackup.Skip(dnc.name.Length + 13).ToArray());
+            }
+            return Encoding.UTF8.GetString(dnc.rawData.Skip(dnc.name.Length + 13).ToArray());
+        }
+
         public static void UpdateStringInDnc(Dnc dnc, string text)
         {
             var startArray = dnc.rawData.Take(dnc.name.Length + 41).ToArray();
