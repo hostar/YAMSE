@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ComponentFactory.Krypton.Toolkit;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -11,7 +12,7 @@ namespace YAMSE
     {
         public static void BtnSaveClick(object sender, EventArgs eventArgs)
         {
-            var pageId = ((Button)sender).Tag as KryptonPageId;
+            var pageId = ((KryptonButton)sender).Tag as KryptonPageId;
             
             switch (pageId.PanelKind)
             {
@@ -29,7 +30,7 @@ namespace YAMSE
 
         public static void BtnRevertClick(object sender, EventArgs eventArgs)
         {
-            var pageId = ((Button)sender).Tag as KryptonPageId;
+            var pageId = ((KryptonButton)sender).Tag as KryptonPageId;
 
             switch (pageId.PanelKind)
             {
