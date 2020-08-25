@@ -54,7 +54,7 @@ namespace YAMSE
 
         public static string CreatePageID(Dnc dnc)
         {
-            return $"{dnc.definitionType} ; {dnc.name}";
+            return $"{dnc.dncType} ; {dnc.name}";
         }
 
         public static void ScintillaTextHighlight(string textInput, int startPosition, ScintillaNET.Scintilla scintillaTextEditor)

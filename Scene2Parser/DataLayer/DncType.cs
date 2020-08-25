@@ -4,9 +4,23 @@ using System.Text;
 
 namespace YAMSE.DataLayer
 {
-    public enum ObjectIDs
+    public enum DncType
     {
         Unknown,
+        MovableBridge,
+        Car,
+        Script,
+        InitScript,
+        PhysicalObject,
+        Door,
+        Tram,
+        GasStation,
+        PedestrianSetup,
+        Enemy,
+        Plane,
+        Player,
+        TrafficSetup,
+
         LMAP,
         Sector,
         Standard,

@@ -17,7 +17,7 @@ namespace YAMSE
             byte[] tmpBuff = inputStream.ToArray();
 
             bool headerParsed = false;
-            bool objectsParsed = false;
+            bool sectionEnded = false;
             bool definitionsParsed = false;
 
             int i = 0;
@@ -30,6 +30,11 @@ namespace YAMSE
             bool loadingInitScriptsShown = false;
 
             const int IdLen = 2; // length of ID
+
+            Scene2Section currSection = null;
+
+
+            int positionIterator = 0;
 
             while (i < tmpBuff.Length)
             {
@@ -51,10 +56,25 @@ namespace YAMSE
 
                         var arr = tmpBuff.Skip(i).Skip(2).Take(4).ToArray();
 
-                        scene2Data.standardObjectsStartPosition = i;
                         scene2Data.standardObjectsLength = BitConverter.ToInt32(arr, 0);
 
-                        i += 4;
+                        currSection = new Scene2Section() 
+                        { 
+                            Position = positionIterator, 
+                            SectionName = "Objects", 
+                            SectionType = NodeType.Object, 
+                            SectionStart = i, 
+                            SectionLength = BitConverter.ToInt32(arr, 0) 
+                        };
+
+                        positionIterator++;
+
+                        scene2Data.Sections.Add(currSection);
+
+                        loggingList.Add("Loading objects...");
+                        loadingObjectsShown = true;
+
+                        i += 6;
                     }
                     else
                     {
@@ -64,16 +84,11 @@ namespace YAMSE
                 else
                 {
                     // parse dncs objects
-                    if (!loadingObjectsShown)
-                    {
-                        loggingList.Add("Loading objects...");
-                        loadingObjectsShown = true;
-                    }
                     if (tmpBuff[i] == 0x10 && tmpBuff[i + 1] == 0x40)
                     {
                         Dnc currDnc = new Dnc
                         {
-                            objectType = ObjectIDs.Unknown,
+                            dncType = DncType.Unknown,
                         };
 
                         // get length
@@ -84,127 +99,174 @@ namespace YAMSE
                         currDnc.rawDataBackup = new byte[currDnc.rawData.Length];
                         currDnc.rawData.CopyTo(currDnc.rawDataBackup, 0);
 
-                        currDnc.objectType = GetObjectType(currDnc);
+                        currDnc.dncType = GetObjectType(currDnc);
                         currDnc.name = GetNameByID(currDnc);
                         currDnc.ID = objectID;
 
-                        scene2Data.objectsDncs.Add(currDnc);
+                        currSection.Dncs.Add(currDnc);
 
                         objectID++;
                         i = i + IdLen + lenCurr;
                     }
                     else
                     {
-                        i++;
-
-                        if (!objectsParsed)
+                        if (i == currSection.SectionEnd)
                         {
-                            if (scene2Data.objectsDncs.Count != 0)
-                            {
-                                objectsParsed = true;
-                                objectID = 0;
-                                i--;
-                            }
-                        }
-                        else
-                        {
-                            //i++;
+                            sectionEnded = true;
+                            objectID = 0;
                         }
                     }
 
-                    // parse dncs definitions
-                    if ((i >= scene2Data.standardObjectsLength) && !definitionsParsed)
+                    
+                    if (sectionEnded)
                     {
-                        if (scene2Data.objectsDefinitionStartPosition > 0)
-                        {
-                            if (i > (scene2Data.objectsDefinitionStartPosition + scene2Data.objectsDefinitionLength))
-                            {
-                                definitionsParsed = true;
-                                objectID = 0;
-                            }
-                        }
-
+                        // parse dncs definitions
                         if (tmpBuff[i] == 0x20 && tmpBuff[i + 1] == 0xAE)
                         {
+                            sectionEnded = false;
+
                             var arr = tmpBuff.Skip(i).Skip(2).Take(4).ToArray();
 
-                            scene2Data.objectsDefinitionStartPosition = i;
-                            scene2Data.objectsDefinitionLength = BitConverter.ToInt32(arr, 0);
+                            currSection = new Scene2Section()
+                            {
+                                Position = positionIterator,
+                                SectionName = "Object definitions",
+                                SectionType = NodeType.Definition,
+                                SectionStart = i,
+                                SectionLength = BitConverter.ToInt32(arr, 0)
+                            };
+
+                            positionIterator++;
+
+                            scene2Data.Sections.Add(currSection);
 
                             i += 6;
-                        }
 
-                        // parse dncs object definitions
-                        if (!loadingObjectsDefinitionsShown)
-                        {
                             loggingList.Add("Loading object definitions...");
                             loadingObjectsDefinitionsShown = true;
                         }
-                        if (tmpBuff[i] == 0x21 && tmpBuff[i + 1] == 0xAE)
+
+                        // init scripts
+                        if (tmpBuff[i] == 0x50 && tmpBuff[i + 1] == 0xAE)
                         {
-                            Dnc currDnc = new Dnc
+                            sectionEnded = false;
+
+                            if (!loadingInitScriptsShown)
                             {
-                                objectType = ObjectIDs.Unknown,
+                                loggingList.Add("Loading init scripts...");
+                                loadingInitScriptsShown = true;
+
+                                var arr = tmpBuff.Skip(i).Skip(2).Take(4).ToArray();
+
+                                currSection = new Scene2Section()
+                                {
+                                    Position = positionIterator,
+                                    SectionName = "Init scripts",
+                                    SectionType = NodeType.InitScript,
+                                    SectionStart = i,
+                                    SectionLength = BitConverter.ToInt32(arr, 0)
+                                };
+
+                                scene2Data.Sections.Add(currSection);
+
+                                positionIterator++;
+
+                                i += 6; // might cause problems
+                            }
+                        }
+
+                        if (sectionEnded)
+                        { // if still true we have found unknown section
+
+                            sectionEnded = false;
+                            var arr = tmpBuff.Skip(i).Skip(2).Take(4).ToArray();
+
+                            currSection = new Scene2Section()
+                            {
+                                Position = positionIterator,
+                                SectionName = $"Unknown {positionIterator}",
+                                SectionType = NodeType.Unknown,
+                                SectionStart = i,
+                                SectionLength = BitConverter.ToInt32(arr, 0)
                             };
 
-                            // get length
-                            int lenCurr = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(IdLen).Take(4).ToArray(), 0) - IdLen;
+                            scene2Data.Sections.Add(currSection);
 
-                            currDnc.rawData = tmpBuff.Skip(i).Skip(IdLen).Take(lenCurr).ToArray();
+                            positionIterator++;
 
-                            currDnc.rawDataBackup = new byte[currDnc.rawData.Length];
-                            currDnc.rawData.CopyTo(currDnc.rawDataBackup, 0);
+                            // put all data of the section to one DNC
 
-                            currDnc.definitionType = GetObjectDefinitionType(currDnc);
-                            currDnc.name = GetNameByDefinitionID(currDnc);
-                            currDnc.ID = objectID;
+                            Dnc currDnc = new Dnc
+                            {
+                                dncType = DncType.Unknown,
+                                name = "Unknown",
+                                ID = objectID,
+                                rawData = tmpBuff.Skip(i).Take(currSection.SectionLength).ToArray()
+                            };
 
-                            scene2Data.objectDefinitionsDncs.Add(currDnc);
+                            currSection.Dncs.Add(currDnc);
 
-                            objectID++;
-                            i = i + IdLen + lenCurr;
-                            i--;
+                            i = i + currSection.SectionLength;
                         }
                     }
 
-                    if (definitionsParsed)
+                    if (tmpBuff[i] == 0x21 && tmpBuff[i + 1] == 0xAE)
                     {
-                        if (tmpBuff.Length <= i)
+                        Dnc currDnc = new Dnc
                         {
-                            break;
-                        }
+                            dncType = DncType.Unknown,
+                        };
 
-                        // init scripts
-                        if (!loadingInitScriptsShown)
+                        // get length
+                        int lenCurr = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(IdLen).Take(4).ToArray(), 0) - IdLen;
+
+                        currDnc.rawData = tmpBuff.Skip(i).Skip(IdLen).Take(lenCurr).ToArray();
+
+                        currDnc.rawDataBackup = new byte[currDnc.rawData.Length];
+                        currDnc.rawData.CopyTo(currDnc.rawDataBackup, 0);
+
+                        currDnc.dncType = GetObjectDefinitionType(currDnc);
+                        currDnc.name = GetNameByDefinitionID(currDnc);
+                        currDnc.ID = objectID;
+
+                        currSection.Dncs.Add(currDnc);
+
+                        objectID++;
+                        i = i + IdLen + lenCurr;
+                        //i--;
+                    }
+                    else
+                    {
+                        if (i == currSection.SectionEnd)
                         {
-                            loggingList.Add("Loading init scripts...");
-                            loadingInitScriptsShown = true;
+                            sectionEnded = true;
+                            objectID = 0;
                         }
-                        if (tmpBuff[i] == 0x51 && tmpBuff[i + 1] == 0xAE)
+                    }
+
+                    if (tmpBuff[i] == 0x51 && tmpBuff[i + 1] == 0xAE)
+                    {
+                        Dnc currDnc = new Dnc
                         {
-                            Dnc currDnc = new Dnc
-                            {
-                                objectType = ObjectIDs.Unknown,
-                            };
+                            dncType = DncType.Unknown,
+                        };
 
-                            // get length
-                            int lenCurr = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(IdLen).Take(4).ToArray(), 0) - IdLen;
+                        // get length
+                        int lenCurr = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(IdLen).Take(4).ToArray(), 0) - IdLen;
 
-                            currDnc.rawData = tmpBuff.Skip(i).Skip(IdLen).Take(lenCurr).ToArray();
+                        currDnc.rawData = tmpBuff.Skip(i).Skip(IdLen).Take(lenCurr).ToArray();
 
-                            currDnc.rawDataBackup = new byte[currDnc.rawData.Length];
-                            currDnc.rawData.CopyTo(currDnc.rawDataBackup, 0);
+                        currDnc.rawDataBackup = new byte[currDnc.rawData.Length];
+                        currDnc.rawData.CopyTo(currDnc.rawDataBackup, 0);
 
-                            currDnc.definitionType = DefinitionIDs.InitScript;
-                            currDnc.name = GetNameByDefinitionID(currDnc);
-                            currDnc.ID = objectID;
+                        currDnc.dncType = DncType.InitScript;
+                        currDnc.name = GetNameByDefinitionID(currDnc);
+                        currDnc.ID = objectID;
 
-                            scene2Data.initScriptsDncs.Add(currDnc);
+                        currSection.Dncs.Add(currDnc);
 
-                            objectID++;
-                            i = i + IdLen + lenCurr;
-                            i--;
-                        }
+                        objectID++;
+                        i = i + IdLen + lenCurr;
                     }
                 }
             }
@@ -218,17 +280,23 @@ namespace YAMSE
 
             //  pre-calculate section sizes and  calculate filesize
             int fileSize = 12;
-            var sumOfLengths = scene2Data.objectsDncs.Sum(x => x.rawData.Length + IdLen);
+            var sumOfLengths = 0;
+
+            foreach (Scene2Section section in scene2Data.Sections)
+            {
+                sumOfLengths = section.Dncs.Sum(x => x.rawData.Length + IdLen);
+                fileSize += sumOfLengths + 6;
+            }
 
             fileSize += sumOfLengths + 6;
             var standardObjectsLengthArr = BitConverter.GetBytes(sumOfLengths + 6 /* 6 is length of section start */);
 
-            sumOfLengths = scene2Data.objectDefinitionsDncs.Sum(x => x.rawData.Length + IdLen);
+            sumOfLengths = scene2Data.Sections.First(x => x.SectionType == NodeType.Definition).Dncs.Sum(x => x.rawData.Length + IdLen);
 
             fileSize += sumOfLengths + 6;
             var objectsDefsLengthArr = BitConverter.GetBytes(sumOfLengths + 6 /* 6 is length of section start */);
 
-            sumOfLengths = scene2Data.initScriptsDncs.Sum(x => x.rawData.Length + IdLen);
+            sumOfLengths = scene2Data.Sections.First(x => x.SectionType == NodeType.InitScript).Dncs.Sum(x => x.rawData.Length + IdLen);
 
             fileSize += sumOfLengths + 6;
             var initScriptsLengthArr = BitConverter.GetBytes(sumOfLengths + 6 /* 6 is length of section start */);
@@ -247,7 +315,7 @@ namespace YAMSE
 
             var objectsID = new byte[] { 0x10, 0x40 };
 
-            foreach (Dnc dnc in scene2Data.objectsDncs)
+            foreach (Dnc dnc in scene2Data.Sections.First(x => x.SectionType == NodeType.Object).Dncs)
             {
                 outputStream.Write(objectsID, 0, objectsID.Length);
                 outputStream.Write(dnc.rawData, 0, dnc.rawData.Length);
@@ -263,7 +331,7 @@ namespace YAMSE
 
             var objectDefsID = new byte[] { 0x21, 0xAE };
 
-            foreach (Dnc dnc in scene2Data.objectDefinitionsDncs)
+            foreach (Dnc dnc in scene2Data.Sections.First(x => x.SectionType == NodeType.Definition).Dncs)
             {
                 outputStream.Write(objectDefsID, 0, objectDefsID.Length);
                 outputStream.Write(dnc.rawData, 0, dnc.rawData.Length);
@@ -271,7 +339,8 @@ namespace YAMSE
 
             loggingList.Add("Object definitions saved.");
 
-            //mysterious section
+            // TODO: eradicate this
+            // mysterious section
             var mystery = new byte[] { 0x02, 0xae, 0x06, 0x00, 0x00, 0x00 };
             outputStream.Write(mystery, 0, mystery.Length);
 
@@ -284,7 +353,7 @@ namespace YAMSE
 
             var initScriptsID = new byte[] { 0x51, 0xAE };
 
-            foreach (Dnc dnc in scene2Data.initScriptsDncs)
+            foreach (Dnc dnc in scene2Data.Sections.First(x => x.SectionType == NodeType.InitScript).Dncs)
             {
                 outputStream.Write(initScriptsID, 0, initScriptsID.Length);
                 outputStream.Write(dnc.rawData, 0, dnc.rawData.Length);
@@ -352,17 +421,17 @@ namespace YAMSE
 
         private static string GetNameByDefinitionID(Dnc dnc)
         {
-            switch (dnc.definitionType)
+            switch (dnc.dncType)
             {
-                case DefinitionIDs.Unknown:
+                case DncType.Unknown:
                     return "Unknown";
-                case DefinitionIDs.MovableBridge:
+                case DncType.MovableBridge:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
-                case DefinitionIDs.Car:
+                case DncType.Car:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
-                case DefinitionIDs.Script:
+                case DncType.Script:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
-                case DefinitionIDs.InitScript:
+                case DncType.InitScript:
 
                     var len = dnc.rawData[5];
 
@@ -371,23 +440,23 @@ namespace YAMSE
                 //return GetCStringFromByteArray(dnc.rawData.Skip(0x9).Take(maxObjectNameLength).ToArray());
 
 
-                case DefinitionIDs.PhysicalObject:
+                case DncType.PhysicalObject:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
-                case DefinitionIDs.Door:
+                case DncType.Door:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
-                case DefinitionIDs.Tram:
+                case DncType.Tram:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
-                case DefinitionIDs.GasStation:
+                case DncType.GasStation:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
-                case DefinitionIDs.PedestrianSetup:
+                case DncType.PedestrianSetup:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
-                case DefinitionIDs.Enemy:
+                case DncType.Enemy:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
-                case DefinitionIDs.Plane:
+                case DncType.Plane:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
-                case DefinitionIDs.Player:
+                case DncType.Player:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
-                case DefinitionIDs.TrafficSetup:
+                case DncType.TrafficSetup:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
                 default:
                     throw new InvalidOperationException(nameof(GetNameByDefinitionID));
@@ -399,26 +468,26 @@ namespace YAMSE
             return Encoding.ASCII.GetString(arr, 0, Array.IndexOf(arr, (byte)0));
         }
 
-        private static ObjectIDs GetObjectType(Dnc dnc)
+        private static DncType GetObjectType(Dnc dnc)
         {
             if (dnc.rawData[4] == 0x10)
             { // either LMAP or sector
-                dnc.objectType = ObjectIDs.LMAP;
+                dnc.dncType = DncType.LMAP;
                 dnc.name = GetNameByID(dnc);
 
                 if (dnc.rawData.FindIndexOf(Encoding.ASCII.GetBytes("LMAP")).Any())
                 { // is LMAP
-                    return ObjectIDs.LMAP;
+                    return DncType.LMAP;
                 }
                 else
                 {
                     if (dnc.rawData.FindIndexOf(new byte[] { 0x01, 0xB4, 0xF2 }).Any())
                     {
-                        return ObjectIDs.Sector;
+                        return DncType.Sector;
                     }
                     else
                     {
-                        return ObjectIDs.Unknown;
+                        return DncType.Unknown;
                     }
                 }
             }
@@ -426,42 +495,42 @@ namespace YAMSE
             {
                 if (dnc.rawData.FindIndexOf(new byte[] { 0x11, 0x40, 0x0A, 0x00, 0x00, 0x00, 0x0C }).Any())
                 {
-                    return ObjectIDs.Occluder;
+                    return DncType.Occluder;
                 }
                 else
                 {
                     if (dnc.rawData.FindIndexOf(new byte[] { 0x11, 0x40, 0x0A, 0x00, 0x00, 0x00, 0x09 }).Any())
                     {
-                        return ObjectIDs.Model;
+                        return DncType.Model;
                     }
                     else
                     {
                         if (dnc.rawData.FindIndexOf(new byte[] { 0x11, 0x40, 0x0A, 0x00, 0x00, 0x00, 0x04 }).Any())
                         {
-                            return ObjectIDs.Sound;
+                            return DncType.Sound;
                         }
                         else
                         {
                             if (dnc.rawData.FindIndexOf(new byte[] { 0x11, 0x40, 0x0A, 0x00, 0x00, 0x00, 0x03 }).Any())
                             {
-                                return ObjectIDs.Camera;
+                                return DncType.Camera;
                             }
                             else
                             {
                                 if (dnc.rawData.FindIndexOf(new byte[] { 0x11, 0x40, 0x0A, 0x00, 0x00, 0x00, 0x0E }).Any())
                                 {
-                                    return ObjectIDs.CityMusic;
+                                    return DncType.CityMusic;
                                 }
                                 else
                                 {
                                     if (dnc.rawData.FindIndexOf(new byte[] { 0x11, 0x40, 0x0A, 0x00, 0x00, 0x00, 0x02 }).Any())
                                     {
-                                        return ObjectIDs.Light;
+                                        return DncType.Light;
                                     }
                                 }
                             }
                         }
-                        return ObjectIDs.Standard;
+                        return DncType.Standard;
                     }
                 }
             }
@@ -469,104 +538,104 @@ namespace YAMSE
 
         private static string GetNameByID(Dnc dnc)
         {
-            switch (dnc.objectType)
+            switch (dnc.dncType)
             {
-                case ObjectIDs.Unknown:
+                case DncType.Unknown:
                     return "Unknown";
-                case ObjectIDs.LMAP:
+                case DncType.LMAP:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
-                case ObjectIDs.Standard:
+                case DncType.Standard:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0x14).Take(maxObjectNameLength).ToArray());
-                case ObjectIDs.Sector:
+                case DncType.Sector:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
-                case ObjectIDs.Occluder:
+                case DncType.Occluder:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0x14).Take(maxObjectNameLength).ToArray());
-                case ObjectIDs.Model:
+                case DncType.Model:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0x14).Take(maxObjectNameLength).ToArray());
-                case ObjectIDs.Sound:
+                case DncType.Sound:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0x14).Take(maxObjectNameLength).ToArray());
-                case ObjectIDs.Camera:
+                case DncType.Camera:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0x14).Take(maxObjectNameLength).ToArray());
-                case ObjectIDs.CityMusic:
+                case DncType.CityMusic:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0x14).Take(maxObjectNameLength).ToArray());
-                case ObjectIDs.Light:
+                case DncType.Light:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0x14).Take(maxObjectNameLength).ToArray());
                 default:
                     throw new InvalidOperationException(nameof(GetNameByID));
             }
         }
 
-        private static DefinitionIDs GetObjectDefinitionType(Dnc dnc)
+        private static DncType GetObjectDefinitionType(Dnc dnc)
         {
             if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x04 }).Any())
             {
-                return DefinitionIDs.Car;
+                return DncType.Car;
             }
             else
             {
                 if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x14 }).Any())
                 {
-                    return DefinitionIDs.MovableBridge;
+                    return DncType.MovableBridge;
                 }
                 else
                 {
                     if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x5 }).Any())
                     {
-                        return DefinitionIDs.Script;
+                        return DncType.Script;
                     }
                     else
                     {
                         if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x23 }).Any())
                         {
-                            return DefinitionIDs.PhysicalObject;
+                            return DncType.PhysicalObject;
                         }
                         else
                         {
                             if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x6 }).Any())
                             {
-                                return DefinitionIDs.Door;
+                                return DncType.Door;
                             }
                             else
                             {
                                 if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x8 }).Any())
                                 {
-                                    return DefinitionIDs.Tram;
+                                    return DncType.Tram;
                                 }
                                 else
                                 {
                                     if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x19 }).Any())
                                     {
-                                        return DefinitionIDs.GasStation;
+                                        return DncType.GasStation;
                                     }
                                     else
                                     {
                                         if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x12 }).Any())
                                         {
-                                            return DefinitionIDs.PedestrianSetup;
+                                            return DncType.PedestrianSetup;
                                         }
                                         else
                                         {
                                             if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x1B }).Any())
                                             {
-                                                return DefinitionIDs.Enemy;
+                                                return DncType.Enemy;
                                             }
                                             else
                                             {
                                                 if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x16 }).Any())
                                                 {
-                                                    return DefinitionIDs.Plane;
+                                                    return DncType.Plane;
                                                 }
                                                 else
                                                 {
                                                     if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x2 }).Any())
                                                     {
-                                                        return DefinitionIDs.Player;
+                                                        return DncType.Player;
                                                     }
                                                     else
                                                     {
                                                         if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0xC }).Any())
                                                         {
-                                                            return DefinitionIDs.TrafficSetup;
+                                                            return DncType.TrafficSetup;
                                                         }
                                                     }
                                                 }
@@ -578,7 +647,7 @@ namespace YAMSE
                         }
                     }
                 }
-                return DefinitionIDs.Unknown;
+                return DncType.Unknown;
             }
         }
     }

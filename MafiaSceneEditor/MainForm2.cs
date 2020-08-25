@@ -418,7 +418,7 @@ namespace YAMSE
                         //elementHostDiagramEditor.Hide();
                         //hexEditor.Stream = new MemoryStream(scene2Data.objectsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault().rawData);
 
-                        dnc = scene2Data.objectsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+                        dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.Object).Dncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
                         currId = DncMethods.CreatePageID(dnc);
 
                         if (activeDncs.Any(x => x == currId))
@@ -431,7 +431,7 @@ namespace YAMSE
                         break;
                     case NodeType.Definition:
 
-                        dnc = scene2Data.objectDefinitionsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+                        dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.Definition).Dncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
                         currId = DncMethods.CreatePageID(dnc);
 
                         if (activeDncs.Any(x => x == currId))
@@ -439,33 +439,33 @@ namespace YAMSE
                             return;
                         }
 
-                        switch (dnc.definitionType)
+                        switch (dnc.dncType)
                         {
-                            case DefinitionIDs.Script:
+                            case DncType.Script:
                                 //elementHostHexEditor.Hide();
                                 activeDncs.Add(currId);
                                 CreatePage(dnc, PanelKind.Text, Scene2Parser.GetStringFromDnc(dnc));
                                 break;
 
-                            case DefinitionIDs.PhysicalObject:
-                            case DefinitionIDs.Door:
-                            case DefinitionIDs.Tram:
-                            case DefinitionIDs.GasStation:
-                            case DefinitionIDs.PedestrianSetup:
-                            case DefinitionIDs.Enemy:
-                            case DefinitionIDs.Plane:
-                            case DefinitionIDs.Player:
-                            case DefinitionIDs.TrafficSetup:
-                            case DefinitionIDs.Unknown:
-                            case DefinitionIDs.MovableBridge:
-                            case DefinitionIDs.Car:
+                            case DncType.PhysicalObject:
+                            case DncType.Door:
+                            case DncType.Tram:
+                            case DncType.GasStation:
+                            case DncType.PedestrianSetup:
+                            case DncType.Enemy:
+                            case DncType.Plane:
+                            case DncType.Player:
+                            case DncType.TrafficSetup:
+                            case DncType.Unknown:
+                            case DncType.MovableBridge:
+                            case DncType.Car:
                             default:
                                 activeDncs.Add(currId);
                                 CreatePage(dnc, PanelKind.Hex);
                                 break;
                         }
 
-                        if (dnc.definitionType == DefinitionIDs.Script)
+                        if (dnc.dncType == DncType.Script)
                         {
                             //elementHostHexEditor.Hide();
                             //elementHostDiagramEditor.Hide();
@@ -498,7 +498,7 @@ namespace YAMSE
 
                         break;
                     case NodeType.InitScript:
-                        dnc = scene2Data.initScriptsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+                        dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.InitScript).Dncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
 
                         //fctb.Text = GetStringFromInitScript(dnc);
 
@@ -553,7 +553,47 @@ namespace YAMSE
                 treeView1.Nodes.Clear();
 
                 int i = 0;
-                TreeNode objectsTreeNode = new TreeNode("Objects");
+
+                foreach (Scene2Section section in scene2Data.Sections)
+                {
+                    TreeNode objectsTreeNode = new TreeNode(section.SectionName);
+
+                    foreach (IGrouping<DncType, Dnc> item in section.Dncs.GroupBy(x => x.dncType))
+                    {
+                        TreeNode treeNodeParent = new TreeNode(item.Key.ToString());
+
+                        i = 0;
+
+                        List<TreeNode> nodeList = new List<TreeNode>();
+                        foreach (Dnc dnc in item)
+                        {
+                            TreeNode treeNode = new TreeNode
+                            {
+                                Text = dnc.name,
+                                Tag = new NodeTag
+                                {
+                                    id = dnc.ID,
+                                    nodeType = section.SectionType
+                                }
+                            };
+
+                            nodeList.Add(treeNode);
+                            i++;
+                        }
+
+                        // sort nodes
+                        nodeList = nodeList.OrderBy(x => x.Text).ToList();
+
+                        treeNodeParent.Nodes.AddRange(nodeList.ToArray());
+
+                        treeNodeParent.Text += $" [{nodeList.Count}]";
+                        objectsTreeNode.Nodes.Add(treeNodeParent);
+                    }
+                    treeView1.Nodes.Add(objectsTreeNode);
+
+                }
+
+                /*
                 foreach (IGrouping<ObjectIDs, Dnc> item in scene2Data.objectsDncs.GroupBy(x => x.objectType))
                 {
                     TreeNode treeNodeParent = new TreeNode(item.Key.ToString());
@@ -668,6 +708,7 @@ namespace YAMSE
                 }
 
                 treeView1.Nodes.Add(initScriptTreeNode);
+                */
 
                 listBoxOutput.Items.Add("Loading of file done.");
             }
