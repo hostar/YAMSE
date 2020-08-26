@@ -51,6 +51,7 @@ namespace YAMSE
         TreeNode currentTreeNode;
 
         OpenFileDialog openFileDialog1 = new OpenFileDialog();
+        SaveFileDialog saveFileDialog1 = new SaveFileDialog();
 
         List<string> activeDncs = new List<string>();
 
@@ -139,6 +140,7 @@ namespace YAMSE
 
             kryptonContextMenuItem4.Text = "Save As";
             kryptonContextMenuItem4.Image = (Image)resources.GetObject("ImageSaveAs");
+            kryptonContextMenuItem4.Click += Scene2FileSaveAs;
 
             kryptonContextMenuItemExit.Text = "Exit";
             kryptonContextMenuItemExit.Image = (Image)resources.GetObject("ImageExit");
@@ -690,6 +692,14 @@ namespace YAMSE
             var tmpStream = new FileStream(openFileDialog1.FileName, FileMode.Create);
             Scene2Parser.SaveScene(tmpStream, ref scene2Data, listBoxOutput.Items);
             tmpStream.Close();
+        }
+
+        private void Scene2FileSaveAs(object sender, EventArgs e)
+        {
+            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                Scene2Parser.SaveScene(saveFileDialog1.OpenFile(), ref scene2Data, listBoxOutput.Items);
+            }
         }
     }
 }

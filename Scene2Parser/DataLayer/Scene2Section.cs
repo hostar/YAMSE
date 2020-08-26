@@ -18,6 +18,8 @@ namespace YAMSE.DataLayer
 
         public int SectionLength { get; set; }
 
+        public byte[] SectionIdArr { get; set; } = new byte[2];
+
         public int SectionEnd 
         { 
             get 

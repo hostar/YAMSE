@@ -33,7 +33,6 @@ namespace YAMSE
 
             Scene2Section currSection = null;
 
-
             int positionIterator = 0;
 
             while (i < tmpBuff.Length)
@@ -54,9 +53,9 @@ namespace YAMSE
                         scene2Data.header.Size = tmpBuff.Skip(2).Take(4).ToList();
                         scene2Data.header.Content = tmpBuff.Skip(6).Take(i - 6).ToList();
 
-                        var arr = tmpBuff.Skip(i).Skip(2).Take(4).ToArray();
+                        var sectionLen = tmpBuff.Skip(i).Skip(2).Take(4).ToArray();
 
-                        scene2Data.standardObjectsLength = BitConverter.ToInt32(arr, 0);
+                        scene2Data.standardObjectsLength = BitConverter.ToInt32(sectionLen, 0);
 
                         currSection = new Scene2Section() 
                         { 
@@ -64,7 +63,8 @@ namespace YAMSE
                             SectionName = "Objects", 
                             SectionType = NodeType.Object, 
                             SectionStart = i, 
-                            SectionLength = BitConverter.ToInt32(arr, 0) 
+                            SectionIdArr = tmpBuff.Skip(i).Take(2).ToArray(),
+                            SectionLength = BitConverter.ToInt32(sectionLen, 0) 
                         };
 
                         positionIterator++;
@@ -94,6 +94,7 @@ namespace YAMSE
                         // get length
                         int lenCurr = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(IdLen).Take(4).ToArray(), 0) - IdLen;
 
+                        currDnc.objectIDArr = tmpBuff.Skip(i).Take(IdLen).ToArray();
                         currDnc.rawData = tmpBuff.Skip(i).Skip(IdLen).Take(lenCurr).ToArray();
 
                         currDnc.rawDataBackup = new byte[currDnc.rawData.Length];
@@ -125,7 +126,7 @@ namespace YAMSE
                         {
                             sectionEnded = false;
 
-                            var arr = tmpBuff.Skip(i).Skip(2).Take(4).ToArray();
+                            var sectionLen = tmpBuff.Skip(i).Skip(2).Take(4).ToArray();
 
                             currSection = new Scene2Section()
                             {
@@ -133,7 +134,8 @@ namespace YAMSE
                                 SectionName = "Object definitions",
                                 SectionType = NodeType.Definition,
                                 SectionStart = i,
-                                SectionLength = BitConverter.ToInt32(arr, 0)
+                                SectionIdArr = tmpBuff.Skip(i).Take(2).ToArray(),
+                                SectionLength = BitConverter.ToInt32(sectionLen, 0)
                             };
 
                             positionIterator++;
@@ -156,7 +158,7 @@ namespace YAMSE
                                 loggingList.Add("Loading init scripts...");
                                 loadingInitScriptsShown = true;
 
-                                var arr = tmpBuff.Skip(i).Skip(2).Take(4).ToArray();
+                                var sectionLen = tmpBuff.Skip(i).Skip(2).Take(4).ToArray();
 
                                 currSection = new Scene2Section()
                                 {
@@ -164,7 +166,8 @@ namespace YAMSE
                                     SectionName = "Init scripts",
                                     SectionType = NodeType.InitScript,
                                     SectionStart = i,
-                                    SectionLength = BitConverter.ToInt32(arr, 0)
+                                    SectionIdArr = tmpBuff.Skip(i).Take(2).ToArray(),
+                                    SectionLength = BitConverter.ToInt32(sectionLen, 0)
                                 };
 
                                 scene2Data.Sections.Add(currSection);
@@ -187,6 +190,7 @@ namespace YAMSE
                                 SectionName = $"Unknown {positionIterator}",
                                 SectionType = NodeType.Unknown,
                                 SectionStart = i,
+                                SectionIdArr = tmpBuff.Skip(i).Take(2).ToArray(),
                                 SectionLength = sectionLen
                             };
 
@@ -203,13 +207,14 @@ namespace YAMSE
                             while(tmpPos < sectionLen)
                             {
                                 int dncLen = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(2).Take(4).ToArray(), 0);
-
+                                
                                 Dnc currDnc = new Dnc
                                 {
                                     dncType = DncType.Unknown,
                                     name = $"Unknown {objectID}",
                                     ID = objectID,
-                                    rawData = tmpBuff.Skip(i).Take(dncLen).ToArray(),
+                                    objectIDArr = tmpBuff.Skip(i).Take(IdLen).ToArray(),
+                                    rawData = tmpBuff.Skip(i).Skip(IdLen).Take(dncLen - IdLen).ToArray(),
                                 };
 
                                 currSection.Dncs.Add(currDnc);
@@ -231,6 +236,7 @@ namespace YAMSE
                         // get length
                         int lenCurr = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(IdLen).Take(4).ToArray(), 0) - IdLen;
 
+                        currDnc.objectIDArr = tmpBuff.Skip(i).Take(IdLen).ToArray();
                         currDnc.rawData = tmpBuff.Skip(i).Skip(IdLen).Take(lenCurr).ToArray();
 
                         currDnc.rawDataBackup = new byte[currDnc.rawData.Length];
@@ -265,6 +271,7 @@ namespace YAMSE
                         // get length
                         int lenCurr = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(IdLen).Take(4).ToArray(), 0) - IdLen;
 
+                        currDnc.objectIDArr = tmpBuff.Skip(i).Take(IdLen).ToArray();
                         currDnc.rawData = tmpBuff.Skip(i).Skip(IdLen).Take(lenCurr).ToArray();
 
                         currDnc.rawDataBackup = new byte[currDnc.rawData.Length];
@@ -289,87 +296,30 @@ namespace YAMSE
 
             outputStream.Write(scene2Data.header.Magic.ToArray(), 0, scene2Data.header.Magic.ToArray().Length);
 
-            //  pre-calculate section sizes and  calculate filesize
-            int fileSize = 12;
-            var sumOfLengths = 0;
+            // calculate file size
+            var fileSize = 6 + scene2Data.header.Content.Count + (scene2Data.Sections.Count * 6);
 
-            foreach (Scene2Section section in scene2Data.Sections)
-            {
-                sumOfLengths = section.Dncs.Sum(x => x.rawData.Length + IdLen);
-                fileSize += sumOfLengths + 6;
-            }
+            fileSize += scene2Data.Sections.SelectMany(x => x.Dncs).Sum(x => x.rawData.Length);
+            fileSize += scene2Data.Sections.SelectMany(x => x.Dncs).Count() * 2;
 
-            fileSize += sumOfLengths + 6;
-            var standardObjectsLengthArr = BitConverter.GetBytes(sumOfLengths + 6 /* 6 is length of section start */);
+            var fileSizeArr = BitConverter.GetBytes(fileSize);
+            outputStream.Write(fileSizeArr, 0, fileSizeArr.Length);
 
-            sumOfLengths = scene2Data.Sections.First(x => x.SectionType == NodeType.Definition).Dncs.Sum(x => x.rawData.Length + IdLen);
-
-            fileSize += sumOfLengths + 6;
-            var objectsDefsLengthArr = BitConverter.GetBytes(sumOfLengths + 6 /* 6 is length of section start */);
-
-            sumOfLengths = scene2Data.Sections.First(x => x.SectionType == NodeType.InitScript).Dncs.Sum(x => x.rawData.Length + IdLen);
-
-            fileSize += sumOfLengths + 6;
-            var initScriptsLengthArr = BitConverter.GetBytes(sumOfLengths + 6 /* 6 is length of section start */);
-
-            var fileSizeLengthArr = BitConverter.GetBytes(fileSize + scene2Data.header.Content.Count);
-            outputStream.Write(fileSizeLengthArr, 0, fileSizeLengthArr.Length);
-            
             outputStream.Write(scene2Data.header.Content.ToArray(), 0, scene2Data.header.Content.ToArray().Length);
 
-            var sectionID = new byte[] { 0x00, 0x40 };
-
-            // objects
-            outputStream.Write(sectionID, 0, sectionID.Length);
-
-            outputStream.Write(standardObjectsLengthArr, 0, standardObjectsLengthArr.Length);
-
-            var objectsID = new byte[] { 0x10, 0x40 };
-
-            foreach (Dnc dnc in scene2Data.Sections.First(x => x.SectionType == NodeType.Object).Dncs)
+            foreach (var section in scene2Data.Sections.OrderBy(x => x.Position))
             {
-                outputStream.Write(objectsID, 0, objectsID.Length);
-                outputStream.Write(dnc.rawData, 0, dnc.rawData.Length);
+                outputStream.Write(section.SectionIdArr, 0, section.SectionIdArr.Length);
+
+                var dncLenArr =  BitConverter.GetBytes(section.Dncs.Sum(x => x.rawData.Length) + (section.Dncs.Count * 2) + 6);
+                outputStream.Write(dncLenArr, 0, dncLenArr.Length);
+
+                foreach (var dnc in section.Dncs.OrderBy(x => x.ID))
+                {
+                    outputStream.Write(dnc.objectIDArr, 0, dnc.objectIDArr.Length);
+                    outputStream.Write(dnc.rawData, 0, dnc.rawData.Length);
+                }
             }
-            loggingList.Add("Objects saved.");
-
-            // object definitions
-            var sectionIDdefs = new byte[] { 0x20, 0xAE };
-
-            outputStream.Write(sectionIDdefs, 0, sectionIDdefs.Length);
-
-            outputStream.Write(objectsDefsLengthArr, 0, objectsDefsLengthArr.Length);
-
-            var objectDefsID = new byte[] { 0x21, 0xAE };
-
-            foreach (Dnc dnc in scene2Data.Sections.First(x => x.SectionType == NodeType.Definition).Dncs)
-            {
-                outputStream.Write(objectDefsID, 0, objectDefsID.Length);
-                outputStream.Write(dnc.rawData, 0, dnc.rawData.Length);
-            }
-
-            loggingList.Add("Object definitions saved.");
-
-            // TODO: eradicate this
-            // mysterious section
-            var mystery = new byte[] { 0x02, 0xae, 0x06, 0x00, 0x00, 0x00 };
-            outputStream.Write(mystery, 0, mystery.Length);
-
-            // init scripts
-            var sectionInitScripts = new byte[] { 0x50, 0xAE };
-
-            outputStream.Write(sectionInitScripts, 0, sectionInitScripts.Length);
-
-            outputStream.Write(initScriptsLengthArr, 0, initScriptsLengthArr.Length);
-
-            var initScriptsID = new byte[] { 0x51, 0xAE };
-
-            foreach (Dnc dnc in scene2Data.Sections.First(x => x.SectionType == NodeType.InitScript).Dncs)
-            {
-                outputStream.Write(initScriptsID, 0, initScriptsID.Length);
-                outputStream.Write(dnc.rawData, 0, dnc.rawData.Length);
-            }
-            loggingList.Add("Init scripts saved.");
 
             /*
             
