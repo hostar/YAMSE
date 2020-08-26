@@ -100,13 +100,13 @@ namespace YAMSE
                         currDnc.rawData.CopyTo(currDnc.rawDataBackup, 0);
 
                         currDnc.dncType = GetObjectType(currDnc);
-                        currDnc.name = GetNameByID(currDnc);
                         currDnc.ID = objectID;
+                        currDnc.name = GetNameByID(currDnc);
 
                         currSection.Dncs.Add(currDnc);
 
                         objectID++;
-                        i = i + IdLen + lenCurr;
+                        i += IdLen + lenCurr;
                     }
                     else
                     {
@@ -179,7 +179,7 @@ namespace YAMSE
                         { // if still true we have found unknown section
 
                             sectionEnded = false;
-                            var arr = tmpBuff.Skip(i).Skip(2).Take(4).ToArray();
+                            int sectionLen = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(2).Take(4).ToArray(), 0);
 
                             currSection = new Scene2Section()
                             {
@@ -187,26 +187,37 @@ namespace YAMSE
                                 SectionName = $"Unknown {positionIterator}",
                                 SectionType = NodeType.Unknown,
                                 SectionStart = i,
-                                SectionLength = BitConverter.ToInt32(arr, 0)
+                                SectionLength = sectionLen
                             };
 
                             scene2Data.Sections.Add(currSection);
 
                             positionIterator++;
 
-                            // put all data of the section to one DNC
+                            // get dncs
 
-                            Dnc currDnc = new Dnc
+                            i += 6; // move to first dnc
+
+                            int tmpPos = 6;
+                            objectID = 0;
+                            while(tmpPos < sectionLen)
                             {
-                                dncType = DncType.Unknown,
-                                name = "Unknown",
-                                ID = objectID,
-                                rawData = tmpBuff.Skip(i).Take(currSection.SectionLength).ToArray()
-                            };
+                                int dncLen = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(2).Take(4).ToArray(), 0);
 
-                            currSection.Dncs.Add(currDnc);
+                                Dnc currDnc = new Dnc
+                                {
+                                    dncType = DncType.Unknown,
+                                    name = $"Unknown {objectID}",
+                                    ID = objectID,
+                                    rawData = tmpBuff.Skip(i).Take(dncLen).ToArray(),
+                                };
 
-                            i = i + currSection.SectionLength;
+                                currSection.Dncs.Add(currDnc);
+
+                                tmpPos += dncLen;
+                                objectID++;
+                                i += dncLen; // move to next dnc
+                            }
                         }
                     }
 
@@ -226,8 +237,8 @@ namespace YAMSE
                         currDnc.rawData.CopyTo(currDnc.rawDataBackup, 0);
 
                         currDnc.dncType = GetObjectDefinitionType(currDnc);
-                        currDnc.name = GetNameByDefinitionID(currDnc);
                         currDnc.ID = objectID;
+                        currDnc.name = GetNameByDefinitionID(currDnc);
 
                         currSection.Dncs.Add(currDnc);
 
@@ -424,7 +435,7 @@ namespace YAMSE
             switch (dnc.dncType)
             {
                 case DncType.Unknown:
-                    return "Unknown";
+                    return $"Unknown {dnc.ID}";
                 case DncType.MovableBridge:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
                 case DncType.Car:
@@ -541,7 +552,7 @@ namespace YAMSE
             switch (dnc.dncType)
             {
                 case DncType.Unknown:
-                    return "Unknown";
+                    return $"Unknown {dnc.ID}";
                 case DncType.LMAP:
                     return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
                 case DncType.Standard:

@@ -411,7 +411,8 @@ namespace YAMSE
 
             if (e.Tag != null)
             {
-                switch (((NodeTag)e.Tag).nodeType)
+                var nodeType = ((NodeTag)e.Tag).nodeType;
+                switch (nodeType)
                 {
                     case NodeType.Object:
                         //elementHostHexEditor.Show();
@@ -419,7 +420,7 @@ namespace YAMSE
                         //hexEditor.Stream = new MemoryStream(scene2Data.objectsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault().rawData);
 
                         dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.Object).Dncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
-                        currId = DncMethods.CreatePageID(dnc);
+                        currId = DncMethods.CreatePageID(dnc, nodeType);
 
                         if (activeDncs.Any(x => x == currId))
                         {
@@ -432,7 +433,7 @@ namespace YAMSE
                     case NodeType.Definition:
 
                         dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.Definition).Dncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
-                        currId = DncMethods.CreatePageID(dnc);
+                        currId = DncMethods.CreatePageID(dnc, nodeType);
 
                         if (activeDncs.Any(x => x == currId))
                         {
@@ -465,56 +466,11 @@ namespace YAMSE
                                 break;
                         }
 
-                        if (dnc.dncType == DncType.Script)
-                        {
-                            //elementHostHexEditor.Hide();
-                            //elementHostDiagramEditor.Hide();
-                            /*
-                            if (mdiForms.Any(x => (string)x.Tag == CreateInnerFormTag(dnc)))
-                            {
-                                return;
-                            }
-
-                            CreateMdiForm(dnc, Scene2Parser.GetStringFromDnc(dnc));
-                            */
-                        }
-                        else
-                        {
-                            //hexEditor.Stream = new MemoryStream(dnc.rawData);
-                            //elementHostHexEditor.Show();
-
-                            //elementHostHexEditor.Hide();
-                            //elementHostDiagramEditor.Hide();
-
-                            /*
-                            if (mdiForms.Any(x => (string)x.Tag == CreateInnerFormTag(dnc)))
-                            {
-                                return;
-                            }
-
-                            CreateMdiForm(dnc);
-                            */
-                        }
-
                         break;
                     case NodeType.InitScript:
                         dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.InitScript).Dncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
 
-                        //fctb.Text = GetStringFromInitScript(dnc);
-
-                        /*
-                        elementHostHexEditor.Hide();
-                        elementHostDiagramEditor.Hide();
-
-                        if (mdiForms.Any(x => (string)x.Tag == CreateInnerFormTag(dnc)))
-                        {
-                            return;
-                        }
-
-                        CreateMdiForm(dnc, GetStringFromInitScript(dnc));
-                        */
-
-                        currId = DncMethods.CreatePageID(dnc);
+                        currId = DncMethods.CreatePageID(dnc, nodeType);
 
                         if (activeDncs.Any(x => x == currId))
                         {
@@ -525,6 +481,16 @@ namespace YAMSE
                         CreatePage(dnc, PanelKind.Text, Scene2Parser.GetStringFromInitScript(dnc));
                         break;
                     default:
+                        dnc = scene2Data.Sections.Where(x => x.SectionType == NodeType.Unknown).SelectMany(x => x.Dncs).Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+                        currId = DncMethods.CreatePageID(dnc, nodeType);
+
+                        if (activeDncs.Any(x => x == currId))
+                        {
+                            return;
+                        }
+
+                        activeDncs.Add(currId);
+                        CreatePage(dnc, PanelKind.Hex);
                         break;
                 }
 
@@ -561,6 +527,11 @@ namespace YAMSE
                     foreach (IGrouping<DncType, Dnc> item in section.Dncs.GroupBy(x => x.dncType))
                     {
                         TreeNode treeNodeParent = new TreeNode(item.Key.ToString());
+
+                        if (item.Key == DncType.Unknown)
+                        {
+                            treeNodeParent.Text += $" {section.SectionName}";
+                        }
 
                         i = 0;
 
