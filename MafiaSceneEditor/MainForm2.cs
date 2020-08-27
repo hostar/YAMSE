@@ -422,7 +422,7 @@ namespace YAMSE
                         //hexEditor.Stream = new MemoryStream(scene2Data.objectsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault().rawData);
 
                         dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.Object).Dncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
-                        currId = DncMethods.CreatePageID(dnc, nodeType);
+                        currId = DncMethods.CreatePageID(dnc);
 
                         if (activeDncs.Any(x => x == currId))
                         {
@@ -435,7 +435,7 @@ namespace YAMSE
                     case NodeType.Definition:
 
                         dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.Definition).Dncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
-                        currId = DncMethods.CreatePageID(dnc, nodeType);
+                        currId = DncMethods.CreatePageID(dnc);
 
                         if (activeDncs.Any(x => x == currId))
                         {
@@ -472,7 +472,7 @@ namespace YAMSE
                     case NodeType.InitScript:
                         dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.InitScript).Dncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
 
-                        currId = DncMethods.CreatePageID(dnc, nodeType);
+                        currId = DncMethods.CreatePageID(dnc);
 
                         if (activeDncs.Any(x => x == currId))
                         {
@@ -484,7 +484,7 @@ namespace YAMSE
                         break;
                     default:
                         dnc = scene2Data.Sections.Where(x => x.SectionType == NodeType.Unknown).SelectMany(x => x.Dncs).Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
-                        currId = DncMethods.CreatePageID(dnc, nodeType);
+                        currId = DncMethods.CreatePageID(dnc);
 
                         if (activeDncs.Any(x => x == currId))
                         {

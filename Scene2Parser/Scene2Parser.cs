@@ -18,16 +18,12 @@ namespace YAMSE
 
             bool headerParsed = false;
             bool sectionEnded = false;
-            bool definitionsParsed = false;
 
             int i = 0;
             int objectID = 0;
 
             // loading
             bool loadingHeaderShown = false;
-            bool loadingObjectsShown = false;
-            bool loadingObjectsDefinitionsShown = false;
-            bool loadingInitScriptsShown = false;
 
             const int IdLen = 2; // length of ID
 
@@ -53,28 +49,7 @@ namespace YAMSE
                         scene2Data.header.Size = tmpBuff.Skip(2).Take(4).ToList();
                         scene2Data.header.Content = tmpBuff.Skip(6).Take(i - 6).ToList();
 
-                        var sectionLen = tmpBuff.Skip(i).Skip(2).Take(4).ToArray();
-
-                        scene2Data.standardObjectsLength = BitConverter.ToInt32(sectionLen, 0);
-
-                        currSection = new Scene2Section() 
-                        { 
-                            Position = positionIterator, 
-                            SectionName = "Objects", 
-                            SectionType = NodeType.Object, 
-                            SectionStart = i, 
-                            SectionIdArr = tmpBuff.Skip(i).Take(2).ToArray(),
-                            SectionLength = BitConverter.ToInt32(sectionLen, 0) 
-                        };
-
-                        positionIterator++;
-
-                        scene2Data.Sections.Add(currSection);
-
-                        loggingList.Add("Loading objects...");
-                        loadingObjectsShown = true;
-
-                        i += 6;
+                        ParseKnownSection(scene2Data, loggingList, tmpBuff, ref i, ref currSection, ref positionIterator, "Loading objects...", "Objects", NodeType.Object);
                     }
                     else
                     {
@@ -83,31 +58,12 @@ namespace YAMSE
                 }
                 else
                 {
-                    // parse dncs objects
-                    if (tmpBuff[i] == 0x10 && tmpBuff[i + 1] == 0x40)
+                    // load dncs
+
+                    // definitions
+                    if (tmpBuff[i] == 0x21 && tmpBuff[i + 1] == 0xAE)
                     {
-                        Dnc currDnc = new Dnc
-                        {
-                            dncType = DncType.Unknown,
-                        };
-
-                        // get length
-                        int lenCurr = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(IdLen).Take(4).ToArray(), 0) - IdLen;
-
-                        currDnc.objectIDArr = tmpBuff.Skip(i).Take(IdLen).ToArray();
-                        currDnc.rawData = tmpBuff.Skip(i).Skip(IdLen).Take(lenCurr).ToArray();
-
-                        currDnc.rawDataBackup = new byte[currDnc.rawData.Length];
-                        currDnc.rawData.CopyTo(currDnc.rawDataBackup, 0);
-
-                        currDnc.dncType = GetObjectType(currDnc);
-                        currDnc.ID = objectID;
-                        currDnc.name = GetNameByID(currDnc);
-
-                        currSection.Dncs.Add(currDnc);
-
-                        objectID++;
-                        i += IdLen + lenCurr;
+                        LoadDnc(tmpBuff, ref i, ref objectID, IdLen, currSection);
                     }
                     else
                     {
@@ -118,7 +74,38 @@ namespace YAMSE
                         }
                     }
 
-                    
+                    // init scripts
+                    if (tmpBuff[i] == 0x51 && tmpBuff[i + 1] == 0xAE)
+                    {
+                        LoadDnc(tmpBuff, ref i, ref objectID, IdLen, currSection);
+                        if (i == tmpBuff.Length)
+                        {
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        if (i == currSection.SectionEnd)
+                        {
+                            sectionEnded = true;
+                            objectID = 0;
+                        }
+                    }
+
+                    // parse dncs objects
+                    if (tmpBuff[i] == 0x10 && tmpBuff[i + 1] == 0x40)
+                    {
+                        LoadDnc(tmpBuff, ref i, ref objectID, IdLen, currSection);
+                    }
+                    else
+                    {
+                        if (i == currSection.SectionEnd)
+                        {
+                            sectionEnded = true;
+                            objectID = 0;
+                        }
+                    }
+
                     if (sectionEnded)
                     {
                         // parse dncs definitions
@@ -126,167 +113,127 @@ namespace YAMSE
                         {
                             sectionEnded = false;
 
-                            var sectionLen = tmpBuff.Skip(i).Skip(2).Take(4).ToArray();
-
-                            currSection = new Scene2Section()
-                            {
-                                Position = positionIterator,
-                                SectionName = "Object definitions",
-                                SectionType = NodeType.Definition,
-                                SectionStart = i,
-                                SectionIdArr = tmpBuff.Skip(i).Take(2).ToArray(),
-                                SectionLength = BitConverter.ToInt32(sectionLen, 0)
-                            };
-
-                            positionIterator++;
-
-                            scene2Data.Sections.Add(currSection);
-
-                            i += 6;
-
-                            loggingList.Add("Loading object definitions...");
-                            loadingObjectsDefinitionsShown = true;
+                            ParseKnownSection(scene2Data, loggingList, tmpBuff, ref i, ref currSection, ref positionIterator, "Loading object definitions...", "Object definitions", NodeType.Definition);
                         }
 
                         // init scripts
                         if (tmpBuff[i] == 0x50 && tmpBuff[i + 1] == 0xAE)
                         {
                             sectionEnded = false;
-
-                            if (!loadingInitScriptsShown)
-                            {
-                                loggingList.Add("Loading init scripts...");
-                                loadingInitScriptsShown = true;
-
-                                var sectionLen = tmpBuff.Skip(i).Skip(2).Take(4).ToArray();
-
-                                currSection = new Scene2Section()
-                                {
-                                    Position = positionIterator,
-                                    SectionName = "Init scripts",
-                                    SectionType = NodeType.InitScript,
-                                    SectionStart = i,
-                                    SectionIdArr = tmpBuff.Skip(i).Take(2).ToArray(),
-                                    SectionLength = BitConverter.ToInt32(sectionLen, 0)
-                                };
-
-                                scene2Data.Sections.Add(currSection);
-
-                                positionIterator++;
-
-                                i += 6; // might cause problems
-                            }
+                            ParseKnownSection(scene2Data, loggingList, tmpBuff, ref i, ref currSection, ref positionIterator, "Loading init scripts...", "Init scripts", NodeType.InitScript);
                         }
 
                         if (sectionEnded)
                         { // if still true we have found unknown section
-
                             sectionEnded = false;
-                            int sectionLen = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(2).Take(4).ToArray(), 0);
-
-                            currSection = new Scene2Section()
-                            {
-                                Position = positionIterator,
-                                SectionName = $"Unknown {positionIterator}",
-                                SectionType = NodeType.Unknown,
-                                SectionStart = i,
-                                SectionIdArr = tmpBuff.Skip(i).Take(2).ToArray(),
-                                SectionLength = sectionLen
-                            };
-
-                            scene2Data.Sections.Add(currSection);
-
-                            positionIterator++;
-
-                            // get dncs
-
-                            i += 6; // move to first dnc
-
-                            int tmpPos = 6;
-                            objectID = 0;
-                            while(tmpPos < sectionLen)
-                            {
-                                int dncLen = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(2).Take(4).ToArray(), 0);
-                                
-                                Dnc currDnc = new Dnc
-                                {
-                                    dncType = DncType.Unknown,
-                                    name = $"Unknown {objectID}",
-                                    ID = objectID,
-                                    objectIDArr = tmpBuff.Skip(i).Take(IdLen).ToArray(),
-                                    rawData = tmpBuff.Skip(i).Skip(IdLen).Take(dncLen - IdLen).ToArray(),
-                                };
-
-                                currSection.Dncs.Add(currDnc);
-
-                                tmpPos += dncLen;
-                                objectID++;
-                                i += dncLen; // move to next dnc
-                            }
+                            ParseUnknownSection(scene2Data, tmpBuff, ref i, out objectID, IdLen, out currSection, ref positionIterator);
                         }
-                    }
-
-                    if (tmpBuff[i] == 0x21 && tmpBuff[i + 1] == 0xAE)
-                    {
-                        Dnc currDnc = new Dnc
-                        {
-                            dncType = DncType.Unknown,
-                        };
-
-                        // get length
-                        int lenCurr = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(IdLen).Take(4).ToArray(), 0) - IdLen;
-
-                        currDnc.objectIDArr = tmpBuff.Skip(i).Take(IdLen).ToArray();
-                        currDnc.rawData = tmpBuff.Skip(i).Skip(IdLen).Take(lenCurr).ToArray();
-
-                        currDnc.rawDataBackup = new byte[currDnc.rawData.Length];
-                        currDnc.rawData.CopyTo(currDnc.rawDataBackup, 0);
-
-                        currDnc.dncType = GetObjectDefinitionType(currDnc);
-                        currDnc.ID = objectID;
-                        currDnc.name = GetNameByDefinitionID(currDnc);
-
-                        currSection.Dncs.Add(currDnc);
-
-                        objectID++;
-                        i = i + IdLen + lenCurr;
-                        //i--;
-                    }
-                    else
-                    {
-                        if (i == currSection.SectionEnd)
-                        {
-                            sectionEnded = true;
-                            objectID = 0;
-                        }
-                    }
-
-                    if (tmpBuff[i] == 0x51 && tmpBuff[i + 1] == 0xAE)
-                    {
-                        Dnc currDnc = new Dnc
-                        {
-                            dncType = DncType.Unknown,
-                        };
-
-                        // get length
-                        int lenCurr = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(IdLen).Take(4).ToArray(), 0) - IdLen;
-
-                        currDnc.objectIDArr = tmpBuff.Skip(i).Take(IdLen).ToArray();
-                        currDnc.rawData = tmpBuff.Skip(i).Skip(IdLen).Take(lenCurr).ToArray();
-
-                        currDnc.rawDataBackup = new byte[currDnc.rawData.Length];
-                        currDnc.rawData.CopyTo(currDnc.rawDataBackup, 0);
-
-                        currDnc.dncType = DncType.InitScript;
-                        currDnc.name = GetNameByDefinitionID(currDnc);
-                        currDnc.ID = objectID;
-
-                        currSection.Dncs.Add(currDnc);
-
-                        objectID++;
-                        i = i + IdLen + lenCurr;
                     }
                 }
+            }
+        }
+
+        private static void LoadDnc(byte[] tmpBuff, ref int i, ref int objectID, int IdLen, Scene2Section currSection)
+        {
+            Dnc currDnc = new Dnc
+            {
+                dncType = DncType.Unknown,
+            };
+
+            // get length
+            int lenCurr = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(IdLen).Take(4).ToArray(), 0) - IdLen;
+
+            currDnc.objectIDArr = tmpBuff.Skip(i).Take(IdLen).ToArray();
+            currDnc.rawData = tmpBuff.Skip(i).Skip(IdLen).Take(lenCurr).ToArray();
+
+            currDnc.rawDataBackup = new byte[currDnc.rawData.Length];
+            currDnc.rawData.CopyTo(currDnc.rawDataBackup, 0);
+
+            currDnc.dncKind = currSection.SectionType;
+            currDnc.dncType = GetObjectDefinitionType(currDnc);
+
+            if (currDnc.dncType == DncType.Unknown)
+            {
+                currDnc.dncType = GetObjectType(currDnc);
+            }
+
+            currDnc.ID = objectID;
+            currDnc.name = GetNameByID(currDnc);
+
+            currSection.Dncs.Add(currDnc);
+
+            objectID++;
+            i = i + IdLen + lenCurr;
+        }
+
+        private static void ParseKnownSection(Scene2Data scene2Data, IList loggingList, byte[] tmpBuff, ref int i, ref Scene2Section currSection, ref int positionIterator, string logMsg, string sectionName, NodeType nodeType)
+        {
+            loggingList.Add(logMsg);
+
+            var sectionLen = tmpBuff.Skip(i).Skip(2).Take(4).ToArray();
+
+            currSection = new Scene2Section()
+            {
+                Position = positionIterator,
+                SectionName = sectionName,
+                SectionType = nodeType,
+                SectionStart = i,
+                SectionIdArr = tmpBuff.Skip(i).Take(2).ToArray(),
+                SectionLength = BitConverter.ToInt32(sectionLen, 0)
+            };
+
+            scene2Data.Sections.Add(currSection);
+
+            positionIterator++;
+
+            i += 6;
+        }
+
+        private static void ParseUnknownSection(Scene2Data scene2Data, byte[] tmpBuff, ref int i, out int objectID, int IdLen, out Scene2Section currSection, ref int positionIterator)
+        {
+            int sectionLen = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(2).Take(4).ToArray(), 0);
+
+            currSection = new Scene2Section()
+            {
+                Position = positionIterator,
+                SectionName = $"Unknown {positionIterator}",
+                SectionType = NodeType.Unknown,
+                SectionStart = i,
+                SectionIdArr = tmpBuff.Skip(i).Take(2).ToArray(),
+                SectionLength = sectionLen
+            };
+
+            scene2Data.Sections.Add(currSection);
+
+            positionIterator++;
+
+            // get dncs
+
+            i += 6; // move to first dnc
+
+            int tmpPos = 6;
+            objectID = 0;
+            while (tmpPos < sectionLen)
+            {
+                int dncLen = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(2).Take(4).ToArray(), 0);
+
+                Dnc currDnc = new Dnc
+                {
+                    dncType = DncType.Unknown,
+                    name = $"Unknown {objectID}",
+                    ID = objectID,
+                    objectIDArr = tmpBuff.Skip(i).Take(IdLen).ToArray(),
+                    rawData = tmpBuff.Skip(i).Skip(IdLen).Take(dncLen - IdLen).ToArray(),
+                };
+
+                currDnc.rawDataBackup = new byte[currDnc.rawData.Length];
+                currDnc.rawData.CopyTo(currDnc.rawDataBackup, 0);
+
+                currSection.Dncs.Add(currDnc);
+
+                tmpPos += dncLen;
+                objectID++;
+                i += dncLen; // move to next dnc
             }
         }
 
@@ -380,47 +327,45 @@ namespace YAMSE
             dnc.rawData = startArray.Concat(textInBytes).ToArray();
         }
 
-        private static string GetNameByDefinitionID(Dnc dnc)
+        private static string GetNameByID(Dnc dnc)
         {
             switch (dnc.dncType)
             {
                 case DncType.Unknown:
                     return $"Unknown {dnc.ID}";
-                case DncType.MovableBridge:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
-                case DncType.Car:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
-                case DncType.Script:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
+                
                 case DncType.InitScript:
 
                     var len = dnc.rawData[5];
 
                     return Encoding.ASCII.GetString(dnc.rawData, 0x9, len);
-
-                //return GetCStringFromByteArray(dnc.rawData.Skip(0x9).Take(maxObjectNameLength).ToArray());
-
-
+                case DncType.MovableBridge:
+                case DncType.Car:
+                case DncType.Script:
                 case DncType.PhysicalObject:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
                 case DncType.Door:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
                 case DncType.Tram:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
                 case DncType.GasStation:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
                 case DncType.PedestrianSetup:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
                 case DncType.Enemy:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
                 case DncType.Plane:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
                 case DncType.Player:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
                 case DncType.TrafficSetup:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
+                case DncType.LMAP:
+                case DncType.Sector:
+                case DncType.Clock:
+                    return GetCStringFromByteArray(dnc.rawData.Skip(10).Take(maxObjectNameLength).ToArray());
+
+                case DncType.Standard:
+                case DncType.Occluder:
+                case DncType.Model:
+                case DncType.Sound:
+                case DncType.Camera:
+                case DncType.CityMusic:
+                case DncType.Light:
+                    return GetCStringFromByteArray(dnc.rawData.Skip(20).Take(maxObjectNameLength).ToArray());
                 default:
-                    throw new InvalidOperationException(nameof(GetNameByDefinitionID));
+                    throw new InvalidOperationException(nameof(GetNameByID));
             }
         }
 
@@ -433,9 +378,6 @@ namespace YAMSE
         {
             if (dnc.rawData[4] == 0x10)
             { // either LMAP or sector
-                dnc.dncType = DncType.LMAP;
-                dnc.name = GetNameByID(dnc);
-
                 if (dnc.rawData.FindIndexOf(Encoding.ASCII.GetBytes("LMAP")).Any())
                 { // is LMAP
                     return DncType.LMAP;
@@ -454,37 +396,38 @@ namespace YAMSE
             }
             else
             {
-                if (dnc.rawData.FindIndexOf(new byte[] { 0x11, 0x40, 0x0A, 0x00, 0x00, 0x00, 0x0C }).Any())
+                var firstN = dnc.rawData.Take(20 + maxObjectNameLength).ToArray();
+                if (firstN.FindIndexOf(new byte[] { 0x11, 0x40, 0x0A, 0x00, 0x00, 0x00, 0x0C }).Any())
                 {
                     return DncType.Occluder;
                 }
                 else
                 {
-                    if (dnc.rawData.FindIndexOf(new byte[] { 0x11, 0x40, 0x0A, 0x00, 0x00, 0x00, 0x09 }).Any())
+                    if (firstN.FindIndexOf(new byte[] { 0x11, 0x40, 0x0A, 0x00, 0x00, 0x00, 0x09 }).Any())
                     {
                         return DncType.Model;
                     }
                     else
                     {
-                        if (dnc.rawData.FindIndexOf(new byte[] { 0x11, 0x40, 0x0A, 0x00, 0x00, 0x00, 0x04 }).Any())
+                        if (firstN.FindIndexOf(new byte[] { 0x11, 0x40, 0x0A, 0x00, 0x00, 0x00, 0x04 }).Any())
                         {
                             return DncType.Sound;
                         }
                         else
                         {
-                            if (dnc.rawData.FindIndexOf(new byte[] { 0x11, 0x40, 0x0A, 0x00, 0x00, 0x00, 0x03 }).Any())
+                            if (firstN.FindIndexOf(new byte[] { 0x11, 0x40, 0x0A, 0x00, 0x00, 0x00, 0x03 }).Any())
                             {
                                 return DncType.Camera;
                             }
                             else
                             {
-                                if (dnc.rawData.FindIndexOf(new byte[] { 0x11, 0x40, 0x0A, 0x00, 0x00, 0x00, 0x0E }).Any())
+                                if (firstN.FindIndexOf(new byte[] { 0x11, 0x40, 0x0A, 0x00, 0x00, 0x00, 0x0E }).Any())
                                 {
                                     return DncType.CityMusic;
                                 }
                                 else
                                 {
-                                    if (dnc.rawData.FindIndexOf(new byte[] { 0x11, 0x40, 0x0A, 0x00, 0x00, 0x00, 0x02 }).Any())
+                                    if (firstN.FindIndexOf(new byte[] { 0x11, 0x40, 0x0A, 0x00, 0x00, 0x00, 0x02 }).Any())
                                     {
                                         return DncType.Light;
                                     }
@@ -497,106 +440,90 @@ namespace YAMSE
             }
         }
 
-        private static string GetNameByID(Dnc dnc)
-        {
-            switch (dnc.dncType)
-            {
-                case DncType.Unknown:
-                    return $"Unknown {dnc.ID}";
-                case DncType.LMAP:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
-                case DncType.Standard:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(0x14).Take(maxObjectNameLength).ToArray());
-                case DncType.Sector:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(0xA).Take(maxObjectNameLength).ToArray());
-                case DncType.Occluder:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(0x14).Take(maxObjectNameLength).ToArray());
-                case DncType.Model:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(0x14).Take(maxObjectNameLength).ToArray());
-                case DncType.Sound:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(0x14).Take(maxObjectNameLength).ToArray());
-                case DncType.Camera:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(0x14).Take(maxObjectNameLength).ToArray());
-                case DncType.CityMusic:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(0x14).Take(maxObjectNameLength).ToArray());
-                case DncType.Light:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(0x14).Take(maxObjectNameLength).ToArray());
-                default:
-                    throw new InvalidOperationException(nameof(GetNameByID));
-            }
-        }
-
         private static DncType GetObjectDefinitionType(Dnc dnc)
         {
-            if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x04 }).Any())
+            if (dnc.rawData.Skip(4).Take(2).ToArray().FindIndexOf(new byte[] { 0x01, 0x0d }).Any())
+            {
+                return DncType.InitScript;
+            }
+
+            var firstN = dnc.rawData.Take(20 + maxObjectNameLength).ToArray();
+            if (firstN.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x04 }).Any())
             {
                 return DncType.Car;
             }
             else
             {
-                if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x14 }).Any())
+                if (firstN.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x14 }).Any())
                 {
                     return DncType.MovableBridge;
                 }
                 else
                 {
-                    if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x5 }).Any())
+                    if (firstN.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x5 }).Any())
                     {
                         return DncType.Script;
                     }
                     else
                     {
-                        if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x23 }).Any())
+                        if (firstN.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x23 }).Any())
                         {
                             return DncType.PhysicalObject;
                         }
                         else
                         {
-                            if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x6 }).Any())
+                            if (firstN.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x6 }).Any())
                             {
                                 return DncType.Door;
                             }
                             else
                             {
-                                if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x8 }).Any())
+                                if (firstN.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x8 }).Any())
                                 {
                                     return DncType.Tram;
                                 }
                                 else
                                 {
-                                    if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x19 }).Any())
+                                    if (firstN.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x19 }).Any())
                                     {
                                         return DncType.GasStation;
                                     }
                                     else
                                     {
-                                        if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x12 }).Any())
+                                        if (firstN.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x12 }).Any())
                                         {
                                             return DncType.PedestrianSetup;
                                         }
                                         else
                                         {
-                                            if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x1B }).Any())
+                                            if (firstN.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x1B }).Any())
                                             {
                                                 return DncType.Enemy;
                                             }
                                             else
                                             {
-                                                if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x16 }).Any())
+                                                if (firstN.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x16 }).Any())
                                                 {
                                                     return DncType.Plane;
                                                 }
                                                 else
                                                 {
-                                                    if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x2 }).Any())
+                                                    if (firstN.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x2 }).Any())
                                                     {
                                                         return DncType.Player;
                                                     }
                                                     else
                                                     {
-                                                        if (dnc.rawData.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0xC }).Any())
+                                                        if (firstN.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0xC }).Any())
                                                         {
                                                             return DncType.TrafficSetup;
+                                                        }
+                                                        else
+                                                        {
+                                                            if (firstN.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x22 }).Any())
+                                                            {
+                                                                return DncType.Clock;
+                                                            }
                                                         }
                                                     }
                                                 }

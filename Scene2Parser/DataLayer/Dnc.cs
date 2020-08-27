@@ -10,6 +10,8 @@ namespace YAMSE.DataLayer
         public byte[] objectIDArr = new byte[2];
         public DncType dncType = DncType.Unknown;
 
+        public NodeType dncKind = NodeType.Unknown;
+
         public string name;
 
         public byte[] rawData;

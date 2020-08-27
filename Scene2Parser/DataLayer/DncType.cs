@@ -29,6 +29,7 @@ namespace YAMSE.DataLayer
         Sound,
         Camera,
         CityMusic,
-        Light
+        Light,
+        Clock
     }
 }
