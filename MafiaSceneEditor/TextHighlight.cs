@@ -97,6 +97,7 @@ namespace YAMSE
             "recwaitforend",
             "recunload",
             "cleardifferences",
+            "car_setprojector",
         };
     }
 }

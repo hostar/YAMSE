@@ -12,6 +12,8 @@ features to add:
   export of DNCs
   import of DNCs
   mdi should ask if is trying to be closed without saving
+
+  editing of enemy script
   editing of city cars and pedestrians - low priority
 
   movable sub-forms with scripts - done
