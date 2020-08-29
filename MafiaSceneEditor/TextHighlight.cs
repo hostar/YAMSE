@@ -45,7 +45,7 @@ namespace YAMSE
             "player_lockcontrols",
             "zatmyse",
             "subtitle_add",
-            "event",
+            "event", 
             "camera_lock",
             "mission_objectivesclear",
             "person_playanim",
@@ -80,6 +80,12 @@ namespace YAMSE
             "detector_setsignal",
             "mission_objectives",
             "freeride_enablecar",
+            "enablemap",
+            "setnoanimhit",
+            "car_setaxis",
+            "stream_setloop",
+            "stream_play",
+            "stream_create"
         };
     }
 }
