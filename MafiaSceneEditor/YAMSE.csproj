@@ -6,9 +6,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <UseWPF>true</UseWPF>
 
-    <PublishTrimmed>true</PublishTrimmed>
-    <PublishSingleFile>true</PublishSingleFile>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    
   </PropertyGroup>
 
   <ItemGroup>
