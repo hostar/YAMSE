@@ -47,6 +47,7 @@ namespace YAMSE
         KryptonRibbonGroupButton kryptonRibbonGroupButtonWorkspaceArrange = new KryptonRibbonGroupButton();
 
         KryptonListBox listBoxOutput = new KryptonListBox();
+        KryptonLabel outputLabel = new KryptonLabel { Text = "Output", Location = new Point(0, 0), Size = new Size(100, 100) };
 
         TreeNode currentTreeNode;
 
@@ -97,20 +98,31 @@ namespace YAMSE
             Controls.Add(splitContainerOuter);
             Controls.Add(kryptonRibbon);
 
-            listBoxOutput.Dock = DockStyle.Fill;
+            listBoxOutput.Dock = DockStyle.None;
+            listBoxOutput.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top;
+            listBoxOutput.Location = new Point(0, 25);
+            listBoxOutput.Size = new Size(Width, 300);
 
             splitContainerInner.Dock = DockStyle.Fill;
+            splitContainerInner.SeparatorStyle = SeparatorStyle.HighProfile;
+
             splitContainerInner.Panel1.Controls.Add(kryptonWorkspaceTreeView);
             splitContainerInner.Panel2.Controls.Add(kryptonWorkspaceContent);
 
             splitContainerOuter.Dock = DockStyle.Fill;
+            splitContainerOuter.SplitterDistance = 400;
+
             splitContainerOuter.Orientation = Orientation.Horizontal;
             splitContainerOuter.Panel1.Controls.Add(splitContainerInner);
+
             splitContainerOuter.Panel2.Controls.Add(listBoxOutput);
+            splitContainerOuter.Panel2.Controls.Add(outputLabel);
+
+            splitContainerOuter.SeparatorStyle = SeparatorStyle.HighProfile;
 
             FormClosing += MainForm_Close;
 
-            MinimumSize = new Size(500, 500);
+            MinimumSize = new Size(600, 600);
 
             // this is essential, do not delete
             System.Windows.Application app = new System.Windows.Application
