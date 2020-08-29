@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using YAMSE.DataLayer;
+using YAMSE.Diagram.Classes;
 
 namespace YAMSE
 {
@@ -26,7 +27,7 @@ namespace YAMSE
 
         KryptonRibbon kryptonRibbon = new KryptonRibbon();
 
-        KryptonTreeView treeView1 = new KryptonTreeView();
+        internal KryptonTreeView treeView1 = new KryptonTreeView();
 
         KryptonContextMenuItem kryptonContextMenuItem1 = new KryptonContextMenuItem();
         KryptonContextMenuItem kryptonContextMenuItem2 = new KryptonContextMenuItem();
@@ -64,6 +65,8 @@ namespace YAMSE
         bool scene2FileLoaded = false;
 
         private Scene2Data scene2Data = new Scene2Data();
+
+        private DiagramVisualizer diagramVisualizer;
 
         public MainForm2()
         {
@@ -135,6 +138,8 @@ namespace YAMSE
             InitRibbon();
 
             ResumeLayout();
+
+            diagramVisualizer = new DiagramVisualizer(this);
         }
 
         private void InitRibbon()
@@ -194,6 +199,7 @@ namespace YAMSE
             kryptonRibbonGroup1.Items.AddRange(new KryptonRibbonGroupContainer[] {kryptonRibbonGroupTriple1});
 
             kryptonRibbonGroupButtonShowDiagram.TextLine1 = "Show diagram";
+            kryptonRibbonGroupButtonShowDiagram.Click += ShowScriptDependencyDiagram;
 
             kryptonRibbonGroupTriple1.Items.AddRange(new KryptonRibbonGroupItem[] {kryptonRibbonGroupButtonShowDiagram});
 
@@ -434,7 +440,7 @@ namespace YAMSE
             kryptonWorkspaceContent.FirstCell().Pages.Remove(page);
         }
 
-        private void SelectedObjectChanged(TreeNode e)
+        internal void SelectedObjectChanged(TreeNode e)
         {
             Dnc dnc;
             string currId = string.Empty;
@@ -737,5 +743,20 @@ namespace YAMSE
                 Scene2Parser.SaveScene(saveFileDialog1.OpenFile(), ref scene2Data, listBoxOutput.Items);
             }
         }
+
+        #region Diagram
+        private void ShowScriptDependencyDiagram(object sender, EventArgs e)
+        {
+            if (!scene2FileLoaded)
+            {
+                KryptonMessageBox.Show("First open Scene2 file.");
+                return;
+            }
+
+            diagramVisualizer = new DiagramVisualizer(this);
+            diagramVisualizer.Show();
+            diagramVisualizer.ShowScriptDependencyDiagram(scene2Data);
+        }
+        #endregion
     }
 }

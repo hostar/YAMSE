@@ -85,7 +85,9 @@ namespace YAMSE
             "car_setaxis",
             "stream_setloop",
             "stream_play",
-            "stream_create"
+            "stream_create",
+            "create_physicalobject",
+            "detector_waitforhit"
         };
     }
 }
