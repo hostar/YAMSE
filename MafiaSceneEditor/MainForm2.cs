@@ -49,8 +49,9 @@ namespace YAMSE
 
         KryptonRibbonQATButton kryptonQatButtonUndo = new KryptonRibbonQATButton();
 
+        TableLayoutPanel tableLayoutPanel2 = new TableLayoutPanel();
         KryptonListBox listBoxOutput = new KryptonListBox();
-        KryptonLabel outputLabel = new KryptonLabel { Text = "Output", Location = new Point(0, 0), Size = new Size(100, 100) };
+        KryptonLabel outputLabel = new KryptonLabel { Text = "Output"};
 
         TreeNode currentTreeNode;
 
@@ -67,6 +68,8 @@ namespace YAMSE
         private Scene2Data scene2Data = new Scene2Data();
 
         private DiagramVisualizer diagramVisualizer;
+
+        int _maxRecentDocs = 9;
 
         public MainForm2()
         {
@@ -103,10 +106,10 @@ namespace YAMSE
             Controls.Add(splitContainerOuter);
             Controls.Add(kryptonRibbon);
 
-            listBoxOutput.Dock = DockStyle.None;
-            listBoxOutput.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top;
-            listBoxOutput.Location = new Point(0, 25);
-            listBoxOutput.Size = new Size(Width, 300);
+            listBoxOutput.Dock = DockStyle.Fill;
+            //listBoxOutput.Anchor = AnchorStyles.Left | AnchorStyles.Top;
+            //listBoxOutput.Location = new Point(0, 25);
+            //listBoxOutput.Size = new Size(Width, 300);
 
             splitContainerInner.Dock = DockStyle.Fill;
             splitContainerInner.SeparatorStyle = SeparatorStyle.HighProfile;
@@ -120,8 +123,17 @@ namespace YAMSE
             splitContainerOuter.Orientation = Orientation.Horizontal;
             splitContainerOuter.Panel1.Controls.Add(splitContainerInner);
 
-            splitContainerOuter.Panel2.Controls.Add(listBoxOutput);
-            splitContainerOuter.Panel2.Controls.Add(outputLabel);
+            tableLayoutPanel2.BackColor = Color.FromArgb(221, 234, 247);
+            tableLayoutPanel2.ColumnCount = 1;
+            tableLayoutPanel2.RowCount = 2;
+            tableLayoutPanel2.Dock = DockStyle.Fill;
+            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
+            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 80F));
+
+            tableLayoutPanel2.Controls.Add(outputLabel, 0, 0);
+            tableLayoutPanel2.Controls.Add(listBoxOutput, 0, 1);
+
+            splitContainerOuter.Panel2.Controls.Add(tableLayoutPanel2);
 
             splitContainerOuter.SeparatorStyle = SeparatorStyle.HighProfile;
 
@@ -180,7 +192,7 @@ namespace YAMSE
             kryptonRibbonTab2.Text = "Workspace";
 
             kryptonRibbon.RibbonAppButton.AppButtonMenuItems.AddRange(new KryptonContextMenuItemBase[] {
-            kryptonContextMenuItem1,
+            /*kryptonContextMenuItem1,*/
             kryptonContextMenuItem2,
             kryptonContextMenuItem3,
             kryptonContextMenuItem4,
@@ -222,18 +234,21 @@ namespace YAMSE
 
         private void KryptonQatButtonUndo_Click(object sender, EventArgs e)
         {
-            KryptonPageId pageId = kryptonWorkspaceContent.ActivePage.Tag as KryptonPageId;
-
-            switch (pageId.PanelKind)
+            if (kryptonWorkspaceContent.ActivePage != null)
             {
-                case PanelKind.Text:
-                    pageId.ScintillaTextEditor.Undo();
-                    break;
-                case PanelKind.Hex:
-                    pageId.HexEditor.Undo();
-                    break;
-                default:
-                    break;
+                KryptonPageId pageId = kryptonWorkspaceContent.ActivePage.Tag as KryptonPageId;
+
+                switch (pageId.PanelKind)
+                {
+                    case PanelKind.Text:
+                        pageId.ScintillaTextEditor.Undo();
+                        break;
+                    case PanelKind.Hex:
+                        pageId.HexEditor.Undo();
+                        break;
+                    default:
+                        break;
+                }
             }
         }
 
@@ -376,6 +391,7 @@ namespace YAMSE
 
             TableLayoutPanel tableLayoutPanel1 = new TableLayoutPanel();
 
+            tableLayoutPanel1.BackColor = Color.FromArgb(221, 234, 247);
             tableLayoutPanel1.ColumnCount = 3;
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 114F));
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
@@ -542,6 +558,48 @@ namespace YAMSE
             }
         }
 
+        private void AddRecentFile(string filename)
+        {
+            // Search for an existing entry for that filename
+            KryptonRibbonRecentDoc recentDoc = null;
+            foreach (KryptonRibbonRecentDoc entry in kryptonRibbon.RibbonAppButton.AppButtonRecentDocs)
+                if (entry.Text.Equals(filename))
+                {
+                    recentDoc = entry;
+                    break;
+                }
+
+            // If no existing entry then create a new one
+            if (recentDoc == null)
+            {
+                recentDoc = new KryptonRibbonRecentDoc();
+                recentDoc.Click += (sender, e) => 
+                    {
+                        var recent = sender as KryptonRibbonRecentDoc;
+                        MemoryStream memoryStream = new MemoryStream();
+                        Stream tmpStream = File.OpenRead(recent.Text);
+                        tmpStream.CopyTo(memoryStream);
+                        tmpStream.Close();
+
+                        Scene2LoadInternal(memoryStream); 
+                    };
+                recentDoc.Text = filename;
+            }
+
+            // Remove entry from current list and insert at the top
+            kryptonRibbon.RibbonAppButton.AppButtonRecentDocs.Remove(recentDoc);
+            kryptonRibbon.RibbonAppButton.AppButtonRecentDocs.Insert(0, recentDoc);
+
+            // Restrict list to just 9 entries
+            if (kryptonRibbon.RibbonAppButton.AppButtonRecentDocs.Count > _maxRecentDocs)
+            {
+                for (int i = kryptonRibbon.RibbonAppButton.AppButtonRecentDocs.Count; i > _maxRecentDocs; i--)
+                {
+                    kryptonRibbon.RibbonAppButton.AppButtonRecentDocs.RemoveAt(kryptonRibbon.RibbonAppButton.AppButtonRecentDocs.Count - 1);
+                }
+            }
+        }
+
         private void Scene2FileLoad(object sender, EventArgs e)
         {
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
@@ -554,64 +612,35 @@ namespace YAMSE
                 tmpStream.CopyTo(memoryStream);
                 tmpStream.Close();
 
-                scene2Data = new Scene2Data();
+                Scene2LoadInternal(memoryStream);
 
-                Scene2Parser.LoadScene(memoryStream, ref scene2Data, listBoxOutput.Items);
+                AddRecentFile(openFileDialog1.FileName);
+            }
+        }
 
-                // put into treeview
-                // objects
-                treeView1.Nodes.Clear();
+        private void Scene2LoadInternal(MemoryStream memoryStream)
+        {
+            scene2Data = new Scene2Data();
 
-                int i = 0;
+            Scene2Parser.LoadScene(memoryStream, ref scene2Data, listBoxOutput.Items);
 
-                foreach (Scene2Section section in scene2Data.Sections)
-                {
-                    TreeNode objectsTreeNode = new TreeNode(section.SectionName);
+            // put into treeview
+            treeView1.Nodes.Clear();
 
-                    foreach (IGrouping<DncType, Dnc> item in section.Dncs.GroupBy(x => x.dncType))
-                    {
-                        TreeNode treeNodeParent = new TreeNode(item.Key.ToString());
+            int i = 0;
 
-                        if (item.Key == DncType.Unknown)
-                        {
-                            treeNodeParent.Text += $" {section.SectionName}";
-                        }
+            foreach (Scene2Section section in scene2Data.Sections)
+            {
+                TreeNode objectsTreeNode = new TreeNode(section.SectionName);
 
-                        i = 0;
-
-                        List<TreeNode> nodeList = new List<TreeNode>();
-                        foreach (Dnc dnc in item)
-                        {
-                            TreeNode treeNode = new TreeNode
-                            {
-                                Text = dnc.name,
-                                Tag = new NodeTag
-                                {
-                                    id = dnc.ID,
-                                    nodeType = section.SectionType
-                                }
-                            };
-
-                            nodeList.Add(treeNode);
-                            i++;
-                        }
-
-                        // sort nodes
-                        nodeList = nodeList.OrderBy(x => x.Text).ToList();
-
-                        treeNodeParent.Nodes.AddRange(nodeList.ToArray());
-
-                        treeNodeParent.Text += $" [{nodeList.Count}]";
-                        objectsTreeNode.Nodes.Add(treeNodeParent);
-                    }
-                    treeView1.Nodes.Add(objectsTreeNode);
-
-                }
-
-                /*
-                foreach (IGrouping<ObjectIDs, Dnc> item in scene2Data.objectsDncs.GroupBy(x => x.objectType))
+                foreach (IGrouping<DncType, Dnc> item in section.Dncs.GroupBy(x => x.dncType))
                 {
                     TreeNode treeNodeParent = new TreeNode(item.Key.ToString());
+
+                    if (item.Key == DncType.Unknown)
+                    {
+                        treeNodeParent.Text += $" {section.SectionName}";
+                    }
 
                     i = 0;
 
@@ -624,7 +653,7 @@ namespace YAMSE
                             Tag = new NodeTag
                             {
                                 id = dnc.ID,
-                                nodeType = NodeType.Object
+                                nodeType = section.SectionType
                             }
                         };
 
@@ -635,112 +664,36 @@ namespace YAMSE
                     // sort nodes
                     nodeList = nodeList.OrderBy(x => x.Text).ToList();
 
-                    foreach (TreeNode node2 in nodeList)
-                    {
-                        treeNodeParent.Nodes.Add(node2);
-                    }
+                    treeNodeParent.Nodes.AddRange(nodeList.ToArray());
 
                     treeNodeParent.Text += $" [{nodeList.Count}]";
                     objectsTreeNode.Nodes.Add(treeNodeParent);
                 }
                 treeView1.Nodes.Add(objectsTreeNode);
 
-
-                // definitions
-                TreeNode defsTreeNode = new TreeNode("Object Definitions");
-                foreach (IGrouping<DefinitionIDs, Dnc> item in scene2Data.objectDefinitionsDncs.GroupBy(x => x.definitionType))
-                {
-                    TreeNode treeNodeParent = new TreeNode(item.Key.ToString());
-
-                    i = 0;
-
-                    List<TreeNode> nodeList = new List<TreeNode>();
-                    foreach (Dnc dnc in item)
-                    {
-                        TreeNode treeNode = new TreeNode
-                        {
-                            Text = dnc.name,
-                            Tag = new NodeTag
-                            {
-                                id = dnc.ID,
-                                nodeType = NodeType.Definition
-                            }
-                        };
-
-                        nodeList.Add(treeNode);
-                        i++;
-                    }
-
-                    // sort nodes
-                    nodeList = nodeList.OrderBy(x => x.Text).ToList();
-
-                    foreach (TreeNode node2 in nodeList)
-                    {
-                        treeNodeParent.Nodes.Add(node2);
-                    }
-
-                    treeNodeParent.Text += $" [{nodeList.Count}]";
-                    defsTreeNode.Nodes.Add(treeNodeParent);
-                }
-
-                treeView1.Nodes.Add(defsTreeNode);
-
-                // init scripts
-                TreeNode initScriptTreeNode = new TreeNode("Init script");
-                foreach (IGrouping<DefinitionIDs, Dnc> item in scene2Data.initScriptsDncs.GroupBy(x => x.definitionType))
-                {
-                    TreeNode treeNodeParent = new TreeNode(item.Key.ToString());
-
-                    i = 0;
-
-                    List<TreeNode> nodeList = new List<TreeNode>();
-                    foreach (Dnc dnc in item)
-                    {
-                        TreeNode treeNode = new TreeNode
-                        {
-                            Text = dnc.name,
-                            Tag = new NodeTag
-                            {
-                                id = dnc.ID,
-                                nodeType = NodeType.InitScript
-                            }
-                        };
-
-                        nodeList.Add(treeNode);
-                        i++;
-                    }
-
-                    // sort nodes
-                    nodeList = nodeList.OrderBy(x => x.Text).ToList();
-
-                    foreach (TreeNode node2 in nodeList)
-                    {
-                        treeNodeParent.Nodes.Add(node2);
-                    }
-
-                    treeNodeParent.Text += $" [{nodeList.Count}]";
-                    initScriptTreeNode.Nodes.Add(treeNodeParent);
-                }
-
-                treeView1.Nodes.Add(initScriptTreeNode);
-                */
-
-                listBoxOutput.Items.Add("Loading of file done.");
             }
+
+            listBoxOutput.Items.Add("Loading of file done.");
         }
 
         private void Scene2FileSave(object sender, EventArgs e)
         {
-            var tmpStream = new FileStream(openFileDialog1.FileName, FileMode.Create);
-            Scene2Parser.SaveScene(tmpStream, ref scene2Data, listBoxOutput.Items);
-            tmpStream.Close();
+            if (scene2FileLoaded)
+            {
+                var tmpStream = new FileStream(openFileDialog1.FileName, FileMode.Create);
+                Scene2Parser.SaveScene(tmpStream, ref scene2Data, listBoxOutput.Items);
+                tmpStream.Close();
+            }
         }
 
         private void Scene2FileSaveAs(object sender, EventArgs e)
         {
-            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+            if (scene2FileLoaded)
             {
-                Scene2Parser.SaveScene(saveFileDialog1.OpenFile(), ref scene2Data, listBoxOutput.Items);
+                if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+                {
+                    Scene2Parser.SaveScene(saveFileDialog1.OpenFile(), ref scene2Data, listBoxOutput.Items);
+                }
             }
         }
 

@@ -25,7 +25,6 @@ namespace YAMSE
                 default:
                     break;
             }
-            
         }
 
         public static void BtnRevertClick(object sender, EventArgs eventArgs)

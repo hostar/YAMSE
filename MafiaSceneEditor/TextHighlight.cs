@@ -87,7 +87,16 @@ namespace YAMSE
             "stream_play",
             "stream_create",
             "create_physicalobject",
-            "detector_waitforhit"
+            "detector_waitforhit",
+            "car_invisible",
+            "iscarusable",
+            "endofmission",
+            "game_nightmission",
+            "loaddifferences",
+            "recloadfull",
+            "recwaitforend",
+            "recunload",
+            "cleardifferences",
         };
     }
 }
