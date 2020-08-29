@@ -71,6 +71,8 @@ namespace YAMSE
 
         int _maxRecentDocs = 9;
 
+        string fNameRecent = "\\recent.list";
+
         public MainForm2()
         {
             // KryptonExplorer
@@ -230,6 +232,16 @@ namespace YAMSE
 
             kryptonRibbonTab2.Groups.AddRange(new KryptonRibbonGroup[] {
             kryptonRibbonGroup2});
+
+            var fullPathRecent = Directory.GetCurrentDirectory() + fNameRecent;
+
+            if (File.Exists(fullPathRecent))
+            {
+                foreach (var path in File.ReadAllLines(fullPathRecent))
+                {
+                    AddRecentFile(path);
+                }
+            }
         }
 
         private void KryptonQatButtonUndo_Click(object sender, EventArgs e)
@@ -257,6 +269,10 @@ namespace YAMSE
             if (KryptonMessageBox.Show("Are you sure you want to exit?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.No)
             {
                 e.Cancel = true;
+            }
+            else
+            {
+                File.WriteAllText(Directory.GetCurrentDirectory() + fNameRecent, string.Join(Environment.NewLine, kryptonRibbon.RibbonAppButton.AppButtonRecentDocs.Select(x => x.Text)));
             }
         }
 
