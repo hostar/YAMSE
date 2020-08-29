@@ -4,6 +4,7 @@
     {
         Object,
         Definition,
-        InitScript
+        InitScript,
+        Unknown
     }
 }

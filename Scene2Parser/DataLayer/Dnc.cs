@@ -8,8 +8,9 @@ namespace YAMSE.DataLayer
     {
         public int ID;
         public byte[] objectIDArr = new byte[2];
-        public ObjectIDs     objectType = ObjectIDs.Unknown;
-        public DefinitionIDs definitionType = DefinitionIDs.Unknown;
+        public DncType dncType = DncType.Unknown;
+
+        public NodeType dncKind = NodeType.Unknown;
 
         public string name;
 

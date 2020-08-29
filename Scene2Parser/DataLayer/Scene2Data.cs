@@ -17,11 +17,7 @@ namespace YAMSE.DataLayer
                 0x00,0x00,0x7A,0x44
             };
 
-        public List<Dnc> objectsDncs { get; set; } = new List<Dnc>();
-
-        public List<Dnc> objectDefinitionsDncs { get; set; } = new List<Dnc>();
-
-        public List<Dnc> initScriptsDncs { get; set; } = new List<Dnc>();
+        public List<Scene2Section> Sections { get; set; } = new List<Scene2Section>();
 
         public Header header { get; set; } = new Header();
 
@@ -32,5 +28,6 @@ namespace YAMSE.DataLayer
 
         public int objectsDefinitionStartPosition = 0;
         public int objectsDefinitionLength = 0;
+        
     }
 }

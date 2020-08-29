@@ -4,7 +4,7 @@ using System.Text;
 
 namespace YAMSE.DataLayer
 {
-    public enum DefinitionIDs
+    public enum DncType
     {
         Unknown,
         MovableBridge,
@@ -20,5 +20,16 @@ namespace YAMSE.DataLayer
         Plane,
         Player,
         TrafficSetup,
+
+        LMAP,
+        Sector,
+        Standard,
+        Occluder,
+        Model,
+        Sound,
+        Camera,
+        CityMusic,
+        Light,
+        Clock
     }
 }

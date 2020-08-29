@@ -162,7 +162,7 @@ namespace YAMSE
 
             int left = 0;
             int top = 0;
-            foreach (var script in scene2Data.objectDefinitionsDncs.Where(x => x.definitionType == DefinitionIDs.Script))
+            foreach (var script in scene2Data.Sections.First(x => x.SectionType == NodeType.Definition).Dncs.Where(x => x.dncType == DncType.Script))
             {
                 // get references from scripts
                 // findactor xx, "name"
@@ -395,7 +395,7 @@ namespace YAMSE
 
                 int i = 0;
                 TreeNode objectsTreeNode = new TreeNode("Objects");
-                foreach (var item in scene2Data.objectsDncs.GroupBy(x => x.objectType))
+                foreach (var item in scene2Data.Sections.First(x => x.SectionType == NodeType.Object).Dncs.GroupBy(x => x.dncType))
                 {
                     TreeNode treeNodeParent = new TreeNode(item.Key.ToString());
 
@@ -434,7 +434,7 @@ namespace YAMSE
 
                 // definitions
                 TreeNode defsTreeNode = new TreeNode("Object Definitions");
-                foreach (var item in scene2Data.objectDefinitionsDncs.GroupBy(x => x.definitionType))
+                foreach (var item in scene2Data.Sections.First(x => x.SectionType == NodeType.Definition).Dncs.GroupBy(x => x.dncType))
                 {
                     TreeNode treeNodeParent = new TreeNode(item.Key.ToString());
 
@@ -473,7 +473,7 @@ namespace YAMSE
 
                 // init scripts
                 TreeNode initScriptTreeNode = new TreeNode("Init script");
-                foreach (var item in scene2Data.initScriptsDncs.GroupBy(x => x.definitionType))
+                foreach (var item in scene2Data.Sections.First(x => x.SectionType == NodeType.InitScript).Dncs.GroupBy(x => x.dncType))
                 {
                     TreeNode treeNodeParent = new TreeNode(item.Key.ToString());
 
@@ -546,7 +546,7 @@ namespace YAMSE
                         //elementHostHexEditor.Show();
                         elementHostDiagramEditor.Hide();
                         //hexEditor.Stream = new MemoryStream(scene2Data.objectsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault().rawData);
-                        dnc = scene2Data.objectsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+                        dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.Object).Dncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
 
                         if (mdiForms.Any(x => (string)x.Tag == CreateInnerFormTag(dnc)))
                         {
@@ -557,11 +557,11 @@ namespace YAMSE
                         break;
                     case NodeType.Definition:
 
-                        dnc = scene2Data.objectDefinitionsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+                        dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.Definition).Dncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
 
-                        switch (dnc.definitionType)
+                        switch (dnc.dncType)
                         {
-                            case DefinitionIDs.Script:
+                            case DncType.Script:
                                 elementHostHexEditor.Hide();
                                 elementHostDiagramEditor.Hide();
 
@@ -573,18 +573,18 @@ namespace YAMSE
                                 CreateMdiForm(dnc, Scene2Parser.GetStringFromDnc(dnc));
                                 break;
 
-                            case DefinitionIDs.PhysicalObject:
-                            case DefinitionIDs.Door:
-                            case DefinitionIDs.Tram:
-                            case DefinitionIDs.GasStation:
-                            case DefinitionIDs.PedestrianSetup:
-                            case DefinitionIDs.Enemy:
-                            case DefinitionIDs.Plane:
-                            case DefinitionIDs.Player:
-                            case DefinitionIDs.TrafficSetup:
-                            case DefinitionIDs.Unknown:
-                            case DefinitionIDs.MovableBridge:
-                            case DefinitionIDs.Car:
+                            case DncType.PhysicalObject:
+                            case DncType.Door:
+                            case DncType.Tram:
+                            case DncType.GasStation:
+                            case DncType.PedestrianSetup:
+                            case DncType.Enemy:
+                            case DncType.Plane:
+                            case DncType.Player:
+                            case DncType.TrafficSetup:
+                            case DncType.Unknown:
+                            case DncType.MovableBridge:
+                            case DncType.Car:
                             default:
                                 if (mdiForms.Any(x => (string)x.Tag == CreateInnerFormTag(dnc)))
                                 {
@@ -594,7 +594,7 @@ namespace YAMSE
                                 CreateMdiForm(dnc);
                                 break;
                         }
-                        if (dnc.definitionType == DefinitionIDs.Script)
+                        if (dnc.dncType == DncType.Script)
                         {
                             elementHostHexEditor.Hide();
                             elementHostDiagramEditor.Hide();
@@ -624,7 +624,7 @@ namespace YAMSE
                         
                         break;
                     case NodeType.InitScript:
-                        dnc = scene2Data.initScriptsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+                        dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.InitScript).Dncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
 
                         //fctb.Text = GetStringFromInitScript(dnc);
                         elementHostHexEditor.Hide();
@@ -686,7 +686,7 @@ namespace YAMSE
         /// <returns></returns>
         private static string CreateInnerFormTag(Dnc dnc)
         {
-            return $"{dnc.definitionType} ; {dnc.name}";
+            return $"{dnc.dncType} ; {dnc.name}";
         }
 
         private static string GetStringFromInitScript(Dnc dnc)
