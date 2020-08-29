@@ -46,6 +46,8 @@ namespace YAMSE
         KryptonRibbonGroupButton kryptonRibbonGroupButtonShowDiagram = new KryptonRibbonGroupButton();
         KryptonRibbonGroupButton kryptonRibbonGroupButtonWorkspaceArrange = new KryptonRibbonGroupButton();
 
+        KryptonRibbonQATButton kryptonQatButtonUndo = new KryptonRibbonQATButton();
+
         KryptonListBox listBoxOutput = new KryptonListBox();
         KryptonLabel outputLabel = new KryptonLabel { Text = "Output", Location = new Point(0, 0), Size = new Size(100, 100) };
 
@@ -159,7 +161,15 @@ namespace YAMSE
             kryptonContextMenuItemExit.Click += (sender, e) => { Close(); };
 
             kryptonRibbon.HideRibbonSize = new Size(100, 250);
-            kryptonRibbon.QATLocation = QATLocation.Hidden;
+            kryptonRibbon.QATLocation = QATLocation.Below;
+            kryptonRibbon.QATUserChange = false;
+
+            kryptonQatButtonUndo.Text = "Undo";
+            kryptonQatButtonUndo.Image = Resources.undo2;
+
+            kryptonQatButtonUndo.Click += KryptonQatButtonUndo_Click;
+
+            kryptonRibbon.QATButtons.Add(kryptonQatButtonUndo);
 
             kryptonRibbonTab1.Text = "Tools";
             kryptonRibbonTab2.Text = "Workspace";
@@ -179,16 +189,13 @@ namespace YAMSE
             kryptonRibbonGroup1.DialogBoxLauncher = false;
             kryptonRibbonGroup1.TextLine1 = "Visualization";
 
-            kryptonRibbonTab1.Groups.AddRange(new KryptonRibbonGroup[] {
-            kryptonRibbonGroup1});
+            kryptonRibbonTab1.Groups.AddRange(new KryptonRibbonGroup[] {kryptonRibbonGroup1});
 
-            kryptonRibbonGroup1.Items.AddRange(new KryptonRibbonGroupContainer[] {
-            kryptonRibbonGroupTriple1});
+            kryptonRibbonGroup1.Items.AddRange(new KryptonRibbonGroupContainer[] {kryptonRibbonGroupTriple1});
 
             kryptonRibbonGroupButtonShowDiagram.TextLine1 = "Show diagram";
 
-            kryptonRibbonGroupTriple1.Items.AddRange(new KryptonRibbonGroupItem[] {
-            kryptonRibbonGroupButtonShowDiagram});
+            kryptonRibbonGroupTriple1.Items.AddRange(new KryptonRibbonGroupItem[] {kryptonRibbonGroupButtonShowDiagram});
 
             kryptonRibbonGroup2.DialogBoxLauncher = false;
             kryptonRibbonGroup2.MinimumWidth = 200;
@@ -205,6 +212,23 @@ namespace YAMSE
 
             kryptonRibbonTab2.Groups.AddRange(new KryptonRibbonGroup[] {
             kryptonRibbonGroup2});
+        }
+
+        private void KryptonQatButtonUndo_Click(object sender, EventArgs e)
+        {
+            KryptonPageId pageId = kryptonWorkspaceContent.ActivePage.Tag as KryptonPageId;
+
+            switch (pageId.PanelKind)
+            {
+                case PanelKind.Text:
+                    pageId.ScintillaTextEditor.Undo();
+                    break;
+                case PanelKind.Hex:
+                    pageId.HexEditor.Undo();
+                    break;
+                default:
+                    break;
+            }
         }
 
         private void MainForm_Close(object sender, FormClosingEventArgs e)

@@ -148,4 +148,7 @@ xmlns:av="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:dd="u
   <data name="undo" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\undo.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="undo2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\undo2.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
 </root>
