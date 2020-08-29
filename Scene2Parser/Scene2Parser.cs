@@ -442,7 +442,7 @@ namespace YAMSE
 
         private static DncType GetObjectDefinitionType(Dnc dnc)
         {
-            if (dnc.rawData.Skip(4).Take(2).ToArray().FindIndexOf(new byte[] { 0x01, 0x0d }).Any())
+            if (dnc.rawData.Skip(4).Take(1).ToArray().FindIndexOf(new byte[] { 0x01 /*, 0x0d */ }).Any())
             {
                 return DncType.InitScript;
             }
