@@ -7,8 +7,10 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Windows.Forms;
 using YAMSE.DataLayer;
 using YAMSE.Diagram.Classes;
@@ -76,6 +78,8 @@ namespace YAMSE
         public MainForm2()
         {
             // KryptonExplorer
+            Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
+
             InitializeComponent();
             SuspendLayout();
 
@@ -469,7 +473,20 @@ namespace YAMSE
         {
             KryptonPage page = (sender as ButtonSpecAny).Tag as KryptonPage;
             activeDncs.Remove(page.Tag.ToString());
-            kryptonWorkspaceContent.FirstCell().Pages.Remove(page);
+            try
+            {
+                KryptonWorkspaceCell currCell = kryptonWorkspaceContent.FirstCell();
+                while(!currCell.Pages.Contains(page))
+                {
+                    currCell = kryptonWorkspaceContent.NextCell(currCell);
+                }
+                currCell.Pages.Remove(page);
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
         }
 
         internal void SelectedObjectChanged(TreeNode e)
