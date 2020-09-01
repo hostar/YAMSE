@@ -332,8 +332,9 @@ namespace YAMSE
             switch (dnc.dncType)
             {
                 case DncType.Unknown:
-                    return $"Unknown {dnc.ID}";
-                
+                    //return $"Unknown {dnc.ID}";
+                    return GetCStringFromByteArray(dnc.rawData.Skip(10).Take(maxObjectNameLength).ToArray());
+
                 case DncType.InitScript:
 
                     var len = dnc.rawData[5];
@@ -353,6 +354,8 @@ namespace YAMSE
                 case DncType.TrafficSetup:
                 case DncType.LMAP:
                 case DncType.Sector:
+                case DncType.Wagon:
+                case DncType.Route:
                 case DncType.Clock:
                     return GetCStringFromByteArray(dnc.rawData.Skip(10).Take(maxObjectNameLength).ToArray());
 
@@ -523,6 +526,20 @@ namespace YAMSE
                                                             if (firstN.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x22 }).Any())
                                                             {
                                                                 return DncType.Clock;
+                                                            }
+                                                            else
+                                                            {
+                                                                if (firstN.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x1E }).Any())
+                                                                {
+                                                                    return DncType.Wagon;
+                                                                }
+                                                                else
+                                                                {
+                                                                    if (firstN.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x18 }).Any())
+                                                                    {
+                                                                        return DncType.Route;
+                                                                    }
+                                                                }
                                                             }
                                                         }
                                                     }
