@@ -30,6 +30,8 @@ namespace YAMSE.DataLayer
         Camera,
         CityMusic,
         Light,
-        Clock
+        Clock,
+        Wagon,
+        Route
     }
 }
