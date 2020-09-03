@@ -314,36 +314,17 @@ namespace YAMSE
 
         public static void UpdateStringInDnc(Dnc dnc, string text)
         {
-            var startArray = dnc.rawData.Take(dnc.name.Length + 41).ToArray();
-
-            // recalculate array length
-            var textInBytes = Encoding.UTF8.GetBytes(text);
-            var bytesLen = BitConverter.GetBytes(textInBytes.Length + startArray.Length + IdLen);
-
-            for (int i = 0; i < bytesLen.Length; i++)
-            {
-                startArray[i] = bytesLen[i];
-            }
-
-            // recalculate additional size
-            bytesLen = BitConverter.GetBytes(textInBytes.Length);
-            for (int i = 0; i < bytesLen.Length; i++)
-            {
-                startArray[dnc.name.Length + 37 + i] = bytesLen[i];
-            }
-
-            bytesLen = BitConverter.GetBytes(textInBytes.Length + 20);
-            for (int i = 0; i < bytesLen.Length; i++)
-            {
-                startArray[dnc.name.Length + 23 + i] = bytesLen[i];
-            }
-
-            dnc.rawData = startArray.Concat(textInBytes).ToArray();
+            UpdateStringInDncInternal(dnc, text, 41);
         }
 
         public static void UpdateStringInEnemyDnc(Dnc dnc, string text)
         {
-            var startArray = dnc.rawData.Take(dnc.name.Length + 110).ToArray();
+            UpdateStringInDncInternal(dnc, text, 110);
+        }
+
+        private static void UpdateStringInDncInternal(Dnc dnc, string text, int offset)
+        {
+            var startArray = dnc.rawData.Take(dnc.name.Length + offset).ToArray();
 
             // recalculate array length
             var textInBytes = Encoding.UTF8.GetBytes(text);
