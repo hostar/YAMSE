@@ -64,7 +64,6 @@ namespace YAMSE
 
         //KryptonWorkspaceCell workspaceMain = new KryptonWorkspaceCell();
 
-        bool isDirty = false;
         bool scene2FileLoaded = false;
 
         private Scene2Data scene2Data = new Scene2Data();
@@ -489,6 +488,19 @@ namespace YAMSE
             }
         }
 
+        private void CloseAllPages()
+        {
+            KryptonWorkspaceCell currCell = kryptonWorkspaceContent.FirstCell();
+            while (kryptonWorkspaceContent.NextCell(currCell) != null)
+            {
+                currCell.Pages.Clear();
+                currCell = kryptonWorkspaceContent.NextCell(currCell);
+            }
+            currCell.Pages.Clear();
+
+            activeDncs.Clear();
+        }
+
         internal void SelectedObjectChanged(TreeNode e)
         {
             Dnc dnc;
@@ -540,13 +552,15 @@ namespace YAMSE
                                 activeDncs.Add(currId);
                                 CreatePage(dnc, PanelKind.Text, Scene2Parser.GetStringFromDnc(dnc));
                                 break;
-
+                            case DncType.Enemy:
+                                activeDncs.Add(currId);
+                                CreatePage(dnc, PanelKind.Text, Scene2Parser.GetStringFromDnc(dnc));
+                                break;
                             case DncType.PhysicalObject:
                             case DncType.Door:
                             case DncType.Tram:
                             case DncType.GasStation:
                             case DncType.PedestrianSetup:
-                            case DncType.Enemy:
                             case DncType.Plane:
                             case DncType.Player:
                             case DncType.TrafficSetup:
@@ -611,10 +625,17 @@ namespace YAMSE
                         var recent = sender as KryptonRibbonRecentDoc;
                         MemoryStream memoryStream = new MemoryStream();
                         Stream tmpStream = File.OpenRead(recent.Text);
+                        
+                        openFileDialog1.FileName = recent.Text;
+
                         tmpStream.CopyTo(memoryStream);
                         tmpStream.Close();
 
-                        Scene2LoadInternal(memoryStream); 
+                        Scene2LoadInternal(memoryStream);
+
+                        CloseAllPages();
+
+                        scene2FileLoaded = true;
                     };
                 recentDoc.Text = filename;
             }
@@ -637,7 +658,6 @@ namespace YAMSE
         {
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                scene2FileLoaded = true;
                 listBoxOutput.Items.Add("Loading file...");
 
                 MemoryStream memoryStream = new MemoryStream();
@@ -646,6 +666,10 @@ namespace YAMSE
                 tmpStream.Close();
 
                 Scene2LoadInternal(memoryStream);
+
+                CloseAllPages();
+
+                scene2FileLoaded = true;
 
                 AddRecentFile(openFileDialog1.FileName);
             }

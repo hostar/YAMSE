@@ -17,7 +17,16 @@ namespace YAMSE
             switch (pageId.PanelKind)
             {
                 case PanelKind.Text:
-                    Scene2Parser.UpdateStringInDnc(pageId.Dnc, pageId.ScintillaTextEditor.Text);
+                    switch (pageId.Dnc.dncType)
+                    {                        
+                        case DncType.Script:
+                        case DncType.InitScript:
+                            Scene2Parser.UpdateStringInDnc(pageId.Dnc, pageId.ScintillaTextEditor.Text);
+                            break;
+                        case DncType.Enemy:
+                            Scene2Parser.UpdateStringInEnemyDnc(pageId.Dnc, pageId.ScintillaTextEditor.Text);
+                            break;
+                    }
                     break;
                 case PanelKind.Hex:
                     pageId.Dnc.rawData = pageId.HexEditor.GetAllBytes(true);

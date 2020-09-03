@@ -282,11 +282,25 @@ namespace YAMSE
 
         public static string GetStringFromDnc(Dnc dnc, bool useBackup = false)
         {
+            int offset = 0;
+
+            switch (dnc.dncType)
+            {
+                case DncType.Script:
+                    offset = 41;
+                    break;
+                case DncType.InitScript:
+                    break;
+                case DncType.Enemy:
+                    offset = 110;
+                    break;
+            }
+
             if (useBackup)
             {
-                return Encoding.UTF8.GetString(dnc.rawDataBackup.Skip(dnc.name.Length + 41).ToArray());
+                return Encoding.UTF8.GetString(dnc.rawDataBackup.Skip(dnc.name.Length + offset).ToArray());
             }
-            return Encoding.UTF8.GetString(dnc.rawData.Skip(dnc.name.Length + 41).ToArray());
+            return Encoding.UTF8.GetString(dnc.rawData.Skip(dnc.name.Length + offset).ToArray());
         }
 
         public static string GetStringFromInitScript(Dnc dnc, bool useBackup = false)
@@ -301,6 +315,35 @@ namespace YAMSE
         public static void UpdateStringInDnc(Dnc dnc, string text)
         {
             var startArray = dnc.rawData.Take(dnc.name.Length + 41).ToArray();
+
+            // recalculate array length
+            var textInBytes = Encoding.UTF8.GetBytes(text);
+            var bytesLen = BitConverter.GetBytes(textInBytes.Length + startArray.Length + IdLen);
+
+            for (int i = 0; i < bytesLen.Length; i++)
+            {
+                startArray[i] = bytesLen[i];
+            }
+
+            // recalculate additional size
+            bytesLen = BitConverter.GetBytes(textInBytes.Length);
+            for (int i = 0; i < bytesLen.Length; i++)
+            {
+                startArray[dnc.name.Length + 37 + i] = bytesLen[i];
+            }
+
+            bytesLen = BitConverter.GetBytes(textInBytes.Length + 20);
+            for (int i = 0; i < bytesLen.Length; i++)
+            {
+                startArray[dnc.name.Length + 23 + i] = bytesLen[i];
+            }
+
+            dnc.rawData = startArray.Concat(textInBytes).ToArray();
+        }
+
+        public static void UpdateStringInEnemyDnc(Dnc dnc, string text)
+        {
+            var startArray = dnc.rawData.Take(dnc.name.Length + 110).ToArray();
 
             // recalculate array length
             var textInBytes = Encoding.UTF8.GetBytes(text);
