@@ -73,7 +73,8 @@ namespace YAMSE
 
             foreach (var word in textInput.Split(null))
             {
-                if (string.IsNullOrWhiteSpace(word))
+                var wordLower = word.ToLower();
+                if (string.IsNullOrWhiteSpace(wordLower))
                 {
                     continue;
                 }
@@ -89,25 +90,25 @@ namespace YAMSE
                 var toAdd = currIndex - index;
 
                 scintillaTextEditor.StartStyling(currIndex);
-                if (TextHighlight.Commands.Contains(word))
+                if (TextHighlight.Commands.Contains(wordLower))
                 {
-                    scintillaTextEditor.SetStyling(word.Length, 1);
+                    scintillaTextEditor.SetStyling(wordLower.Length, 1);
                 }
-                if (TextHighlight.Keywords.Contains(word))
+                if (TextHighlight.Keywords.Contains(wordLower))
                 {
-                    scintillaTextEditor.SetStyling(word.Length, 3);
+                    scintillaTextEditor.SetStyling(wordLower.Length, 3);
                 }
-                if (TextHighlight.Declaration.Contains(word))
+                if (TextHighlight.Declaration.Contains(wordLower))
                 {
-                    scintillaTextEditor.SetStyling(word.Length, 2);
+                    scintillaTextEditor.SetStyling(wordLower.Length, 2);
                 }
-                if (word.StartsWith(TextHighlight.Comment))
+                if (wordLower.StartsWith(TextHighlight.Comment))
                 {
                     var currLineLen = scintillaTextEditor.Lines[scintillaTextEditor.LineFromPosition(currIndex)].Length;
                     scintillaTextEditor.SetStyling(currLineLen, 4);
                 }
 
-                index += word.Length;
+                index += wordLower.Length;
                 index += toAdd;
             }
         }
