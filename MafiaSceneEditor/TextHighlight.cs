@@ -172,6 +172,8 @@ namespace YAMSE
             "car_setspeccoll",
             "ifplayerstealcar",
             "enemy_unblock",
+            "human_looktoactor",
+            "enemy_talk",
         };
     }
 }
