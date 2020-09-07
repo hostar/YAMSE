@@ -192,7 +192,7 @@ namespace YAMSE
                                 StrokeThickness = 2,
                                 SourceConnectorName = "Bottom",
                                 SourceArrowSymbol = "None",
-                                SourceID = script.name,
+                                SourceID = script.Name,
                                 SinkID = sinkName,
                             });
 
@@ -207,7 +207,7 @@ namespace YAMSE
                 if (hasAtLeastOneConnection)
                 {
                     var guid = AddToDesignerItems(designerItems, left, top, script);
-                    guidsForNames.Add(script.name, guid);
+                    guidsForNames.Add(script.Name, guid);
 
                     if (root.Connections == null)
                     {
@@ -360,10 +360,10 @@ namespace YAMSE
             var guid = Guid.NewGuid().ToString();
             designerItems.Add(new RootDesignerItem
             {
-                Content = Resources.Test1Content.Replace("Box_placeholder", script.name),
+                Content = Resources.Test1Content.Replace("Box_placeholder", script.Name),
                 Left = left,
                 Top = top,
-                Width = 100 + (script.name.Length - 5) * 7,
+                Width = 100 + (script.Name.Length - 5) * 7,
                 Height = 70,
                 ParentID = "00000000-0000-0000-0000-000000000000",
                 ID = guid,
@@ -406,7 +406,7 @@ namespace YAMSE
                     {
                         TreeNode treeNode = new TreeNode
                         {
-                            Text = dnc.name,
+                            Text = dnc.Name,
                             Tag = new NodeTag
                             {
                                 id = dnc.ID,
@@ -445,7 +445,7 @@ namespace YAMSE
                     {
                         TreeNode treeNode = new TreeNode
                         {
-                            Text = dnc.name,
+                            Text = dnc.Name,
                             Tag = new NodeTag
                             {
                                 id = dnc.ID,
@@ -484,7 +484,7 @@ namespace YAMSE
                     {
                         TreeNode treeNode = new TreeNode
                         {
-                            Text = dnc.name,
+                            Text = dnc.Name,
                             Tag = new NodeTag
                             {
                                 id = dnc.ID,
@@ -669,7 +669,7 @@ namespace YAMSE
 
         private MdiScriptEdit CreateMdiFormInner(Dnc dnc)
         {
-            return new MdiScriptEdit { MdiParent = this, Width = 800, Height = 400, Visible = true, Text = dnc.name, Tag = CreateInnerFormTag(dnc), Dnc = dnc, Scene2Data = scene2Data };
+            return new MdiScriptEdit { MdiParent = this, Width = 800, Height = 400, Visible = true, Text = dnc.Name, Tag = CreateInnerFormTag(dnc), Dnc = dnc, Scene2Data = scene2Data };
         }
 
         private void TmpForm_FormClosed(object sender, FormClosedEventArgs e)
@@ -686,12 +686,12 @@ namespace YAMSE
         /// <returns></returns>
         private static string CreateInnerFormTag(Dnc dnc)
         {
-            return $"{dnc.dncType} ; {dnc.name}";
+            return $"{dnc.dncType} ; {dnc.Name}";
         }
 
         private static string GetStringFromInitScript(Dnc dnc)
         {
-            return Encoding.UTF8.GetString(dnc.rawData.Skip(dnc.name.Length + 13).ToArray());
+            return Encoding.UTF8.GetString(dnc.rawData.Skip(dnc.Name.Length + 13).ToArray());
         }
 
         private void treeView1_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)

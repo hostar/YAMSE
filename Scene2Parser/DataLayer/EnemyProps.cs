@@ -4,10 +4,11 @@ using System.Text;
 using System.Linq;
 using YAMSE.DataLayer;
 using YAMSE;
+using YAMSE.Interfaces;
 
-namespace Scene2Parser.DataLayer
+namespace YAMSE.DataLayer
 {
-    public class EnemyProps
+    public class EnemyProps : IDncProps
     {
         private float agressivity;
         private int behavior1;
@@ -171,44 +172,51 @@ namespace Scene2Parser.DataLayer
             }
         }
 
+        public int DataBegin { get; set; }
+
         private Dnc _dnc;
-        private int dataBegin;
 
         public EnemyProps(Dnc dnc)
         {
             _dnc = dnc;
-            dataBegin = dnc.rawData.FindIndexOf(new byte[] { 0x24, 0xAE }).FirstOrDefault() + 5;
+            DataBeginLocator();
 
-            Agressivity = BitConverter.ToSingle(dnc.rawData.Skip(dataBegin + 42).Take(4).ToArray(), 0);
-            Behavior1 = dnc.rawData.Skip(dataBegin + 2).Take(1).First();
-            Behavior2 = BitConverter.ToSingle(dnc.rawData.Skip(dataBegin + 34).Take(4).ToArray(), 0);
-            Driving = BitConverter.ToSingle(dnc.rawData.Skip(dataBegin + 62).Take(4).ToArray(), 0);
-            Energy = BitConverter.ToSingle(dnc.rawData.Skip(dataBegin + 14).Take(4).ToArray(), 0);
-            LeftHand = BitConverter.ToSingle(dnc.rawData.Skip(dataBegin + 18).Take(4).ToArray(), 0);
-            RightHand = BitConverter.ToSingle(dnc.rawData.Skip(dataBegin + 22).Take(4).ToArray(), 0);
-            LeftLeg = BitConverter.ToSingle(dnc.rawData.Skip(dataBegin + 26).Take(4).ToArray(), 0);
-            RightLeg = BitConverter.ToSingle(dnc.rawData.Skip(dataBegin + 30).Take(4).ToArray(), 0);
-            Hearing = BitConverter.ToSingle(dnc.rawData.Skip(dataBegin + 58).Take(4).ToArray(), 0);
-            Intelligence = BitConverter.ToSingle(dnc.rawData.Skip(dataBegin + 46).Take(4).ToArray(), 0);
-            Mass = BitConverter.ToSingle(dnc.rawData.Skip(dataBegin + 66).Take(4).ToArray(), 0);
-            Reactions = BitConverter.ToSingle(dnc.rawData.Skip(dataBegin + 70).Take(4).ToArray(), 0);
-            Shooting = BitConverter.ToSingle(dnc.rawData.Skip(dataBegin + 50).Take(4).ToArray(), 0);
-            Sight = BitConverter.ToSingle(dnc.rawData.Skip(dataBegin + 54).Take(4).ToArray(), 0);
-            Speed = BitConverter.ToSingle(dnc.rawData.Skip(dataBegin + 38).Take(4).ToArray(), 0);
-            Strength = BitConverter.ToSingle(dnc.rawData.Skip(dataBegin + 10).Take(4).ToArray(), 0);
-            Voice = dnc.rawData.Skip(dataBegin + 6).Take(1).First();
+            Agressivity = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 42).Take(4).ToArray(), 0);
+            Behavior1 = dnc.rawData.Skip(DataBegin + 2).Take(1).First();
+            Behavior2 = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 34).Take(4).ToArray(), 0);
+            Driving = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 62).Take(4).ToArray(), 0);
+            Energy = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 14).Take(4).ToArray(), 0);
+            LeftHand = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 18).Take(4).ToArray(), 0);
+            RightHand = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 22).Take(4).ToArray(), 0);
+            LeftLeg = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 26).Take(4).ToArray(), 0);
+            RightLeg = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 30).Take(4).ToArray(), 0);
+            Hearing = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 58).Take(4).ToArray(), 0);
+            Intelligence = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 46).Take(4).ToArray(), 0);
+            Mass = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 66).Take(4).ToArray(), 0);
+            Reactions = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 70).Take(4).ToArray(), 0);
+            Shooting = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 50).Take(4).ToArray(), 0);
+            Sight = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 54).Take(4).ToArray(), 0);
+            Speed = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 38).Take(4).ToArray(), 0);
+            Strength = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 10).Take(4).ToArray(), 0);
+            Voice = dnc.rawData.Skip(DataBegin + 6).Take(1).First();
         }
 
         private void WriteToDnc(float value, int indexInArray, bool isFloat = true)
         {
             if (isFloat)
             {
-                Array.Copy(BitConverter.GetBytes(value), 0, _dnc.rawData, dataBegin + indexInArray, 4);
+                Array.Copy(BitConverter.GetBytes(value), 0, _dnc.rawData, DataBegin + indexInArray, 4);
             }
             else
             {
-                Array.Copy(BitConverter.GetBytes((int)value).Take(1).ToArray(), 0, _dnc.rawData, dataBegin + indexInArray, 1);
+                Array.Copy(BitConverter.GetBytes((int)value).Take(1).ToArray(), 0, _dnc.rawData, DataBegin + indexInArray, 1);
             }
+        }
+
+        public int DataBeginLocator()
+        {
+            DataBegin = _dnc.rawData.FindIndexOf(new byte[] { 0x24, 0xAE }).FirstOrDefault() + 5;
+            return DataBegin;
         }
     }
 }

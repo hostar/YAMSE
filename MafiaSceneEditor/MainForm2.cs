@@ -330,7 +330,7 @@ namespace YAMSE
 
         private KryptonPage CreatePage(Dnc dnc, PanelKind panelKind, string text = "")
         {
-            string pageName = dnc.name;
+            string pageName = dnc.Name;
 
             var pageId = new KryptonPageId { Dnc = dnc, PanelKind = panelKind };
 
@@ -361,7 +361,7 @@ namespace YAMSE
 
                     pageId.ScintillaTextEditor = scintillaTextEditor;
 
-                    EnemyProps enemyProps = new EnemyProps(dnc);
+                    EnemyProps enemyProps = dnc.DncProps as EnemyProps;
 
                     PropertyGrid propertyGrid = new PropertyGrid() { SelectedObject = enemyProps, Dock = DockStyle.Fill};
 
@@ -771,7 +771,7 @@ namespace YAMSE
                     {
                         TreeNode treeNode = new TreeNode
                         {
-                            Text = dnc.name,
+                            Text = dnc.Name,
                             Tag = new NodeTag
                             {
                                 id = dnc.ID,

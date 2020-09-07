@@ -155,15 +155,78 @@ namespace YAMSE
             if (currDnc.dncType == DncType.Unknown)
             {
                 currDnc.dncType = GetObjectType(currDnc);
+                PopulateProps(currDnc);
             }
 
             currDnc.ID = objectID;
-            currDnc.name = GetNameByID(currDnc);
+            currDnc.Name = GetNameByID(currDnc);
 
             currSection.Dncs.Add(currDnc);
 
             objectID++;
             i = i + IdLen + lenCurr;
+        }
+
+        private static void PopulateProps(Dnc currDnc)
+        {
+            switch (currDnc.dncType)
+            {
+                case DncType.Unknown:
+                    break;
+                case DncType.MovableBridge:
+                    break;
+                case DncType.Car:
+                    break;
+                case DncType.Script:
+                    break;
+                case DncType.InitScript:
+                    break;
+                case DncType.PhysicalObject:
+                    break;
+                case DncType.Door:
+                    break;
+                case DncType.Tram:
+                    break;
+                case DncType.GasStation:
+                    break;
+                case DncType.PedestrianSetup:
+                    break;
+                case DncType.Enemy:
+                    currDnc.DncProps = new EnemyProps(currDnc);
+                    break;
+                case DncType.Plane:
+                    break;
+                case DncType.Player:
+                    break;
+                case DncType.TrafficSetup:
+                    break;
+                case DncType.LMAP:
+                    break;
+                case DncType.Sector:
+                    break;
+                case DncType.Standard:
+                    break;
+                case DncType.Occluder:
+                    break;
+                case DncType.Model:
+                    break;
+                case DncType.Sound:
+                    break;
+                case DncType.Camera:
+                    break;
+                case DncType.CityMusic:
+                    break;
+                case DncType.Light:
+                    break;
+                case DncType.Clock:
+                    break;
+                case DncType.Wagon:
+                    break;
+                case DncType.Route:
+                    break;
+                default:
+                    break;
+            }
         }
 
         private static void ParseKnownSection(Scene2Data scene2Data, IList loggingList, byte[] tmpBuff, ref int i, ref Scene2Section currSection, ref int positionIterator, string logMsg, string sectionName, NodeType nodeType)
@@ -220,7 +283,7 @@ namespace YAMSE
                 Dnc currDnc = new Dnc
                 {
                     dncType = DncType.Unknown,
-                    name = $"Unknown {objectID}",
+                    Name = $"Unknown {objectID}",
                     ID = objectID,
                     objectIDArr = tmpBuff.Skip(i).Take(IdLen).ToArray(),
                     rawData = tmpBuff.Skip(i).Skip(IdLen).Take(dncLen - IdLen).ToArray(),
@@ -298,18 +361,18 @@ namespace YAMSE
 
             if (useBackup)
             {
-                return Encoding.UTF8.GetString(dnc.rawDataBackup.Skip(dnc.name.Length + offset).ToArray());
+                return Encoding.UTF8.GetString(dnc.rawDataBackup.Skip(dnc.Name.Length + offset).ToArray());
             }
-            return Encoding.UTF8.GetString(dnc.rawData.Skip(dnc.name.Length + offset).ToArray());
+            return Encoding.UTF8.GetString(dnc.rawData.Skip(dnc.Name.Length + offset).ToArray());
         }
 
         public static string GetStringFromInitScript(Dnc dnc, bool useBackup = false)
         {
             if (useBackup)
             {
-                return Encoding.UTF8.GetString(dnc.rawDataBackup.Skip(dnc.name.Length + 13).ToArray());
+                return Encoding.UTF8.GetString(dnc.rawDataBackup.Skip(dnc.Name.Length + 13).ToArray());
             }
-            return Encoding.UTF8.GetString(dnc.rawData.Skip(dnc.name.Length + 13).ToArray());
+            return Encoding.UTF8.GetString(dnc.rawData.Skip(dnc.Name.Length + 13).ToArray());
         }
 
         public static void UpdateStringInDnc(Dnc dnc, string text)
@@ -324,7 +387,7 @@ namespace YAMSE
 
         private static void UpdateStringInDncInternal(Dnc dnc, string text, int offset)
         {
-            var startArray = dnc.rawData.Take(dnc.name.Length + offset).ToArray();
+            var startArray = dnc.rawData.Take(dnc.Name.Length + offset).ToArray();
 
             // recalculate array length
             var textInBytes = Encoding.UTF8.GetBytes(text);
@@ -339,13 +402,13 @@ namespace YAMSE
             bytesLen = BitConverter.GetBytes(textInBytes.Length);
             for (int i = 0; i < bytesLen.Length; i++)
             {
-                startArray[dnc.name.Length + 37 + i] = bytesLen[i];
+                startArray[dnc.Name.Length + 37 + i] = bytesLen[i];
             }
 
             bytesLen = BitConverter.GetBytes(textInBytes.Length + 20);
             for (int i = 0; i < bytesLen.Length; i++)
             {
-                startArray[dnc.name.Length + 23 + i] = bytesLen[i];
+                startArray[dnc.Name.Length + 23 + i] = bytesLen[i];
             }
 
             dnc.rawData = startArray.Concat(textInBytes).ToArray();

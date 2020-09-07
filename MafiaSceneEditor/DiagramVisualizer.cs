@@ -110,7 +110,7 @@ namespace YAMSE
                                 StrokeThickness = 2,
                                 SourceConnectorName = "Bottom",
                                 SourceArrowSymbol = "None",
-                                SourceID = script.name,
+                                SourceID = script.Name,
                                 SinkID = sinkName,
                             });
 
@@ -125,7 +125,7 @@ namespace YAMSE
                 if (hasAtLeastOneConnection)
                 {
                     var guid = AddToDesignerItems(designerItems, left, top, script);
-                    guidsForNames.Add(script.name, guid);
+                    guidsForNames.Add(script.Name, guid);
 
                     if (root.Connections == null)
                     {
@@ -334,10 +334,10 @@ namespace YAMSE
             var guid = Guid.NewGuid().ToString();
             designerItems.Add(new RootDesignerItem
             {
-                Content = Resources.Test1Content.Replace("Box_placeholder", script.name),
+                Content = Resources.Test1Content.Replace("Box_placeholder", script.Name),
                 Left = left,
                 Top = top,
-                Width = 100 + (script.name.Length - 5) * 7,
+                Width = 100 + (script.Name.Length - 5) * 7,
                 Height = 70,
                 ParentID = "00000000-0000-0000-0000-000000000000",
                 ID = guid,

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using YAMSE.Interfaces;
 
 namespace YAMSE.DataLayer
 {
@@ -12,9 +13,11 @@ namespace YAMSE.DataLayer
 
         public NodeType dncKind = NodeType.Unknown;
 
-        public string name;
+        public string Name { get; set; }
 
-        public byte[] rawData;
-        public byte[] rawDataBackup;
+        public IDncProps DncProps { get; set; }
+
+        public byte[] rawData { get; set; }
+        public byte[] rawDataBackup { get; set; }
     }
 }
