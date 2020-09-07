@@ -5,7 +5,8 @@ namespace YAMSE
 {
     public enum PanelKind
     {
-        Text,
+        Script,
+        Enemy,
         Hex
     }
 
@@ -32,6 +33,8 @@ namespace YAMSE
         }
 
         public Scintilla ScintillaTextEditor { get; set; }
+
+        public KryptonPageContainer KryptonPageContainer { get; set; }
 
         public WpfHexaEditor.HexEditor HexEditor { get; set; }
 

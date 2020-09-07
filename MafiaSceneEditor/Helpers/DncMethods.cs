@@ -16,7 +16,7 @@ namespace YAMSE
             
             switch (pageId.PanelKind)
             {
-                case PanelKind.Text:
+                case PanelKind.Script:
                     switch (pageId.Dnc.dncType)
                     {                        
                         case DncType.Script:
@@ -42,7 +42,7 @@ namespace YAMSE
 
             switch (pageId.PanelKind)
             {
-                case PanelKind.Text:
+                case PanelKind.Script:
                     var text = Scene2Parser.GetStringFromDnc(pageId.Dnc, true);
                     pageId.ScintillaTextEditor.Text = text;
                     ScintillaTextHighlight(text, 0, pageId.ScintillaTextEditor);
@@ -81,10 +81,19 @@ namespace YAMSE
                 //Debug.WriteLine(word);
 
                 var currIndex = scintillaTextEditor.Text.IndexOf(word, index, (scintillaTextEditor.Text.Length - index) <= 20 ? (scintillaTextEditor.Text.Length - index) : 20);
+
+                int repeat = 0;
                 while (currIndex == -1)
                 {
                     index = scintillaTextEditor.Lines[scintillaTextEditor.LineFromPosition(index)].Position;
                     currIndex = scintillaTextEditor.Text.IndexOf(word, index);
+
+                    repeat++;
+
+                    if (repeat == 20)
+                    {
+                        break;
+                    }
                 }
 
                 var toAdd = currIndex - index;

@@ -18,7 +18,7 @@ namespace YAMSE
                                     byte[] candidate) =>
             candidate.Length <= array.Length - position && !candidate.Where((t, i) => array[position + i] != t).Any();
 
-        public static IEnumerable<long> FindIndexOf(this byte[] self, byte[] candidate)
+        public static IEnumerable<int> FindIndexOf(this byte[] self, byte[] candidate)
         {
             if (!IsEmptyLocate(self, candidate))
                 for (var i = 0; i < self.Length; i++)
