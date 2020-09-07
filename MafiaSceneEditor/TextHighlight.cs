@@ -173,7 +173,11 @@ namespace YAMSE
             "ifplayerstealcar",
             "enemy_unblock",
             "human_looktoactor",
+            "change_mission",
             "enemy_talk",
+            "garage_enablesteal",
+            "garage_carmanager",
+            "human_createab",
         };
     }
 }

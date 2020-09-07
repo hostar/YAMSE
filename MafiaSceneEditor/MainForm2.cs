@@ -395,7 +395,8 @@ namespace YAMSE
                     var elementHostHexEditor = new System.Windows.Forms.Integration.ElementHost
                     {
                         Location = new Point(250, 50),
-                        Size = new Size(1000, 500)
+                        Size = new Size(1000, 500),
+                        Dock = DockStyle.Fill
                     };
                     elementHostHexEditor.Name = nameof(elementHostHexEditor);
                     elementHostHexEditor.Child = hexEditor;
@@ -410,7 +411,7 @@ namespace YAMSE
                         new KryptonPageContainer
                         {
                             Column = 0,
-                            ColumnSpan = 2,
+                            ColumnSpan = 3,
                             Component = elementHostHexEditor,
                             RowSpan = 1
                         });
