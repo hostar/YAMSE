@@ -5,6 +5,7 @@ using System.Linq;
 using YAMSE.DataLayer;
 using YAMSE;
 using YAMSE.Interfaces;
+using System.ComponentModel;
 
 namespace YAMSE.DataLayer
 {
@@ -14,11 +15,7 @@ namespace YAMSE.DataLayer
         private int behavior1;
         private float behavior2;
         private float driving;
-        private float energy;
-        private float leftHand;
-        private float rightHand;
-        private float leftLeg;
-        private float rightLeg;
+        
         private float hearing;
         private float intelligence;
         private float mass;
@@ -29,11 +26,16 @@ namespace YAMSE.DataLayer
         private float strength;
         private int voice;
 
+        private int dataBegin;
+
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public EnemyEnergy EnemyEnergy { get; set; }
+
         public float Agressivity { get => agressivity;
             set
             {
                 agressivity = value;
-                WriteToDnc(value, 42);
+                Scene2Parser.WriteToDnc(_dnc, DataBegin, value, 42);
             }
         }
 
@@ -41,7 +43,7 @@ namespace YAMSE.DataLayer
             set
             {
                 behavior1 = value;
-                WriteToDnc(value, 2, false);
+                Scene2Parser.WriteToDnc(_dnc, DataBegin, value, 2, false);
             }
         }
 
@@ -49,7 +51,7 @@ namespace YAMSE.DataLayer
             set
             {
                 behavior2 = value;
-                WriteToDnc(value, 34);
+                Scene2Parser.WriteToDnc(_dnc, DataBegin, value, 34);
             }
         }
 
@@ -57,54 +59,17 @@ namespace YAMSE.DataLayer
             set
             {
                 driving = value;
-                WriteToDnc(value, 62);
+                Scene2Parser.WriteToDnc(_dnc, DataBegin, value, 62);
             }
         }
 
-        public float Energy { get => energy;
-            set
-            {
-                energy = value;
-                WriteToDnc(value, 14);
-            }
-        }
-        public float LeftHand { get => leftHand;
-            set
-            {
-                leftHand = value;
-                WriteToDnc(value, 18);
-            }
-        }
-
-        public float RightHand { get => rightHand;
-            set
-            {
-                rightHand = value;
-                WriteToDnc(value, 22);
-            }
-        }
-
-        public float LeftLeg { get => leftLeg;
-            set
-            {
-                leftLeg = value;
-                WriteToDnc(value, 26);
-            }
-        }
-
-        public float RightLeg { get => rightLeg;
-            set
-            {
-                rightLeg = value;
-                WriteToDnc(value, 30);
-            }
-        }
+        
 
         public float Hearing { get => hearing;
             set
             {
                 hearing = value;
-                WriteToDnc(value, 58);
+                Scene2Parser.WriteToDnc(_dnc, DataBegin, value, 58);
             }
         }
 
@@ -112,7 +77,7 @@ namespace YAMSE.DataLayer
             set
             {
                 intelligence = value;
-                WriteToDnc(value, 46);
+                Scene2Parser.WriteToDnc(_dnc, DataBegin, value, 46);
             }
         }
 
@@ -120,7 +85,7 @@ namespace YAMSE.DataLayer
             set
             {
                 mass = value;
-                WriteToDnc(value, 66);
+                Scene2Parser.WriteToDnc(_dnc, DataBegin, value, 66);
             }
         }
 
@@ -128,7 +93,7 @@ namespace YAMSE.DataLayer
             set
             {
                 reactions = value;
-                WriteToDnc(value, 70);
+                Scene2Parser.WriteToDnc(_dnc, DataBegin, value, 70);
             }
         }
 
@@ -136,7 +101,7 @@ namespace YAMSE.DataLayer
             set
             {
                 shooting = value;
-                WriteToDnc(value, 50);
+                Scene2Parser.WriteToDnc(_dnc, DataBegin, value, 50);
             }
         }
 
@@ -144,7 +109,7 @@ namespace YAMSE.DataLayer
             set
             {
                 sight = value;
-                WriteToDnc(value, 54);
+                Scene2Parser.WriteToDnc(_dnc, DataBegin, value, 54);
             }
         }
 
@@ -152,7 +117,7 @@ namespace YAMSE.DataLayer
             set
             {
                 speed = value;
-                WriteToDnc(value, 38);
+                Scene2Parser.WriteToDnc(_dnc, DataBegin, value, 38);
             }
         }
 
@@ -160,7 +125,7 @@ namespace YAMSE.DataLayer
             set
             {
                 strength = value;
-                WriteToDnc(value, 10);
+                Scene2Parser.WriteToDnc(_dnc, DataBegin, value, 10);
             }
         }
 
@@ -168,11 +133,20 @@ namespace YAMSE.DataLayer
             set
             {
                 voice = value;
-                WriteToDnc(value, 6, false);
+                Scene2Parser.WriteToDnc(_dnc, DataBegin, value, 6, false);
             }
         }
 
-        public int DataBegin { get; set; }
+        public int DataBegin { get => dataBegin;
+            set
+            {
+                dataBegin = value;
+                if (EnemyEnergy != null)
+                {
+                    EnemyEnergy.DataBegin = value;
+                }
+            }
+        }
 
         private Dnc _dnc;
 
@@ -185,11 +159,16 @@ namespace YAMSE.DataLayer
             Behavior1 = dnc.rawData.Skip(DataBegin + 2).Take(1).First();
             Behavior2 = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 34).Take(4).ToArray(), 0);
             Driving = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 62).Take(4).ToArray(), 0);
-            Energy = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 14).Take(4).ToArray(), 0);
-            LeftHand = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 18).Take(4).ToArray(), 0);
-            RightHand = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 22).Take(4).ToArray(), 0);
-            LeftLeg = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 26).Take(4).ToArray(), 0);
-            RightLeg = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 30).Take(4).ToArray(), 0);
+
+            EnemyEnergy = new EnemyEnergy(_dnc, DataBegin)
+            {
+                Energy = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 14).Take(4).ToArray(), 0),
+                LeftHand = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 18).Take(4).ToArray(), 0),
+                RightHand = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 22).Take(4).ToArray(), 0),
+                LeftLeg = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 26).Take(4).ToArray(), 0),
+                RightLeg = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 30).Take(4).ToArray(), 0),
+            };
+
             Hearing = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 58).Take(4).ToArray(), 0);
             Intelligence = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 46).Take(4).ToArray(), 0);
             Mass = BitConverter.ToSingle(dnc.rawData.Skip(DataBegin + 66).Take(4).ToArray(), 0);
@@ -201,22 +180,85 @@ namespace YAMSE.DataLayer
             Voice = dnc.rawData.Skip(DataBegin + 6).Take(1).First();
         }
 
-        private void WriteToDnc(float value, int indexInArray, bool isFloat = true)
-        {
-            if (isFloat)
-            {
-                Array.Copy(BitConverter.GetBytes(value), 0, _dnc.rawData, DataBegin + indexInArray, 4);
-            }
-            else
-            {
-                Array.Copy(BitConverter.GetBytes((int)value).Take(1).ToArray(), 0, _dnc.rawData, DataBegin + indexInArray, 1);
-            }
-        }
-
         public int DataBeginLocator()
         {
             DataBegin = _dnc.rawData.FindIndexOf(new byte[] { 0x24, 0xAE }).FirstOrDefault() + 5;
             return DataBegin;
+        }
+    }
+
+    public class EnemyEnergy
+    {
+        private float energy;
+        private float leftHand;
+        private float rightHand;
+        private float leftLeg;
+        private float rightLeg;
+
+        private Dnc _dnc;
+
+        public override string ToString()
+        {
+            return $"{Energy}; {LeftHand}; {RightHand}; {LeftLeg}; {RightLeg}";
+        }
+
+        [Browsable(false)]
+        public int DataBegin { get; set; }
+
+        public EnemyEnergy(Dnc dnc, int dataBegin)
+        {
+            _dnc = dnc;
+            DataBegin = dataBegin;
+        }
+
+        public float Energy
+        {
+            get => energy;
+            set
+            {
+                energy = value;
+                Scene2Parser.WriteToDnc(_dnc, DataBegin, value, 14);
+            }
+        }
+
+        public float LeftHand
+        {
+            get => leftHand;
+            set
+            {
+                leftHand = value;
+                Scene2Parser.WriteToDnc(_dnc, DataBegin, value, 18);
+            }
+        }
+
+        public float RightHand
+        {
+            get => rightHand;
+            set
+            {
+                rightHand = value;
+                Scene2Parser.WriteToDnc(_dnc, DataBegin, value, 22);
+            }
+        }
+
+        public float LeftLeg
+        {
+            get => leftLeg;
+            set
+            {
+                leftLeg = value;
+                Scene2Parser.WriteToDnc(_dnc, DataBegin, value, 26);
+            }
+        }
+
+        public float RightLeg
+        {
+            get => rightLeg;
+            set
+            {
+                rightLeg = value;
+                Scene2Parser.WriteToDnc(_dnc, DataBegin, value, 30);
+            }
         }
     }
 }

@@ -155,6 +155,9 @@ namespace YAMSE
             if (currDnc.dncType == DncType.Unknown)
             {
                 currDnc.dncType = GetObjectType(currDnc);
+            }
+            else
+            {
                 PopulateProps(currDnc);
             }
 
@@ -640,6 +643,18 @@ namespace YAMSE
                     }
                 }
                 return DncType.Unknown;
+            }
+        }
+
+        public static void WriteToDnc(Dnc dnc, int DataBegin, float value, int indexInArray, bool isFloat = true)
+        {
+            if (isFloat)
+            {
+                Array.Copy(BitConverter.GetBytes(value), 0, dnc.rawData, DataBegin + indexInArray, 4);
+            }
+            else
+            {
+                Array.Copy(BitConverter.GetBytes((int)value).Take(1).ToArray(), 0, dnc.rawData, DataBegin + indexInArray, 1);
             }
         }
     }
