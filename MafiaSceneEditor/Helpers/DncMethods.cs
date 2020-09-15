@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using YAMSE.DataLayer;
@@ -23,13 +24,14 @@ namespace YAMSE
                         case DncType.InitScript:
                             Scene2Parser.UpdateStringInDnc(pageId.Dnc, pageId.ScintillaTextEditor.Text);
                             break;
-                        case DncType.Enemy:
-                            Scene2Parser.UpdateStringInEnemyDnc(pageId.Dnc, pageId.ScintillaTextEditor.Text);
-                            break;
                     }
                     break;
                 case PanelKind.Hex:
                     pageId.Dnc.rawData = pageId.HexEditor.GetAllBytes(true);
+                    break;
+                case PanelKind.Enemy:
+                    Scene2Parser.UpdateStringInEnemyDnc(pageId.Dnc, pageId.ScintillaTextEditor.Text);
+                    pageId.Dnc.DncProps.SaveData();
                     break;
                 default:
                     break;
@@ -42,10 +44,17 @@ namespace YAMSE
 
             switch (pageId.PanelKind)
             {
+                case PanelKind.Enemy:
                 case PanelKind.Script:
                     var text = Scene2Parser.GetStringFromDnc(pageId.Dnc, true);
                     pageId.ScintillaTextEditor.Text = text;
                     ScintillaTextHighlight(text, 0, pageId.ScintillaTextEditor);
+
+                    pageId.Dnc.DncProps.RevertData();
+
+                    var propGrid = pageId.KryptonPageContainer.First(x => x.Component.GetType() == typeof(PropertyGrid)).Component as PropertyGrid;
+                    propGrid.Refresh();
+
                     break;
                 case PanelKind.Hex:
                     pageId.Dnc.rawDataBackup.CopyTo(pageId.Dnc.rawData, 0);

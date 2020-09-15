@@ -9,5 +9,11 @@ namespace YAMSE.Interfaces
         int DataBegin { get; set; }
 
         int DataBeginLocator();
+
+        void SaveData();
+
+        void RevertData();
+
+        byte[] RawData { get; set; }
     }
 }

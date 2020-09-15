@@ -460,6 +460,8 @@ namespace YAMSE
 
         private KryptonPage CreatePageInternal(string pageName, KryptonPageId pageId, IEnumerable<KryptonPageContainer> mainComponent)
         {
+            pageId.KryptonPageContainer = mainComponent;
+
             // Create a new page and give it a name and image
             KryptonPage page = new KryptonPage();
             page.Text = pageName;

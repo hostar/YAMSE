@@ -1,4 +1,5 @@
 ﻿using ScintillaNET;
+using System.Collections.Generic;
 using YAMSE.DataLayer;
 
 namespace YAMSE
@@ -34,7 +35,7 @@ namespace YAMSE
 
         public Scintilla ScintillaTextEditor { get; set; }
 
-        public KryptonPageContainer KryptonPageContainer { get; set; }
+        public IEnumerable<KryptonPageContainer> KryptonPageContainer { get; set; }
 
         public WpfHexaEditor.HexEditor HexEditor { get; set; }
 
