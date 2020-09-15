@@ -178,6 +178,10 @@ namespace YAMSE
             "garage_enablesteal",
             "garage_carmanager",
             "human_createab",
+            "garage_generatecars",
+            "getmissionnumber",
+            "garage_nezahazuj",
+            "door_lock",
         };
     }
 }
