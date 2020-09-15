@@ -8,6 +8,8 @@ namespace YAMSE
     {
         Script,
         Enemy,
+        Standard,
+        Model,
         Hex
     }
 

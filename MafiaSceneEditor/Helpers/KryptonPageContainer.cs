@@ -10,5 +10,6 @@ namespace YAMSE
         public int Column { get; set; }
         public int ColumnSpan { get; set; }
         public int RowSpan { get; set; }
+        public int Row { get; set; } = 0;
     }
 }

@@ -75,6 +75,8 @@ namespace YAMSE
 
         string fNameRecent = "\\recent.list";
 
+        Color defaultColor = Color.FromArgb(221, 234, 247);
+
         public MainForm2()
         {
             // KryptonExplorer
@@ -346,7 +348,7 @@ namespace YAMSE
                     pageId.ScintillaTextEditor = scintillaTextEditor;
 
                     kryptonPageContainer.Add(
-                        new KryptonPageContainer 
+                        new KryptonPageContainer
                         {
                             Column = 0,
                             ColumnSpan = 3,
@@ -363,7 +365,7 @@ namespace YAMSE
 
                     EnemyProps enemyProps = dnc.DncProps as EnemyProps;
 
-                    PropertyGrid propertyGrid = new PropertyGrid() { SelectedObject = enemyProps, Dock = DockStyle.Fill};
+                    PropertyGrid propertyGrid = new PropertyGrid() { SelectedObject = enemyProps, Dock = DockStyle.Fill };
 
                     kryptonPageContainer.Add(
                         new KryptonPageContainer
@@ -418,8 +420,138 @@ namespace YAMSE
 
                     return CreatePageInternal(pageName, pageId, kryptonPageContainer);
 
+                case PanelKind.Standard:
+                case PanelKind.Model:
+
+                    int col = 0;
+                    int row = 0;
+
+                    // position
+                    CreateLabel(kryptonPageContainer, col, row, 2, "Position");
+
+                    row++;
+                    CreateLabel(kryptonPageContainer, col, row, 1, "X");
+
+                    row++;
+
+                    CreateLabel(kryptonPageContainer, col, row, 1, "Y");
+
+                    row++;
+
+                    CreateLabel(kryptonPageContainer, col, row, 1, "Z");
+
+                    col++;
+                    row = 1;
+
+                    CreateTextBox(kryptonPageContainer, col, row);
+
+                    row++;
+
+                    CreateTextBox(kryptonPageContainer, col, row);
+
+                    row++;
+
+                    CreateTextBox(kryptonPageContainer, col, row);
+                    
+                    col++;
+                    row = 0;
+
+                    // rotation
+                    CreateLabel(kryptonPageContainer, col, row, 2, "Rotation");
+
+                    row++;
+                    CreateLabel(kryptonPageContainer, col, row, 1, "X");
+
+                    row++;
+                    CreateLabel(kryptonPageContainer, col, row, 1, "Y");
+
+                    row++;
+                    CreateLabel(kryptonPageContainer, col, row, 1, "Z");
+
+                    col++;
+
+                    row = 1;
+                    CreateTextBox(kryptonPageContainer, col, row);
+
+                    row++;
+                    CreateTextBox(kryptonPageContainer, col, row);
+
+                    row++;
+                    CreateTextBox(kryptonPageContainer, col, row);
+
+                    col++;
+                    row = 0;
+
+                    // scaling
+                    CreateLabel(kryptonPageContainer, col, row, 2, "Scaling");
+
+                    row++;
+                    CreateLabel(kryptonPageContainer, col, row, 1, "X");
+
+                    row++;
+                    CreateLabel(kryptonPageContainer, col, row, 1, "Y");
+
+                    row++;
+                    CreateLabel(kryptonPageContainer, col, row, 1, "Z");
+
+                    col++;
+
+                    row = 1;
+                    CreateTextBox(kryptonPageContainer, col, row);
+
+                    row++;
+                    CreateTextBox(kryptonPageContainer, col, row);
+
+                    row++;
+                    CreateTextBox(kryptonPageContainer, col, row);
+
+
+                    TableLayoutPanel tableLayoutPanel = new TableLayoutPanel();
+
+                    tableLayoutPanel.BackColor = defaultColor;
+                    tableLayoutPanel.ColumnCount = 6;
+                    tableLayoutPanel.RowCount = 3;
+                    tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+                    tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+                    tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+
+                    tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20));
+                    tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200));
+                    tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20));
+                    tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200));
+                    tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20));
+                    tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200));
+
+                    return CreatePageInternal(pageName, pageId, kryptonPageContainer, tableLayoutPanel);
+
                 default:
                     throw new InvalidOperationException(nameof(CreatePage));
+            }
+
+            static void CreateLabel(List<KryptonPageContainer> kryptonPageContainer, int col, int row, int colSpan, string text)
+            {
+                kryptonPageContainer.Add(
+                                        new KryptonPageContainer
+                                        {
+                                            Column = col,
+                                            ColumnSpan = colSpan,
+                                            Component = new KryptonLabel() { Text = text },
+                                            RowSpan = 1,
+                                            Row = row
+                                        });
+            }
+
+            static void CreateTextBox(List<KryptonPageContainer> kryptonPageContainer, int col, int row)
+            {
+                kryptonPageContainer.Add(
+                                        new KryptonPageContainer
+                                        {
+                                            Column = col,
+                                            ColumnSpan = 1,
+                                            Component = new KryptonTextBox(),
+                                            RowSpan = 1,
+                                            Row = row
+                                        });
             }
         }
 
@@ -458,9 +590,9 @@ namespace YAMSE
             return scintillaTextEditor;
         }
 
-        private KryptonPage CreatePageInternal(string pageName, KryptonPageId pageId, IEnumerable<KryptonPageContainer> mainComponent)
+        private KryptonPage CreatePageInternal(string pageName, KryptonPageId pageId, IEnumerable<KryptonPageContainer> mainComponents, TableLayoutPanel tableLayoutPanel = null)
         {
-            pageId.KryptonPageContainer = mainComponent;
+            pageId.KryptonPageContainer = mainComponents;
 
             // Create a new page and give it a name and image
             KryptonPage page = new KryptonPage();
@@ -471,35 +603,38 @@ namespace YAMSE
             //page.ImageSmall = imageList.Images[_count % imageList.Images.Count];
             page.MinimumSize = new Size(200, 250);
 
-            TableLayoutPanel tableLayoutPanel1 = new TableLayoutPanel();
-
-            tableLayoutPanel1.BackColor = Color.FromArgb(221, 234, 247);
-            tableLayoutPanel1.ColumnCount = 3;
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 114F));
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300F));
-            //tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200F));
-
-            tableLayoutPanel1.Controls.Add(CreateButton(pageId, DncMethods.BtnSaveClick, "Save"), 0, 1);
-            tableLayoutPanel1.Controls.Add(CreateButton(pageId, DncMethods.BtnRevertClick, "Revert"), 2, 1);
-
-            
-            foreach (var item in mainComponent)
+            if (tableLayoutPanel == null)
             {
-                tableLayoutPanel1.Controls.Add(item.Component, item.Column, 0);
-
-                tableLayoutPanel1.SetColumnSpan(item.Component, item.ColumnSpan);
-                tableLayoutPanel1.SetRowSpan(item.Component, item.RowSpan);
+                tableLayoutPanel = CreateDefaultLayout();
             }
 
-            tableLayoutPanel1.Dock = DockStyle.Fill;
-            tableLayoutPanel1.Location = new Point(0, 27);
-            tableLayoutPanel1.Name = nameof(tableLayoutPanel1);
-            tableLayoutPanel1.RowCount = 2;
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
-            tableLayoutPanel1.Size = new Size(1149, 533);
-            tableLayoutPanel1.TabIndex = 0;
+            foreach (var pageContainer in mainComponents)
+            {
+                tableLayoutPanel.Controls.Add(pageContainer.Component, pageContainer.Column, pageContainer.Row);
+
+                tableLayoutPanel.SetColumnSpan(pageContainer.Component, pageContainer.ColumnSpan);
+                tableLayoutPanel.SetRowSpan(pageContainer.Component, pageContainer.RowSpan);
+            }
+
+            tableLayoutPanel.RowCount++;
+            tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+
+            var btnSave = CreateButton(pageId, DncMethods.BtnSaveClick, "Save");
+            tableLayoutPanel.Controls.Add(btnSave, 0, tableLayoutPanel.RowCount);
+            tableLayoutPanel.SetColumnSpan(btnSave, 2);
+
+            var btnRevert = CreateButton(pageId, DncMethods.BtnRevertClick, "Revert");
+            tableLayoutPanel.Controls.Add(btnRevert, 2, tableLayoutPanel.RowCount);
+            tableLayoutPanel.SetColumnSpan(btnRevert, 2);
+
+            tableLayoutPanel.Dock = DockStyle.Fill;
+            tableLayoutPanel.Location = new Point(0, 27);
+            tableLayoutPanel.Name = nameof(tableLayoutPanel);
+            //tableLayoutPanel.RowCount = 2;
+            //tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            //tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
+            //tableLayoutPanel.Size = new Size(1149, 533);
+            tableLayoutPanel.TabIndex = 0;
 
             // Create a close button for the page
             ButtonSpecAny bsa = new ButtonSpecAny();
@@ -511,11 +646,26 @@ namespace YAMSE
             // Add rich text box as the contents of the page
             page.Padding = new Padding(5);
             //page.Controls.Add(scintillaTextEditor);
-            page.Controls.Add(tableLayoutPanel1);
+            page.Controls.Add(tableLayoutPanel);
 
             //workspaceMain.Pages.Add(page);
             kryptonWorkspaceContent.FirstCell().Pages.Add(page);
             return page;
+        }
+
+        private TableLayoutPanel CreateDefaultLayout()
+        {
+            TableLayoutPanel tableLayoutPanel1 = new TableLayoutPanel();
+
+            tableLayoutPanel1.BackColor = defaultColor;
+            tableLayoutPanel1.ColumnCount = 3;
+            tableLayoutPanel1.RowCount = 1;
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 114F));
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300F));
+
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            return tableLayoutPanel1;
         }
 
         private Control CreateButton(KryptonPageId kryptonPageId, EventHandler eventHandler, string btnName)
@@ -600,8 +750,24 @@ namespace YAMSE
                             return;
                         }
 
-                        activeDncs.Add(currId);
-                        CreatePage(dnc, PanelKind.Hex);
+                        
+
+                        switch (dnc.dncType)
+                        {
+                            case DncType.Standard:
+                                activeDncs.Add(currId);
+                                CreatePage(dnc, PanelKind.Standard);
+                                break;
+                            case DncType.Model:
+                                activeDncs.Add(currId);
+                                CreatePage(dnc, PanelKind.Model);
+                                break;
+                            default:
+                                activeDncs.Add(currId);
+                                CreatePage(dnc, PanelKind.Hex);
+                                break;
+                        }
+
                         break;
                     case NodeType.Definition:
 
