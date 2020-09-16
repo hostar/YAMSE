@@ -156,13 +156,11 @@ namespace YAMSE
             {
                 currDnc.dncType = GetObjectType(currDnc);
             }
-            else
-            {
-                PopulateProps(currDnc);
-            }
 
             currDnc.ID = objectID;
             currDnc.Name = GetNameByID(currDnc);
+
+            PopulateProps(currDnc);
 
             currSection.Dncs.Add(currDnc);
 
@@ -208,10 +206,12 @@ namespace YAMSE
                 case DncType.Sector:
                     break;
                 case DncType.Standard:
+                    currDnc.DncProps = new StandardProps(currDnc);
                     break;
                 case DncType.Occluder:
                     break;
                 case DncType.Model:
+                    currDnc.DncProps = new ModelProps(currDnc);
                     break;
                 case DncType.Sound:
                     break;

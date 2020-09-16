@@ -423,88 +423,7 @@ namespace YAMSE
                 case PanelKind.Standard:
                 case PanelKind.Model:
 
-                    int col = 0;
-                    int row = 0;
-
-                    // position
-                    CreateLabel(kryptonPageContainer, col, row, 2, "Position");
-
-                    row++;
-                    CreateLabel(kryptonPageContainer, col, row, 1, "X");
-
-                    row++;
-
-                    CreateLabel(kryptonPageContainer, col, row, 1, "Y");
-
-                    row++;
-
-                    CreateLabel(kryptonPageContainer, col, row, 1, "Z");
-
-                    col++;
-                    row = 1;
-
-                    CreateTextBox(kryptonPageContainer, col, row);
-
-                    row++;
-
-                    CreateTextBox(kryptonPageContainer, col, row);
-
-                    row++;
-
-                    CreateTextBox(kryptonPageContainer, col, row);
-                    
-                    col++;
-                    row = 0;
-
-                    // rotation
-                    CreateLabel(kryptonPageContainer, col, row, 2, "Rotation");
-
-                    row++;
-                    CreateLabel(kryptonPageContainer, col, row, 1, "X");
-
-                    row++;
-                    CreateLabel(kryptonPageContainer, col, row, 1, "Y");
-
-                    row++;
-                    CreateLabel(kryptonPageContainer, col, row, 1, "Z");
-
-                    col++;
-
-                    row = 1;
-                    CreateTextBox(kryptonPageContainer, col, row);
-
-                    row++;
-                    CreateTextBox(kryptonPageContainer, col, row);
-
-                    row++;
-                    CreateTextBox(kryptonPageContainer, col, row);
-
-                    col++;
-                    row = 0;
-
-                    // scaling
-                    CreateLabel(kryptonPageContainer, col, row, 2, "Scaling");
-
-                    row++;
-                    CreateLabel(kryptonPageContainer, col, row, 1, "X");
-
-                    row++;
-                    CreateLabel(kryptonPageContainer, col, row, 1, "Y");
-
-                    row++;
-                    CreateLabel(kryptonPageContainer, col, row, 1, "Z");
-
-                    col++;
-
-                    row = 1;
-                    CreateTextBox(kryptonPageContainer, col, row);
-
-                    row++;
-                    CreateTextBox(kryptonPageContainer, col, row);
-
-                    row++;
-                    CreateTextBox(kryptonPageContainer, col, row);
-
+                    CreateDefaultTextBoxes(kryptonPageContainer, dnc);
 
                     TableLayoutPanel tableLayoutPanel = new TableLayoutPanel();
 
@@ -541,17 +460,102 @@ namespace YAMSE
                                         });
             }
 
-            static void CreateTextBox(List<KryptonPageContainer> kryptonPageContainer, int col, int row)
+            static void CreateTextBox(List<KryptonPageContainer> kryptonPageContainer, int col, int row, string text)
             {
                 kryptonPageContainer.Add(
                                         new KryptonPageContainer
                                         {
                                             Column = col,
                                             ColumnSpan = 1,
-                                            Component = new KryptonTextBox(),
+                                            Component = new KryptonTextBox() { Text = text },
                                             RowSpan = 1,
                                             Row = row
                                         });
+            }
+
+            static void CreateDefaultTextBoxes(List<KryptonPageContainer> kryptonPageContainer, Dnc dnc)
+            {
+                int col = 0;
+                int row = 0;
+
+                // position
+                CreateLabel(kryptonPageContainer, col, row, 2, "Position");
+
+                row++;
+                CreateLabel(kryptonPageContainer, col, row, 1, "X");
+
+                row++;
+
+                CreateLabel(kryptonPageContainer, col, row, 1, "Y");
+
+                row++;
+
+                CreateLabel(kryptonPageContainer, col, row, 1, "Z");
+
+                col++;
+                row = 1;
+
+                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).PositionX.ToString());
+
+                row++;
+
+                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).PositionY.ToString());
+
+                row++;
+
+                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).PositionZ.ToString());
+
+                col++;
+                row = 0;
+
+                // rotation
+                CreateLabel(kryptonPageContainer, col, row, 2, "Rotation");
+
+                row++;
+                CreateLabel(kryptonPageContainer, col, row, 1, "X");
+
+                row++;
+                CreateLabel(kryptonPageContainer, col, row, 1, "Y");
+
+                row++;
+                CreateLabel(kryptonPageContainer, col, row, 1, "Z");
+
+                col++;
+
+                row = 1;
+                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).RotationX.ToString());
+
+                row++;
+                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).RotationY.ToString());
+
+                row++;
+                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).RotationZ.ToString());
+
+                col++;
+                row = 0;
+
+                // scaling
+                CreateLabel(kryptonPageContainer, col, row, 2, "Scaling");
+
+                row++;
+                CreateLabel(kryptonPageContainer, col, row, 1, "X");
+
+                row++;
+                CreateLabel(kryptonPageContainer, col, row, 1, "Y");
+
+                row++;
+                CreateLabel(kryptonPageContainer, col, row, 1, "Z");
+
+                col++;
+
+                row = 1;
+                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).ScalingX.ToString());
+
+                row++;
+                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).ScalingY.ToString());
+
+                row++;
+                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).ScalingZ.ToString());
             }
         }
 
