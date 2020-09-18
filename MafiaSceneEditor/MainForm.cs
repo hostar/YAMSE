@@ -353,7 +353,7 @@ namespace YAMSE
 
         private void GetObjectType(Dnc dnc)
         {
-            dnc.rawData.FindIndexOf(Encoding.ASCII.GetBytes("LMAP")).Any();
+            dnc.RawData.FindIndexOf(Encoding.ASCII.GetBytes("LMAP")).Any();
         }
         private static string AddToDesignerItems(List<RootDesignerItem> designerItems, int left, int top, Dnc script)
         {
@@ -691,7 +691,7 @@ namespace YAMSE
 
         private static string GetStringFromInitScript(Dnc dnc)
         {
-            return Encoding.UTF8.GetString(dnc.rawData.Skip(dnc.Name.Length + 13).ToArray());
+            return Encoding.UTF8.GetString(dnc.RawData.Skip(dnc.Name.Length + 13).ToArray());
         }
 
         private void treeView1_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)

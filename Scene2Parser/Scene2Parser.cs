@@ -45,9 +45,9 @@ namespace YAMSE
                     {
                         headerParsed = true;
 
-                        scene2Data.header.Magic = tmpBuff.Take(2).ToList();
-                        scene2Data.header.Size = tmpBuff.Skip(2).Take(4).ToList();
-                        scene2Data.header.Content = tmpBuff.Skip(6).Take(i - 6).ToList();
+                        scene2Data.Header.Magic = tmpBuff.Take(2).ToList();
+                        scene2Data.Header.Size = tmpBuff.Skip(2).Take(4).ToList();
+                        scene2Data.Header.Content = tmpBuff.Skip(6).Take(i - 6).ToList();
 
                         ParseKnownSection(scene2Data, loggingList, tmpBuff, ref i, ref currSection, ref positionIterator, "Loading objects...", "Objects", NodeType.Object);
                     }
@@ -144,10 +144,10 @@ namespace YAMSE
             int lenCurr = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(IdLen).Take(4).ToArray(), 0) - IdLen;
 
             currDnc.objectIDArr = tmpBuff.Skip(i).Take(IdLen).ToArray();
-            currDnc.rawData = tmpBuff.Skip(i).Skip(IdLen).Take(lenCurr).ToArray();
+            currDnc.RawData = tmpBuff.Skip(i).Skip(IdLen).Take(lenCurr).ToArray();
 
-            currDnc.rawDataBackup = new byte[currDnc.rawData.Length];
-            currDnc.rawData.CopyTo(currDnc.rawDataBackup, 0);
+            currDnc.RawDataBackup = new byte[currDnc.RawData.Length];
+            currDnc.RawData.CopyTo(currDnc.RawDataBackup, 0);
 
             currDnc.dncKind = currSection.SectionType;
             currDnc.dncType = GetObjectDefinitionType(currDnc);
@@ -289,11 +289,11 @@ namespace YAMSE
                     Name = $"Unknown {objectID}",
                     ID = objectID,
                     objectIDArr = tmpBuff.Skip(i).Take(IdLen).ToArray(),
-                    rawData = tmpBuff.Skip(i).Skip(IdLen).Take(dncLen - IdLen).ToArray(),
+                    RawData = tmpBuff.Skip(i).Skip(IdLen).Take(dncLen - IdLen).ToArray(),
                 };
 
-                currDnc.rawDataBackup = new byte[currDnc.rawData.Length];
-                currDnc.rawData.CopyTo(currDnc.rawDataBackup, 0);
+                currDnc.RawDataBackup = new byte[currDnc.RawData.Length];
+                currDnc.RawData.CopyTo(currDnc.RawDataBackup, 0);
 
                 currSection.Dncs.Add(currDnc);
 
@@ -307,30 +307,30 @@ namespace YAMSE
         {
             loggingList.Add("Starting to save the file.");
 
-            outputStream.Write(scene2Data.header.Magic.ToArray(), 0, scene2Data.header.Magic.ToArray().Length);
+            outputStream.Write(scene2Data.Header.Magic.ToArray(), 0, scene2Data.Header.Magic.ToArray().Length);
 
             // calculate file size
-            var fileSize = 6 + scene2Data.header.Content.Count + (scene2Data.Sections.Count * 6);
+            var fileSize = 6 + scene2Data.Header.Content.Count + (scene2Data.Sections.Count * 6);
 
-            fileSize += scene2Data.Sections.SelectMany(x => x.Dncs).Sum(x => x.rawData.Length);
+            fileSize += scene2Data.Sections.SelectMany(x => x.Dncs).Sum(x => x.RawData.Length);
             fileSize += scene2Data.Sections.SelectMany(x => x.Dncs).Count() * 2;
 
             var fileSizeArr = BitConverter.GetBytes(fileSize);
             outputStream.Write(fileSizeArr, 0, fileSizeArr.Length);
 
-            outputStream.Write(scene2Data.header.Content.ToArray(), 0, scene2Data.header.Content.ToArray().Length);
+            outputStream.Write(scene2Data.Header.Content.ToArray(), 0, scene2Data.Header.Content.ToArray().Length);
 
             foreach (var section in scene2Data.Sections.OrderBy(x => x.Position))
             {
                 outputStream.Write(section.SectionIdArr, 0, section.SectionIdArr.Length);
 
-                var dncLenArr =  BitConverter.GetBytes(section.Dncs.Sum(x => x.rawData.Length) + (section.Dncs.Count * 2) + 6);
+                var dncLenArr =  BitConverter.GetBytes(section.Dncs.Sum(x => x.RawData.Length) + (section.Dncs.Count * 2) + 6);
                 outputStream.Write(dncLenArr, 0, dncLenArr.Length);
 
                 foreach (var dnc in section.Dncs.OrderBy(x => x.ID))
                 {
                     outputStream.Write(dnc.objectIDArr, 0, dnc.objectIDArr.Length);
-                    outputStream.Write(dnc.rawData, 0, dnc.rawData.Length);
+                    outputStream.Write(dnc.RawData, 0, dnc.RawData.Length);
                 }
             }
 
@@ -364,18 +364,18 @@ namespace YAMSE
 
             if (useBackup)
             {
-                return Encoding.UTF8.GetString(dnc.rawDataBackup.Skip(dnc.Name.Length + offset).ToArray());
+                return Encoding.UTF8.GetString(dnc.RawDataBackup.Skip(dnc.Name.Length + offset).ToArray());
             }
-            return Encoding.UTF8.GetString(dnc.rawData.Skip(dnc.Name.Length + offset).ToArray());
+            return Encoding.UTF8.GetString(dnc.RawData.Skip(dnc.Name.Length + offset).ToArray());
         }
 
         public static string GetStringFromInitScript(Dnc dnc, bool useBackup = false)
         {
             if (useBackup)
             {
-                return Encoding.UTF8.GetString(dnc.rawDataBackup.Skip(dnc.Name.Length + 13).ToArray());
+                return Encoding.UTF8.GetString(dnc.RawDataBackup.Skip(dnc.Name.Length + 13).ToArray());
             }
-            return Encoding.UTF8.GetString(dnc.rawData.Skip(dnc.Name.Length + 13).ToArray());
+            return Encoding.UTF8.GetString(dnc.RawData.Skip(dnc.Name.Length + 13).ToArray());
         }
 
         public static void UpdateStringInDnc(Dnc dnc, string text)
@@ -390,7 +390,7 @@ namespace YAMSE
 
         private static void UpdateStringInDncInternal(Dnc dnc, string text, int offset)
         {
-            var startArray = dnc.rawData.Take(dnc.Name.Length + offset).ToArray();
+            var startArray = dnc.RawData.Take(dnc.Name.Length + offset).ToArray();
 
             // recalculate array length
             var textInBytes = Encoding.UTF8.GetBytes(text);
@@ -414,7 +414,7 @@ namespace YAMSE
                 startArray[dnc.Name.Length + 23 + i] = bytesLen[i];
             }
 
-            dnc.rawData = startArray.Concat(textInBytes).ToArray();
+            dnc.RawData = startArray.Concat(textInBytes).ToArray();
         }
 
         private static string GetNameByID(Dnc dnc)
@@ -423,13 +423,13 @@ namespace YAMSE
             {
                 case DncType.Unknown:
                     //return $"Unknown {dnc.ID}";
-                    return GetCStringFromByteArray(dnc.rawData.Skip(10).Take(maxObjectNameLength).ToArray());
+                    return GetCStringFromByteArray(dnc.RawData.Skip(10).Take(maxObjectNameLength).ToArray());
 
                 case DncType.InitScript:
 
-                    var len = dnc.rawData[5];
+                    var len = dnc.RawData[5];
 
-                    return Encoding.ASCII.GetString(dnc.rawData, 0x9, len);
+                    return Encoding.ASCII.GetString(dnc.RawData, 0x9, len);
                 case DncType.MovableBridge:
                 case DncType.Car:
                 case DncType.Script:
@@ -447,7 +447,7 @@ namespace YAMSE
                 case DncType.Wagon:
                 case DncType.Route:
                 case DncType.Clock:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(10).Take(maxObjectNameLength).ToArray());
+                    return GetCStringFromByteArray(dnc.RawData.Skip(10).Take(maxObjectNameLength).ToArray());
 
                 case DncType.Standard:
                 case DncType.Occluder:
@@ -456,7 +456,7 @@ namespace YAMSE
                 case DncType.Camera:
                 case DncType.CityMusic:
                 case DncType.Light:
-                    return GetCStringFromByteArray(dnc.rawData.Skip(20).Take(maxObjectNameLength).ToArray());
+                    return GetCStringFromByteArray(dnc.RawData.Skip(20).Take(maxObjectNameLength).ToArray());
                 default:
                     throw new InvalidOperationException(nameof(GetNameByID));
             }
@@ -469,15 +469,15 @@ namespace YAMSE
 
         private static DncType GetObjectType(Dnc dnc)
         {
-            if (dnc.rawData[4] == 0x10)
+            if (dnc.RawData[4] == 0x10)
             { // either LMAP or sector
-                if (dnc.rawData.FindIndexOf(Encoding.ASCII.GetBytes("LMAP")).Any())
+                if (dnc.RawData.FindIndexOf(Encoding.ASCII.GetBytes("LMAP")).Any())
                 { // is LMAP
                     return DncType.LMAP;
                 }
                 else
                 {
-                    if (dnc.rawData.FindIndexOf(new byte[] { 0x01, 0xB4, 0xF2 }).Any())
+                    if (dnc.RawData.FindIndexOf(new byte[] { 0x01, 0xB4, 0xF2 }).Any())
                     {
                         return DncType.Sector;
                     }
@@ -489,7 +489,7 @@ namespace YAMSE
             }
             else
             {
-                var firstN = dnc.rawData.Take(20 + maxObjectNameLength).ToArray();
+                var firstN = dnc.RawData.Take(20 + maxObjectNameLength).ToArray();
                 if (firstN.FindIndexOf(new byte[] { 0x11, 0x40, 0x0A, 0x00, 0x00, 0x00, 0x0C }).Any())
                 {
                     return DncType.Occluder;
@@ -535,12 +535,12 @@ namespace YAMSE
 
         private static DncType GetObjectDefinitionType(Dnc dnc)
         {
-            if (dnc.rawData.Skip(4).Take(1).ToArray().FindIndexOf(new byte[] { 0x01 /*, 0x0d */ }).Any())
+            if (dnc.RawData.Skip(4).Take(1).ToArray().FindIndexOf(new byte[] { 0x01 /*, 0x0d */ }).Any())
             {
                 return DncType.InitScript;
             }
 
-            var firstN = dnc.rawData.Take(20 + maxObjectNameLength).ToArray();
+            var firstN = dnc.RawData.Take(20 + maxObjectNameLength).ToArray();
             if (firstN.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x04 }).Any())
             {
                 return DncType.Car;
@@ -650,11 +650,11 @@ namespace YAMSE
         {
             if (isFloat)
             {
-                Array.Copy(BitConverter.GetBytes(value), 0, dnc.rawData, DataBegin + indexInArray, 4);
+                Array.Copy(BitConverter.GetBytes(value), 0, dnc.RawData, DataBegin + indexInArray, 4);
             }
             else
             {
-                Array.Copy(BitConverter.GetBytes((int)value).Take(1).ToArray(), 0, dnc.rawData, DataBegin + indexInArray, 1);
+                Array.Copy(BitConverter.GetBytes((int)value).Take(1).ToArray(), 0, dnc.RawData, DataBegin + indexInArray, 1);
             }
         }
     }

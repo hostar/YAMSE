@@ -8,7 +8,7 @@ namespace YAMSE.DataLayer
 {
     public class ModelProps : StandardProps
     {
-        private Dnc _dnc;
+        private readonly Dnc _dnc;
 
         public ModelProps(Dnc dnc) : base(dnc)
         {

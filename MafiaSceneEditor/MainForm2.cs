@@ -20,48 +20,45 @@ namespace YAMSE
 {
     public partial class MainForm2 : KryptonForm
     {
-        KryptonManager kryptonManager = new KryptonManager();
-
-        KryptonWorkspace kryptonWorkspaceTreeView = new KryptonWorkspace();
-        KryptonWorkspace kryptonWorkspaceContent = new KryptonWorkspace();
-
-        KryptonSplitContainer splitContainerInner = new KryptonSplitContainer();
-        KryptonSplitContainer splitContainerOuter = new KryptonSplitContainer();
-
-        KryptonRibbon kryptonRibbon = new KryptonRibbon();
+        readonly KryptonManager kryptonManager = new KryptonManager();
+        readonly KryptonWorkspace kryptonWorkspaceTreeView = new KryptonWorkspace();
+        readonly KryptonWorkspace kryptonWorkspaceContent = new KryptonWorkspace();
+        readonly KryptonSplitContainer splitContainerInner = new KryptonSplitContainer();
+        readonly KryptonSplitContainer splitContainerOuter = new KryptonSplitContainer();
+        readonly KryptonRibbon kryptonRibbon = new KryptonRibbon();
 
         internal KryptonTreeView treeView1 = new KryptonTreeView();
+        readonly KryptonContextMenuItem kryptonContextMenuItem1 = new KryptonContextMenuItem();
+        readonly KryptonContextMenuItem kryptonContextMenuItem2 = new KryptonContextMenuItem();
+        readonly KryptonContextMenuItem kryptonContextMenuItem3 = new KryptonContextMenuItem();
+        readonly KryptonContextMenuItem kryptonContextMenuItem4 = new KryptonContextMenuItem();
+        readonly KryptonContextMenuItem kryptonContextMenuItemExit = new KryptonContextMenuItem();
 
-        KryptonContextMenuItem kryptonContextMenuItem1 = new KryptonContextMenuItem();
-        KryptonContextMenuItem kryptonContextMenuItem2 = new KryptonContextMenuItem();
-        KryptonContextMenuItem kryptonContextMenuItem3 = new KryptonContextMenuItem();
-        KryptonContextMenuItem kryptonContextMenuItem4 = new KryptonContextMenuItem();
-        KryptonContextMenuItem kryptonContextMenuItemExit = new KryptonContextMenuItem();
-        KryptonContextMenuSeparator kryptonContextMenuSeparator1 = new KryptonContextMenuSeparator();
+        readonly KryptonContextMenuSeparator kryptonContextMenuSeparator1 = new KryptonContextMenuSeparator();
 
-        KryptonRibbonTab kryptonRibbonTab1 = new KryptonRibbonTab();
-        KryptonRibbonGroup kryptonRibbonGroup1 = new KryptonRibbonGroup();
-        KryptonRibbonGroupTriple kryptonRibbonGroupTriple1 = new KryptonRibbonGroupTriple();
+        readonly KryptonRibbonTab kryptonRibbonTab1 = new KryptonRibbonTab();
+        readonly KryptonRibbonGroup kryptonRibbonGroup1 = new KryptonRibbonGroup();
+        readonly KryptonRibbonGroupTriple kryptonRibbonGroupTriple1 = new KryptonRibbonGroupTriple();
 
-        KryptonRibbonTab kryptonRibbonTab2 = new KryptonRibbonTab();
-        KryptonRibbonGroup kryptonRibbonGroup2 = new KryptonRibbonGroup();
-        KryptonRibbonGroupTriple kryptonRibbonGroupTriple2 = new KryptonRibbonGroupTriple();
+        readonly KryptonRibbonTab kryptonRibbonTab2 = new KryptonRibbonTab();
+        readonly KryptonRibbonGroup kryptonRibbonGroup2 = new KryptonRibbonGroup();
+        readonly KryptonRibbonGroupTriple kryptonRibbonGroupTriple2 = new KryptonRibbonGroupTriple();
 
-        KryptonRibbonGroupButton kryptonRibbonGroupButtonShowDiagram = new KryptonRibbonGroupButton();
-        KryptonRibbonGroupButton kryptonRibbonGroupButtonWorkspaceArrange = new KryptonRibbonGroupButton();
+        readonly KryptonRibbonGroupButton kryptonRibbonGroupButtonShowDiagram = new KryptonRibbonGroupButton();
+        readonly KryptonRibbonGroupButton kryptonRibbonGroupButtonWorkspaceArrange = new KryptonRibbonGroupButton();
 
-        KryptonRibbonQATButton kryptonQatButtonUndo = new KryptonRibbonQATButton();
+        readonly KryptonRibbonQATButton kryptonQatButtonUndo = new KryptonRibbonQATButton();
 
-        TableLayoutPanel tableLayoutPanel2 = new TableLayoutPanel();
-        KryptonListBox listBoxOutput = new KryptonListBox();
-        KryptonLabel outputLabel = new KryptonLabel { Text = "Output"};
+        readonly TableLayoutPanel tableLayoutPanel2 = new TableLayoutPanel();
+        readonly KryptonListBox listBoxOutput = new KryptonListBox();
+        readonly KryptonLabel outputLabel = new KryptonLabel { Text = "Output"};
 
         TreeNode currentTreeNode;
 
-        OpenFileDialog openFileDialog1 = new OpenFileDialog();
-        SaveFileDialog saveFileDialog1 = new SaveFileDialog();
+        readonly OpenFileDialog openFileDialog1 = new OpenFileDialog();
+        readonly SaveFileDialog saveFileDialog1 = new SaveFileDialog();
 
-        List<string> activeDncs = new List<string>();
+        readonly List<string> activeDncs = new List<string>();
 
         //KryptonWorkspaceCell workspaceMain = new KryptonWorkspaceCell();
 
@@ -75,7 +72,9 @@ namespace YAMSE
 
         string fNameRecent = "\\recent.list";
 
-        Color defaultColor = Color.FromArgb(221, 234, 247);
+        readonly Color defaultColor = Color.FromArgb(221, 234, 247);
+
+        public delegate void CallbackSetValue(object value);
 
         public MainForm2()
         {
@@ -295,14 +294,16 @@ namespace YAMSE
         private KryptonWorkspaceCell CreateCell(string pageName, NavigatorMode mode = NavigatorMode.BarTabGroup)
         {
             // Create new cell instance
-            KryptonWorkspaceCell cell = new KryptonWorkspaceCell();
+            KryptonWorkspaceCell cell = new KryptonWorkspaceCell
+            {
 
-            // Do we need to set the star sizing value?
-            /*
-            if (!string.IsNullOrEmpty(starSize))
-                cell.StarSize = starSize;
-            */
-            cell.NavigatorMode = mode;
+                // Do we need to set the star sizing value?
+                /*
+                if (!string.IsNullOrEmpty(starSize))
+                    cell.StarSize = starSize;
+                */
+                NavigatorMode = mode
+            };
             cell.Pages.Add(CreatePage(pageName));
 
             return cell;
@@ -311,12 +312,14 @@ namespace YAMSE
         private KryptonPage CreatePage(string pageName)
         {
             // Create a new page and give it a name and image
-            KryptonPage page = new KryptonPage();
-            page.Text = pageName;
-            page.TextTitle = pageName;
-            page.TextDescription = pageName;
-            //page.ImageSmall = imageList.Images[_count % imageList.Images.Count];
-            page.MinimumSize = new Size(200, 250);
+            KryptonPage page = new KryptonPage
+            {
+                Text = pageName,
+                TextTitle = pageName,
+                TextDescription = pageName,
+                //page.ImageSmall = imageList.Images[_count % imageList.Images.Count];
+                MinimumSize = new Size(200, 250)
+            };
 
             treeView1.Dock = DockStyle.Fill;
 
@@ -404,7 +407,7 @@ namespace YAMSE
                     elementHostHexEditor.Child = hexEditor;
 
                     var tmpStream = new MemoryStream();
-                    new MemoryStream(dnc.rawData).CopyTo(tmpStream); // needed in order to allow expanding
+                    new MemoryStream(dnc.RawData).CopyTo(tmpStream); // needed in order to allow expanding
                     hexEditor.Stream = tmpStream;
 
                     pageId.HexEditor = hexEditor;
@@ -425,11 +428,12 @@ namespace YAMSE
 
                     CreateDefaultTextBoxes(kryptonPageContainer, dnc);
 
-                    TableLayoutPanel tableLayoutPanel = new TableLayoutPanel();
-
-                    tableLayoutPanel.BackColor = defaultColor;
-                    tableLayoutPanel.ColumnCount = 6;
-                    tableLayoutPanel.RowCount = 3;
+                    TableLayoutPanel tableLayoutPanel = new TableLayoutPanel
+                    {
+                        BackColor = defaultColor,
+                        ColumnCount = 6,
+                        RowCount = 3
+                    };
                     tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
                     tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
                     tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
@@ -460,14 +464,23 @@ namespace YAMSE
                                         });
             }
 
-            static void CreateTextBox(List<KryptonPageContainer> kryptonPageContainer, int col, int row, string text)
+            static void CreateTextBox(List<KryptonPageContainer> kryptonPageContainer, int col, int row, object init, CallbackSetValue setterFunction)
             {
+                var textBox = new KryptonTextBox() { Text = init.ToString() };
+                textBox.TextChanged += (sender, e) => {
+
+                    if (!string.IsNullOrWhiteSpace(textBox.Text))
+                    {
+                        setterFunction(textBox.Text);
+                    }
+                };
+
                 kryptonPageContainer.Add(
                                         new KryptonPageContainer
                                         {
                                             Column = col,
                                             ColumnSpan = 1,
-                                            Component = new KryptonTextBox() { Text = text },
+                                            Component = textBox,
                                             RowSpan = 1,
                                             Row = row
                                         });
@@ -495,15 +508,15 @@ namespace YAMSE
                 col++;
                 row = 1;
 
-                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).PositionX.ToString());
+                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).PositionX, (o) => { (dnc.DncProps as StandardProps).PositionX = Convert.ToSingle(o); });
 
                 row++;
 
-                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).PositionY.ToString());
+                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).PositionY, (o) => { (dnc.DncProps as StandardProps).PositionY = Convert.ToSingle(o); });
 
                 row++;
 
-                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).PositionZ.ToString());
+                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).PositionZ, (o) => { (dnc.DncProps as StandardProps).PositionZ = Convert.ToSingle(o); });
 
                 col++;
                 row = 0;
@@ -523,13 +536,13 @@ namespace YAMSE
                 col++;
 
                 row = 1;
-                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).RotationX.ToString());
+                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).RotationX, (o) => { (dnc.DncProps as StandardProps).RotationX = Convert.ToSingle(o); });
 
                 row++;
-                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).RotationY.ToString());
+                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).RotationY, (o) => { (dnc.DncProps as StandardProps).RotationY = Convert.ToSingle(o); });
 
                 row++;
-                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).RotationZ.ToString());
+                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).RotationZ, (o) => { (dnc.DncProps as StandardProps).RotationZ = Convert.ToSingle(o); });
 
                 col++;
                 row = 0;
@@ -549,13 +562,13 @@ namespace YAMSE
                 col++;
 
                 row = 1;
-                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).ScalingX.ToString());
+                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).ScalingX, (o) => { (dnc.DncProps as StandardProps).ScalingX = Convert.ToSingle(o); });
 
                 row++;
-                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).ScalingY.ToString());
+                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).ScalingY, (o) => { (dnc.DncProps as StandardProps).ScalingY = Convert.ToSingle(o); });
 
                 row++;
-                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).ScalingZ.ToString());
+                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).ScalingZ, (o) => { (dnc.DncProps as StandardProps).ScalingZ = Convert.ToSingle(o); });
             }
         }
 
@@ -599,13 +612,15 @@ namespace YAMSE
             pageId.KryptonPageContainer = mainComponents;
 
             // Create a new page and give it a name and image
-            KryptonPage page = new KryptonPage();
-            page.Text = pageName;
-            page.TextTitle = pageName;
-            page.TextDescription = pageName;
-            page.Tag = pageId;
-            //page.ImageSmall = imageList.Images[_count % imageList.Images.Count];
-            page.MinimumSize = new Size(200, 250);
+            KryptonPage page = new KryptonPage
+            {
+                Text = pageName,
+                TextTitle = pageName,
+                TextDescription = pageName,
+                Tag = pageId,
+                //page.ImageSmall = imageList.Images[_count % imageList.Images.Count];
+                MinimumSize = new Size(200, 250)
+            };
 
             if (tableLayoutPanel == null)
             {
@@ -641,9 +656,11 @@ namespace YAMSE
             tableLayoutPanel.TabIndex = 0;
 
             // Create a close button for the page
-            ButtonSpecAny bsa = new ButtonSpecAny();
-            bsa.Tag = page;
-            bsa.Type = PaletteButtonSpecStyle.Close;
+            ButtonSpecAny bsa = new ButtonSpecAny
+            {
+                Tag = page,
+                Type = PaletteButtonSpecStyle.Close
+            };
             bsa.Click += PageClose;
             page.ButtonSpecs.Add(bsa);
 
@@ -659,11 +676,12 @@ namespace YAMSE
 
         private TableLayoutPanel CreateDefaultLayout()
         {
-            TableLayoutPanel tableLayoutPanel1 = new TableLayoutPanel();
-
-            tableLayoutPanel1.BackColor = defaultColor;
-            tableLayoutPanel1.ColumnCount = 3;
-            tableLayoutPanel1.RowCount = 1;
+            TableLayoutPanel tableLayoutPanel1 = new TableLayoutPanel
+            {
+                BackColor = defaultColor,
+                ColumnCount = 3,
+                RowCount = 1
+            };
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 114F));
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300F));

@@ -17,7 +17,7 @@ namespace YAMSE.DataLayer
 
         public IDncProps DncProps { get; set; }
 
-        public byte[] rawData { get; set; }
-        public byte[] rawDataBackup { get; set; }
+        public byte[] RawData { get; set; }
+        public byte[] RawDataBackup { get; set; }
     }
 }

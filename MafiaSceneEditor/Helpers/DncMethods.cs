@@ -14,12 +14,12 @@ namespace YAMSE
         public static void BtnSaveClick(object sender, EventArgs eventArgs)
         {
             var pageId = ((KryptonButton)sender).Tag as KryptonPageId;
-            
+
             switch (pageId.PanelKind)
             {
                 case PanelKind.Script:
                     switch (pageId.Dnc.dncType)
-                    {                        
+                    {
                         case DncType.Script:
                         case DncType.InitScript:
                             Scene2Parser.UpdateStringInDnc(pageId.Dnc, pageId.ScintillaTextEditor.Text);
@@ -27,10 +27,14 @@ namespace YAMSE
                     }
                     break;
                 case PanelKind.Hex:
-                    pageId.Dnc.rawData = pageId.HexEditor.GetAllBytes(true);
+                    pageId.Dnc.RawData = pageId.HexEditor.GetAllBytes(true);
                     break;
                 case PanelKind.Enemy:
                     Scene2Parser.UpdateStringInEnemyDnc(pageId.Dnc, pageId.ScintillaTextEditor.Text);
+                    pageId.Dnc.DncProps.SaveData();
+                    break;
+                case PanelKind.Standard:
+                case PanelKind.Model:
                     pageId.Dnc.DncProps.SaveData();
                     break;
                 default:
@@ -57,10 +61,10 @@ namespace YAMSE
 
                     break;
                 case PanelKind.Hex:
-                    pageId.Dnc.rawDataBackup.CopyTo(pageId.Dnc.rawData, 0);
+                    pageId.Dnc.RawDataBackup.CopyTo(pageId.Dnc.RawData, 0);
 
                     var tmpStream = new MemoryStream();
-                    new MemoryStream(pageId.Dnc.rawData).CopyTo(tmpStream); // needed in order to allow expanding
+                    new MemoryStream(pageId.Dnc.RawData).CopyTo(tmpStream); // needed in order to allow expanding
                     //hexEditor.Stream = tmpStream;
                     break;
                 default:

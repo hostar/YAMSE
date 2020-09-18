@@ -81,7 +81,7 @@ namespace YAMSE
             elementHostHexEditor.Show();
 
             var tmpStream = new MemoryStream();
-            new MemoryStream(dnc.rawData).CopyTo(tmpStream); // needed in order to allow expanding
+            new MemoryStream(dnc.RawData).CopyTo(tmpStream); // needed in order to allow expanding
             hexEditor.Stream = tmpStream;
         }
         #endregion
@@ -241,10 +241,10 @@ namespace YAMSE
                     ScintillaTextHighlight(scintillaTextEditor.Text, 0);
                     break;
                 case MdiKind.Hex:
-                    Dnc.rawDataBackup.CopyTo(Dnc.rawData, 0);
+                    Dnc.RawDataBackup.CopyTo(Dnc.RawData, 0);
 
                     var tmpStream = new MemoryStream();
-                    new MemoryStream(Dnc.rawData).CopyTo(tmpStream); // needed in order to allow expanding
+                    new MemoryStream(Dnc.RawData).CopyTo(tmpStream); // needed in order to allow expanding
                     hexEditor.Stream = tmpStream;
                     break;
                 default:
@@ -260,7 +260,7 @@ namespace YAMSE
                     Scene2Parser.UpdateStringInDnc(Dnc, scintillaTextEditor.Text);
                     break;
                 case MdiKind.Hex:
-                    Dnc.rawData = hexEditor.GetAllBytes(true);
+                    Dnc.RawData = hexEditor.GetAllBytes(true);
                     break;
                 default:
                     break;

@@ -25,7 +25,7 @@ namespace YAMSE.DataLayer
 
         public byte[] RawData { get; set; }
 
-        private Dnc _dnc;
+        private readonly Dnc _dnc;
 
         public StandardProps(Dnc dnc)
         {
@@ -43,22 +43,32 @@ namespace YAMSE.DataLayer
 
         public void RevertData()
         {
-            PositionX = BitConverter.ToSingle(_dnc.rawData.Skip(DataBegin + 4).Take(4).ToArray(), 0);
-            PositionY = BitConverter.ToSingle(_dnc.rawData.Skip(DataBegin + 8).Take(4).ToArray(), 0);
-            PositionZ = BitConverter.ToSingle(_dnc.rawData.Skip(DataBegin + 12).Take(4).ToArray(), 0);
+            PositionX = BitConverter.ToSingle(_dnc.RawData.Skip(DataBegin + 4).Take(4).ToArray(), 0);
+            PositionY = BitConverter.ToSingle(_dnc.RawData.Skip(DataBegin + 8).Take(4).ToArray(), 0);
+            PositionZ = BitConverter.ToSingle(_dnc.RawData.Skip(DataBegin + 12).Take(4).ToArray(), 0);
 
-            RotationX = BitConverter.ToSingle(_dnc.rawData.Skip(DataBegin + 26).Take(4).ToArray(), 0);
-            RotationY = BitConverter.ToSingle(_dnc.rawData.Skip(DataBegin + 30).Take(4).ToArray(), 0);
-            RotationZ = BitConverter.ToSingle(_dnc.rawData.Skip(DataBegin + 34).Take(4).ToArray(), 0);
+            RotationX = BitConverter.ToSingle(_dnc.RawData.Skip(DataBegin + 26).Take(4).ToArray(), 0);
+            RotationY = BitConverter.ToSingle(_dnc.RawData.Skip(DataBegin + 30).Take(4).ToArray(), 0);
+            RotationZ = BitConverter.ToSingle(_dnc.RawData.Skip(DataBegin + 34).Take(4).ToArray(), 0);
 
-            ScalingX = BitConverter.ToSingle(_dnc.rawData.Skip(DataBegin + 44).Take(4).ToArray(), 0);
-            ScalingY = BitConverter.ToSingle(_dnc.rawData.Skip(DataBegin + 48).Take(4).ToArray(), 0);
-            ScalingZ = BitConverter.ToSingle(_dnc.rawData.Skip(DataBegin + 52).Take(4).ToArray(), 0);
+            ScalingX = BitConverter.ToSingle(_dnc.RawData.Skip(DataBegin + 44).Take(4).ToArray(), 0);
+            ScalingY = BitConverter.ToSingle(_dnc.RawData.Skip(DataBegin + 48).Take(4).ToArray(), 0);
+            ScalingZ = BitConverter.ToSingle(_dnc.RawData.Skip(DataBegin + 52).Take(4).ToArray(), 0);
         }
 
         public void SaveData()
         {
-            
+            Scene2Parser.WriteToDnc(_dnc, DataBegin, PositionX, 4);
+            Scene2Parser.WriteToDnc(_dnc, DataBegin, PositionY, 8);
+            Scene2Parser.WriteToDnc(_dnc, DataBegin, PositionZ, 12);
+
+            Scene2Parser.WriteToDnc(_dnc, DataBegin, RotationX, 26);
+            Scene2Parser.WriteToDnc(_dnc, DataBegin, RotationY, 30);
+            Scene2Parser.WriteToDnc(_dnc, DataBegin, RotationZ, 34);
+
+            Scene2Parser.WriteToDnc(_dnc, DataBegin, ScalingX, 44);
+            Scene2Parser.WriteToDnc(_dnc, DataBegin, ScalingY, 48);
+            Scene2Parser.WriteToDnc(_dnc, DataBegin, ScalingZ, 52);
         }
     }
 }

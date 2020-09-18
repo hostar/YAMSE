@@ -19,7 +19,7 @@ namespace YAMSE.DataLayer
 
         public List<Scene2Section> Sections { get; set; } = new List<Scene2Section>();
 
-        public Header header { get; set; } = new Header();
+        public Header Header { get; set; } = new Header();
 
         public byte[] standardObjectsHeader = new byte[] { 0x00,0x40 /*,0xFF,0x00,0x00,0x00 */ };
 
