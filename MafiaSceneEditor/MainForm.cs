@@ -166,7 +166,7 @@ namespace YAMSE
             {
                 // get references from scripts
                 // findactor xx, "name"
-                string[] strings = Scene2Parser.GetStringFromDnc(script).Split("\r\n");
+                string[] strings = Scene2Parser.GetScriptFromDnc(script).Split("\r\n");
 
                 //listBoxOutput.Items.Add(script.name);
 
@@ -570,7 +570,7 @@ namespace YAMSE
                                     return;
                                 }
 
-                                CreateMdiForm(dnc, Scene2Parser.GetStringFromDnc(dnc));
+                                CreateMdiForm(dnc, Scene2Parser.GetScriptFromDnc(dnc));
                                 break;
 
                             case DncType.PhysicalObject:
@@ -604,7 +604,7 @@ namespace YAMSE
                                 return;
                             }
 
-                            CreateMdiForm(dnc, Scene2Parser.GetStringFromDnc(dnc));
+                            CreateMdiForm(dnc, Scene2Parser.GetScriptFromDnc(dnc));
                         }
                         else
                         {

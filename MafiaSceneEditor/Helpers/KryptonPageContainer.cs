@@ -7,6 +7,8 @@ namespace YAMSE
     public class KryptonPageContainer
     {
         public Control Component { get; set; }
+        public ComponentType ComponentType { get; set; }
+        public CallbackSetComponentValue SetComponentValue { get; set; }
         public int Column { get; set; }
         public int ColumnSpan { get; set; }
         public int RowSpan { get; set; }

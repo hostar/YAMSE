@@ -346,7 +346,7 @@ namespace YAMSE
             loggingList.Add("File saving done.");
         }
 
-        public static string GetStringFromDnc(Dnc dnc, bool useBackup = false)
+        public static string GetScriptFromDnc(Dnc dnc, bool useBackup = false)
         {
             int offset = 0;
 
@@ -356,6 +356,7 @@ namespace YAMSE
                     offset = 41;
                     break;
                 case DncType.InitScript:
+                    offset = 13;
                     break;
                 case DncType.Enemy:
                     offset = 110;
@@ -369,13 +370,18 @@ namespace YAMSE
             return Encoding.UTF8.GetString(dnc.RawData.Skip(dnc.Name.Length + offset).ToArray());
         }
 
-        public static string GetStringFromInitScript(Dnc dnc, bool useBackup = false)
+        public static string GetStringFromDnc(Dnc dnc, int dataBegin, int offset, bool useBackup = false)
         {
             if (useBackup)
             {
-                return Encoding.UTF8.GetString(dnc.RawDataBackup.Skip(dnc.Name.Length + 13).ToArray());
+                return Encoding.ASCII.GetString(dnc.RawDataBackup, dataBegin + offset, Array.IndexOf(dnc.RawDataBackup, (byte)0, dnc.Name.Length + offset) - (dnc.Name.Length + offset));
+                return Encoding.ASCII.GetString(dnc.RawDataBackup.Skip(dnc.Name.Length + offset).ToArray());
             }
-            return Encoding.UTF8.GetString(dnc.RawData.Skip(dnc.Name.Length + 13).ToArray());
+
+            var tmp = Array.IndexOf(dnc.RawData, (byte)0, dataBegin + offset);
+            var tmp2 = tmp - (dataBegin + offset);
+            return Encoding.ASCII.GetString(dnc.RawData, dataBegin + offset, tmp2 /* - (dnc.Name.Length + offset) */);
+            return Encoding.ASCII.GetString(dnc.RawData.Skip(dnc.Name.Length + offset).ToArray());
         }
 
         public static void UpdateStringInDnc(Dnc dnc, string text)

@@ -74,8 +74,6 @@ namespace YAMSE
 
         readonly Color defaultColor = Color.FromArgb(221, 234, 247);
 
-        public delegate void CallbackSetValue(object value);
-
         public MainForm2()
         {
             // KryptonExplorer
@@ -343,6 +341,8 @@ namespace YAMSE
 
             Scintilla scintillaTextEditor;
 
+            TableLayoutPanel tableLayoutPanel;
+
             switch (panelKind)
             {
                 case PanelKind.Script:
@@ -356,6 +356,7 @@ namespace YAMSE
                             Column = 0,
                             ColumnSpan = 3,
                             Component = scintillaTextEditor,
+                            ComponentType = ComponentType.TextEditor,
                             RowSpan = 1
                         });
 
@@ -376,6 +377,7 @@ namespace YAMSE
                             Column = 2,
                             ColumnSpan = 1,
                             Component = propertyGrid,
+                            ComponentType = ComponentType.PropertyGrid,
                             RowSpan = 1
                         });
                     kryptonPageContainer.Add(
@@ -384,6 +386,7 @@ namespace YAMSE
                             Column = 0,
                             ColumnSpan = 2,
                             Component = scintillaTextEditor,
+                            ComponentType = ComponentType.TextEditor,
                             RowSpan = 1
                         });
 
@@ -418,21 +421,59 @@ namespace YAMSE
                             Column = 0,
                             ColumnSpan = 3,
                             Component = elementHostHexEditor,
+                            ComponentType = ComponentType.HexEditor,
                             RowSpan = 1
                         });
 
                     return CreatePageInternal(pageName, pageId, kryptonPageContainer);
 
                 case PanelKind.Standard:
-                case PanelKind.Model:
-
                     CreateDefaultTextBoxes(kryptonPageContainer, dnc);
 
-                    TableLayoutPanel tableLayoutPanel = new TableLayoutPanel
+                    tableLayoutPanel = new TableLayoutPanel
                     {
                         BackColor = defaultColor,
                         ColumnCount = 6,
                         RowCount = 3
+                    };
+                    tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+                    tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+                    tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+
+                    tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20));
+                    tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200));
+                    tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20));
+                    tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200));
+                    tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20));
+                    tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200));
+
+                    return CreatePageInternal(pageName, pageId, kryptonPageContainer, tableLayoutPanel);
+
+                case PanelKind.Model:
+                    CreateDefaultTextBoxes(kryptonPageContainer, dnc);
+
+                    ModelProps modelProps = dnc.DncProps as ModelProps;
+
+                    /*
+                    int row = 6;
+                    int col = 0;
+                    CreateLabel(kryptonPageContainer, col, row, 2, "Sector");
+
+                    col++;
+                    CreateTextBox(kryptonPageContainer, col, row, modelProps.Sector, (o) => { modelProps.Sector = o.ToString(); }, (prop, control) => { control.Text = (prop as ModelProps).Sector.ToString(); });
+
+                    col++;
+                    CreateLabel(kryptonPageContainer, col, row, 2, "Model");
+
+                    col++;
+                    CreateTextBox(kryptonPageContainer, col, row, modelProps.Model, (o) => { modelProps.Model = o.ToString(); }, (prop, control) => { control.Text = (prop as ModelProps).Model.ToString(); });
+                    */
+
+                    tableLayoutPanel = new TableLayoutPanel
+                    {
+                        BackColor = defaultColor,
+                        ColumnCount = 6,
+                        RowCount = 5
                     };
                     tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
                     tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
@@ -464,10 +505,11 @@ namespace YAMSE
                                         });
             }
 
-            static void CreateTextBox(List<KryptonPageContainer> kryptonPageContainer, int col, int row, object init, CallbackSetValue setterFunction)
+            static void CreateTextBox(List<KryptonPageContainer> kryptonPageContainer, int col, int row, object init, CallbackSetPropValue setterFunction, CallbackSetComponentValue componentValueFunction)
             {
                 var textBox = new KryptonTextBox() { Text = init.ToString() };
-                textBox.TextChanged += (sender, e) => {
+                textBox.TextChanged += (sender, e) => 
+                {
 
                     if (!string.IsNullOrWhiteSpace(textBox.Text))
                     {
@@ -481,6 +523,8 @@ namespace YAMSE
                                             Column = col,
                                             ColumnSpan = 1,
                                             Component = textBox,
+                                            ComponentType = ComponentType.TextBoxes,
+                                            SetComponentValue = componentValueFunction,
                                             RowSpan = 1,
                                             Row = row
                                         });
@@ -490,6 +534,8 @@ namespace YAMSE
             {
                 int col = 0;
                 int row = 0;
+
+                StandardProps standardProps = dnc.DncProps as StandardProps;
 
                 // position
                 CreateLabel(kryptonPageContainer, col, row, 2, "Position");
@@ -508,15 +554,15 @@ namespace YAMSE
                 col++;
                 row = 1;
 
-                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).PositionX, (o) => { (dnc.DncProps as StandardProps).PositionX = Convert.ToSingle(o); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionX, (o) => { standardProps.PositionX = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).PositionX.ToString(); });
 
                 row++;
 
-                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).PositionY, (o) => { (dnc.DncProps as StandardProps).PositionY = Convert.ToSingle(o); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionY, (o) => { standardProps.PositionY = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).PositionY.ToString(); });
 
                 row++;
 
-                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).PositionZ, (o) => { (dnc.DncProps as StandardProps).PositionZ = Convert.ToSingle(o); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionZ, (o) => { standardProps.PositionZ = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).PositionZ.ToString(); });
 
                 col++;
                 row = 0;
@@ -536,13 +582,13 @@ namespace YAMSE
                 col++;
 
                 row = 1;
-                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).RotationX, (o) => { (dnc.DncProps as StandardProps).RotationX = Convert.ToSingle(o); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationX, (o) => { standardProps.RotationX = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).RotationX.ToString(); });
 
                 row++;
-                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).RotationY, (o) => { (dnc.DncProps as StandardProps).RotationY = Convert.ToSingle(o); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationY, (o) => { standardProps.RotationY = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).RotationY.ToString(); });
 
                 row++;
-                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).RotationZ, (o) => { (dnc.DncProps as StandardProps).RotationZ = Convert.ToSingle(o); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationZ, (o) => { standardProps.RotationZ = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).RotationZ.ToString(); });
 
                 col++;
                 row = 0;
@@ -562,13 +608,13 @@ namespace YAMSE
                 col++;
 
                 row = 1;
-                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).ScalingX, (o) => { (dnc.DncProps as StandardProps).ScalingX = Convert.ToSingle(o); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingX, (o) => { standardProps.ScalingX = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).ScalingX.ToString(); });
 
                 row++;
-                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).ScalingY, (o) => { (dnc.DncProps as StandardProps).ScalingY = Convert.ToSingle(o); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingY, (o) => { standardProps.ScalingY = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).ScalingY.ToString(); });
 
                 row++;
-                CreateTextBox(kryptonPageContainer, col, row, (dnc.DncProps as StandardProps).ScalingZ, (o) => { (dnc.DncProps as StandardProps).ScalingZ = Convert.ToSingle(o); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingZ, (o) => { standardProps.ScalingZ = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).ScalingZ.ToString(); });
             }
         }
 
@@ -638,6 +684,7 @@ namespace YAMSE
             tableLayoutPanel.RowCount++;
             tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
 
+            
             var btnSave = CreateButton(pageId, DncMethods.BtnSaveClick, "Save");
             tableLayoutPanel.Controls.Add(btnSave, 0, tableLayoutPanel.RowCount);
             tableLayoutPanel.SetColumnSpan(btnSave, 2);
@@ -645,6 +692,7 @@ namespace YAMSE
             var btnRevert = CreateButton(pageId, DncMethods.BtnRevertClick, "Revert");
             tableLayoutPanel.Controls.Add(btnRevert, 2, tableLayoutPanel.RowCount);
             tableLayoutPanel.SetColumnSpan(btnRevert, 2);
+            
 
             tableLayoutPanel.Dock = DockStyle.Fill;
             tableLayoutPanel.Location = new Point(0, 27);
@@ -806,11 +854,11 @@ namespace YAMSE
                             case DncType.Script:
                                 //elementHostHexEditor.Hide();
                                 activeDncs.Add(currId);
-                                CreatePage(dnc, PanelKind.Script, Scene2Parser.GetStringFromDnc(dnc));
+                                CreatePage(dnc, PanelKind.Script, Scene2Parser.GetScriptFromDnc(dnc));
                                 break;
                             case DncType.Enemy:
                                 activeDncs.Add(currId);
-                                CreatePage(dnc, PanelKind.Enemy, Scene2Parser.GetStringFromDnc(dnc));
+                                CreatePage(dnc, PanelKind.Enemy, Scene2Parser.GetScriptFromDnc(dnc));
                                 break;
                             case DncType.PhysicalObject:
                             case DncType.Door:
@@ -841,7 +889,7 @@ namespace YAMSE
                         }
 
                         activeDncs.Add(currId);
-                        CreatePage(dnc, PanelKind.Script, Scene2Parser.GetStringFromInitScript(dnc));
+                        CreatePage(dnc, PanelKind.Script, Scene2Parser.GetScriptFromDnc(dnc));
                         break;
                     default:
                         dnc = scene2Data.Sections.Where(x => x.SectionType == NodeType.Unknown).SelectMany(x => x.Dncs).Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();

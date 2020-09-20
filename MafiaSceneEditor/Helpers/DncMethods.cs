@@ -6,9 +6,13 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using YAMSE.DataLayer;
+using YAMSE.Interfaces;
 
 namespace YAMSE
 {
+    public delegate void CallbackSetPropValue(object value);
+    public delegate void CallbackSetComponentValue(IDncProps prop, Control control);
+
     public class DncMethods
     {
         public static void BtnSaveClick(object sender, EventArgs eventArgs)
@@ -50,13 +54,13 @@ namespace YAMSE
             {
                 case PanelKind.Enemy:
                 case PanelKind.Script:
-                    var text = Scene2Parser.GetStringFromDnc(pageId.Dnc, true);
+                    var text = Scene2Parser.GetScriptFromDnc(pageId.Dnc, true);
                     pageId.ScintillaTextEditor.Text = text;
                     ScintillaTextHighlight(text, 0, pageId.ScintillaTextEditor);
 
                     pageId.Dnc.DncProps.RevertData();
 
-                    var propGrid = pageId.KryptonPageContainer.First(x => x.Component.GetType() == typeof(PropertyGrid)).Component as PropertyGrid;
+                    var propGrid = pageId.KryptonPageContainer.First(x => x.ComponentType == ComponentType.PropertyGrid).Component as PropertyGrid;
                     propGrid.Refresh();
 
                     break;
@@ -66,6 +70,15 @@ namespace YAMSE
                     var tmpStream = new MemoryStream();
                     new MemoryStream(pageId.Dnc.RawData).CopyTo(tmpStream); // needed in order to allow expanding
                     //hexEditor.Stream = tmpStream;
+                    break;
+                case PanelKind.Standard:
+                case PanelKind.Model:
+                    pageId.Dnc.DncProps.RevertData();
+
+                    foreach (var container in pageId.KryptonPageContainer.Where(x => x.ComponentType == ComponentType.TextBoxes))
+                    {
+                        container.SetComponentValue(pageId.Dnc.DncProps, container.Component);
+                    }
                     break;
                 default:
                     break;
