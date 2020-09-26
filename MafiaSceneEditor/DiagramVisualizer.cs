@@ -30,8 +30,7 @@ namespace YAMSE
     {
         readonly System.Windows.Forms.Integration.ElementHost elementHostDiagramEditor;
         readonly MyDesigner myDesigner = new MyDesigner();
-
-        MainForm2 mainForm;
+        readonly MainForm2 mainForm;
 
         public DiagramVisualizer(MainForm2 _mainForm)
         {
@@ -76,19 +75,18 @@ namespace YAMSE
 
             List<string> excludedNames = new List<string> { "Tommy" };
 
-            Regex scriptExtract = new Regex("^(?!//)[ ]*findactor[ ]+([0-9]+),[ ]*\"([a-zA-Z0-9_-]+)\"");
+            Regex scriptExtract = new Regex("^(?!//)[ ]*findactor[ ]+([0-9]+),[ ]*\"([a-zA-Z 0-9_-~]+)\"");
 
             int left = 0;
             int top = 0;
-            foreach (var script in scene2Data.Sections.First(x => x.SectionType == NodeType.Definition).Dncs.Where(x => x.dncType == DncType.Script))
+            foreach (Dnc dnc in scene2Data.Sections.First(x => x.SectionType == NodeType.Definition).Dncs.Where(x => (x.dncType == DncType.Script) || (x.dncType == DncType.Enemy)))
             {
                 // get references from scripts
                 // findactor xx, "name"
-                string[] strings = Scene2Parser.GetStringFromDnc(script).Split("\r\n");
+                string[] strings = Scene2Parser.GetScriptFromDnc(dnc).Split("\r\n");
 
                 //listBoxOutput.Items.Add(script.name);
 
-                bool hasAtLeastOneConnection = false;
                 List<RootConnection> connectionsForOneItem = new List<RootConnection>();
                 foreach (var str in strings)
                 {
@@ -110,45 +108,42 @@ namespace YAMSE
                                 StrokeThickness = 2,
                                 SourceConnectorName = "Bottom",
                                 SourceArrowSymbol = "None",
-                                SourceID = script.Name,
+                                SourceID = dnc.Name,
                                 SinkID = sinkName,
                             });
 
+                            /*
                             if (!excludedNames.Contains(scriptMatchResult?.Groups[2].ToString()))
                             {
                                 hasAtLeastOneConnection = true;
                             }
+                            */
                         }
                     }
                 }
 
-                if (hasAtLeastOneConnection)
+                var guid = AddToDesignerItems(designerItems, left, top, dnc);
+                guidsForNames.Add(dnc.Name, guid);
+
+                if (root.Connections == null)
                 {
-                    var guid = AddToDesignerItems(designerItems, left, top, script);
-                    guidsForNames.Add(script.Name, guid);
+                    root.Connections = connectionsForOneItem.ToArray();
+                }
+                else
+                {
+                    tmpList = root.Connections.ToList();
+                    tmpList.AddRange(connectionsForOneItem);
+                    root.Connections = tmpList.ToArray();
+                }
 
-                    if (root.Connections == null)
-                    {
-                        root.Connections = connectionsForOneItem.ToArray();
-                    }
-                    else
-                    {
-                        tmpList = root.Connections.ToList();
-                        tmpList.AddRange(connectionsForOneItem);
-                        root.Connections = tmpList.ToArray();
-                    }
+                left += 150;
 
-                    left += 150;
-
-                    if (left >= 1000)
-                    {
-                        top += 120;
-                        left = 0;
-                    }
+                if (left >= 1000)
+                {
+                    top += 120;
+                    left = 0;
                 }
             }
-
-            root.DesignerItems = designerItems.ToArray();
 
             // filter out invalid connections
             List<string> connectionForDeletion = new List<string>();
@@ -175,6 +170,18 @@ namespace YAMSE
                     }
                 }
                 root.Connections = tmpList.ToArray();
+
+                // delete nodes without connection
+                for (int i = 0; i < designerItems.Count; i++)
+                {
+                    var designerItem = designerItems[i];
+                    if (!root.Connections.Any(x => x.SourceID == designerItem.ID) && !root.Connections.Any(x => x.SinkID == designerItem.ID))
+                    {
+                        designerItems.RemoveAt(i);
+                    }
+                }
+
+                root.DesignerItems = designerItems.ToArray();
 
                 // move nodes
                 foreach (var grouping in root.Connections.GroupBy(x => x.SourceID))
@@ -237,7 +244,7 @@ namespace YAMSE
                 {
                     if (itemInner.ID != item.ID)
                     {
-                        if (isNodeNear(itemInner.Left, item.Left) && isNodeNear(itemInner.Top, item.Top))
+                        if (IsNodeNear(itemInner.Left, item.Left) && IsNodeNear(itemInner.Top, item.Top))
                         {
                             itemInner.Top += 150;
                         }
@@ -324,7 +331,7 @@ namespace YAMSE
             }
         }
 
-        private bool isNodeNear(int a, int b)
+        private bool IsNodeNear(int a, int b)
         {
             return Math.Abs(a - b) < 20;
         }
@@ -334,7 +341,7 @@ namespace YAMSE
             var guid = Guid.NewGuid().ToString();
             designerItems.Add(new RootDesignerItem
             {
-                Content = Resources.Test1Content.Replace("Box_placeholder", script.Name),
+                Content = /*script.Name,*/ Resources.Test1Content.Replace("Box_placeholder", script.Name),
                 Left = left,
                 Top = top,
                 Width = 100 + (script.Name.Length - 5) * 7,
