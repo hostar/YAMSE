@@ -5,6 +5,7 @@
         TextEditor,
         HexEditor,
         PropertyGrid,
-        TextBoxes
+        CheckBox,
+        Label
     }
 }

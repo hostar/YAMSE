@@ -384,17 +384,17 @@ namespace YAMSE
             return Encoding.ASCII.GetString(dnc.RawData.Skip(dnc.Name.Length + offset).ToArray());
         }
 
-        public static void UpdateStringInDnc(Dnc dnc, string text)
+        public static void UpdateStringInScriptDnc(Dnc dnc, string text)
         {
-            UpdateStringInDncInternal(dnc, text, 41);
+            UpdateStringInDnc(dnc, text, 41);
         }
 
         public static void UpdateStringInEnemyDnc(Dnc dnc, string text)
         {
-            UpdateStringInDncInternal(dnc, text, 110);
+            UpdateStringInDnc(dnc, text, 110);
         }
 
-        private static void UpdateStringInDncInternal(Dnc dnc, string text, int offset)
+        private static void UpdateStringInDnc(Dnc dnc, string text, int offset)
         {
             var startArray = dnc.RawData.Take(dnc.Name.Length + offset).ToArray();
 
@@ -662,6 +662,26 @@ namespace YAMSE
             {
                 Array.Copy(BitConverter.GetBytes((int)value).Take(1).ToArray(), 0, dnc.RawData, DataBegin + indexInArray, 1);
             }
+        }
+
+        public static void WriteArrayToDnc(byte[] inputArray, int destinationIndex, Dnc dnc)
+        {
+            Array.Copy(inputArray, 0, dnc.RawData, destinationIndex, inputArray.Length);
+        }
+
+        public static void CutZerosAtEndOfArray(Dnc dnc)
+        {
+            int notZeroIndex = 0;
+            for (int i = dnc.RawData.Length - 1; i > 0; i--)
+            {
+                if (dnc.RawData[i] != 0)
+                {
+                    notZeroIndex = i + 2;
+                    break;
+                }
+            }
+
+            dnc.RawData = dnc.RawData.Take(notZeroIndex).ToArray();
         }
     }
 }

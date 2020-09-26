@@ -354,10 +354,10 @@ namespace YAMSE
                         new KryptonPageContainer
                         {
                             Column = 0,
-                            ColumnSpan = 3,
+                            ColumnSpan = 4,
                             Component = scintillaTextEditor,
                             ComponentType = ComponentType.TextEditor,
-                            RowSpan = 1
+                            RowSpan = 2
                         });
 
                     return CreatePageInternal(pageName, pageId, kryptonPageContainer);
@@ -432,7 +432,7 @@ namespace YAMSE
 
                     tableLayoutPanel = new TableLayoutPanel
                     {
-                        BackColor = defaultColor,
+                        BackColor = Color.FromArgb(187, 206, 230), //defaultColor,
                         ColumnCount = 6,
                         RowCount = 3
                     };
@@ -454,24 +454,43 @@ namespace YAMSE
 
                     ModelProps modelProps = dnc.DncProps as ModelProps;
 
-                    /*
-                    int row = 6;
+                    KryptonPanel kryptonPanel = new KryptonPanel { Top = 500, Left = 0, Size = new Size(500, 200) };
+
+                    List<KryptonPageContainer> kryptonPageContainer2 = new List<KryptonPageContainer>();
+                    int row = 0;
                     int col = 0;
-                    CreateLabel(kryptonPageContainer, col, row, 2, "Sector");
+                    CreateLabel(kryptonPageContainer2, col, row, 1, "Sector");
 
                     col++;
-                    CreateTextBox(kryptonPageContainer, col, row, modelProps.Sector, (o) => { modelProps.Sector = o.ToString(); }, (prop, control) => { control.Text = (prop as ModelProps).Sector.ToString(); });
+                    CreateCheckBox(kryptonPageContainer2, col, row, string.Empty, modelProps.HaveSector,
+                        (o) => { modelProps.HaveSector = (bool)o; }, (prop, control) => { (control as CheckBox).Checked = (prop as ModelProps).HaveSector; }, width: 16);
 
                     col++;
-                    CreateLabel(kryptonPageContainer, col, row, 2, "Model");
+                    CreateTextBox(kryptonPageContainer2, col, row, modelProps.Sector, 
+                        (o) => { modelProps.Sector = o.ToString(); }, (prop, control) => { control.Text = (prop as ModelProps).Sector.ToString(); }, 3, 280);
+
+                    row++;
+                    col = 0;
+                    CreateLabel(kryptonPageContainer2, col, row, 1, "Model");
 
                     col++;
-                    CreateTextBox(kryptonPageContainer, col, row, modelProps.Model, (o) => { modelProps.Model = o.ToString(); }, (prop, control) => { control.Text = (prop as ModelProps).Model.ToString(); });
-                    */
+                    CreateTextBox(kryptonPageContainer2, col, row, modelProps.Model, 
+                        (o) => { modelProps.Model = o.ToString(); }, (prop, control) => { control.Text = (prop as ModelProps).Model.ToString(); }, 3, 300);
+
+                    TableLayoutPanel tableLayoutOptionalPanel = new TableLayoutPanel
+                    {
+                        BackColor = Color.FromArgb(187, 206, 230),
+                        ColumnCount = 8,
+                        RowCount = 2,
+                        Dock = DockStyle.Fill
+                    };
+
+                    PutOnTableLayout(kryptonPageContainer2, tableLayoutOptionalPanel);
+                    kryptonPanel.Controls.Add(tableLayoutOptionalPanel);
 
                     tableLayoutPanel = new TableLayoutPanel
                     {
-                        BackColor = defaultColor,
+                        BackColor = Color.FromArgb(187, 206, 230),
                         ColumnCount = 6,
                         RowCount = 5
                     };
@@ -486,7 +505,7 @@ namespace YAMSE
                     tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20));
                     tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200));
 
-                    return CreatePageInternal(pageName, pageId, kryptonPageContainer, tableLayoutPanel);
+                    return CreatePageInternal(pageName, pageId, kryptonPageContainer, tableLayoutPanel, kryptonPanel);
 
                 default:
                     throw new InvalidOperationException(nameof(CreatePage));
@@ -500,14 +519,15 @@ namespace YAMSE
                                             Column = col,
                                             ColumnSpan = colSpan,
                                             Component = new KryptonLabel() { Text = text },
+                                            ComponentType = ComponentType.Label,
                                             RowSpan = 1,
                                             Row = row
                                         });
             }
 
-            static void CreateTextBox(List<KryptonPageContainer> kryptonPageContainer, int col, int row, object init, CallbackSetPropValue setterFunction, CallbackSetComponentValue componentValueFunction)
+            static void CreateTextBox(List<KryptonPageContainer> kryptonPageContainer, int col, int row, string init, CallbackSetPropValue setterFunction, CallbackSetComponentValue componentValueFunction, int colSpan = 1, int width = 100)
             {
-                var textBox = new KryptonTextBox() { Text = init.ToString() };
+                var textBox = new KryptonTextBox() { Text = init, Width = width };
                 textBox.TextChanged += (sender, e) => 
                 {
 
@@ -521,9 +541,30 @@ namespace YAMSE
                                         new KryptonPageContainer
                                         {
                                             Column = col,
-                                            ColumnSpan = 1,
+                                            ColumnSpan = colSpan,
                                             Component = textBox,
-                                            ComponentType = ComponentType.TextBoxes,
+                                            ComponentType = ComponentType.CheckBox,
+                                            SetComponentValue = componentValueFunction,
+                                            RowSpan = 1,
+                                            Row = row
+                                        });
+            }
+
+            static void CreateCheckBox(List<KryptonPageContainer> kryptonPageContainer, int col, int row, string initText, bool isChecked, CallbackSetPropValue setterFunction, CallbackSetComponentValue componentValueFunction, int colSpan = 1, int width = 100)
+            {
+                var checkBox = new CheckBox() { Text = initText, Checked = isChecked, Width = width };
+                checkBox.CheckedChanged += (sender, e) =>
+                {
+                    setterFunction(checkBox.Checked);
+                };
+
+                kryptonPageContainer.Add(
+                                        new KryptonPageContainer
+                                        {
+                                            Column = col,
+                                            ColumnSpan = colSpan,
+                                            Component = checkBox,
+                                            ComponentType = ComponentType.CheckBox,
                                             SetComponentValue = componentValueFunction,
                                             RowSpan = 1,
                                             Row = row
@@ -554,15 +595,15 @@ namespace YAMSE
                 col++;
                 row = 1;
 
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionX, (o) => { standardProps.PositionX = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).PositionX.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionX.ToString(), (o) => { standardProps.PositionX = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).PositionX.ToString(); });
 
                 row++;
 
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionY, (o) => { standardProps.PositionY = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).PositionY.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionY.ToString(), (o) => { standardProps.PositionY = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).PositionY.ToString(); });
 
                 row++;
 
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionZ, (o) => { standardProps.PositionZ = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).PositionZ.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionZ.ToString(), (o) => { standardProps.PositionZ = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).PositionZ.ToString(); });
 
                 col++;
                 row = 0;
@@ -582,13 +623,13 @@ namespace YAMSE
                 col++;
 
                 row = 1;
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationX, (o) => { standardProps.RotationX = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).RotationX.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationX.ToString(), (o) => { standardProps.RotationX = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).RotationX.ToString(); });
 
                 row++;
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationY, (o) => { standardProps.RotationY = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).RotationY.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationY.ToString(), (o) => { standardProps.RotationY = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).RotationY.ToString(); });
 
                 row++;
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationZ, (o) => { standardProps.RotationZ = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).RotationZ.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationZ.ToString(), (o) => { standardProps.RotationZ = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).RotationZ.ToString(); });
 
                 col++;
                 row = 0;
@@ -608,13 +649,13 @@ namespace YAMSE
                 col++;
 
                 row = 1;
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingX, (o) => { standardProps.ScalingX = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).ScalingX.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingX.ToString(), (o) => { standardProps.ScalingX = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).ScalingX.ToString(); });
 
                 row++;
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingY, (o) => { standardProps.ScalingY = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).ScalingY.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingY.ToString(), (o) => { standardProps.ScalingY = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).ScalingY.ToString(); });
 
                 row++;
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingZ, (o) => { standardProps.ScalingZ = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).ScalingZ.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingZ.ToString(), (o) => { standardProps.ScalingZ = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).ScalingZ.ToString(); });
             }
         }
 
@@ -653,8 +694,10 @@ namespace YAMSE
             return scintillaTextEditor;
         }
 
-        private KryptonPage CreatePageInternal(string pageName, KryptonPageId pageId, IEnumerable<KryptonPageContainer> mainComponents, TableLayoutPanel tableLayoutPanel = null)
+        private KryptonPage CreatePageInternal(string pageName, KryptonPageId pageId, IEnumerable<KryptonPageContainer> mainComponents, TableLayoutPanel tableLayoutPanel = null, KryptonPanel optionalPanel = null)
         {
+            KryptonPanel kryptonBasePanel = new KryptonPanel { Dock = DockStyle.Fill };
+
             pageId.KryptonPageContainer = mainComponents;
 
             // Create a new page and give it a name and image
@@ -673,35 +716,53 @@ namespace YAMSE
                 tableLayoutPanel = CreateDefaultLayout();
             }
 
-            foreach (var pageContainer in mainComponents)
-            {
-                tableLayoutPanel.Controls.Add(pageContainer.Component, pageContainer.Column, pageContainer.Row);
-
-                tableLayoutPanel.SetColumnSpan(pageContainer.Component, pageContainer.ColumnSpan);
-                tableLayoutPanel.SetRowSpan(pageContainer.Component, pageContainer.RowSpan);
-            }
+            PutOnTableLayout(mainComponents, tableLayoutPanel);
 
             tableLayoutPanel.RowCount++;
             tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
 
-            
-            var btnSave = CreateButton(pageId, DncMethods.BtnSaveClick, "Save");
-            tableLayoutPanel.Controls.Add(btnSave, 0, tableLayoutPanel.RowCount);
-            tableLayoutPanel.SetColumnSpan(btnSave, 2);
+            tableLayoutPanel.Dock = DockStyle.None;
+            tableLayoutPanel.Location = new Point(0, 0);
 
-            var btnRevert = CreateButton(pageId, DncMethods.BtnRevertClick, "Revert");
-            tableLayoutPanel.Controls.Add(btnRevert, 2, tableLayoutPanel.RowCount);
-            tableLayoutPanel.SetColumnSpan(btnRevert, 2);
-            
-
-            tableLayoutPanel.Dock = DockStyle.Fill;
-            tableLayoutPanel.Location = new Point(0, 27);
+            int buttonTopPosition = 0;
+            if (optionalPanel == null)
+            {
+                buttonTopPosition = 800;
+                tableLayoutPanel.Size = new Size(1200, 800);
+            }
+            else
+            {
+                buttonTopPosition = 900;
+                tableLayoutPanel.Size = new Size(800, 300);
+            }
             tableLayoutPanel.Name = nameof(tableLayoutPanel);
             //tableLayoutPanel.RowCount = 2;
             //tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             //tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
             //tableLayoutPanel.Size = new Size(1149, 533);
             tableLayoutPanel.TabIndex = 0;
+
+            // Add rich text box as the contents of the page
+            kryptonBasePanel.Padding = new Padding(5);
+            //page.Controls.Add(scintillaTextEditor);
+            kryptonBasePanel.Controls.Add(tableLayoutPanel);
+
+            KryptonPanel kryptonButtonPanel = new KryptonPanel() { Top = buttonTopPosition, Left = 0, Width = 800, Height = 200, BackColor = defaultColor, ForeColor = defaultColor };
+            var btnSave = CreateButton(pageId, DncMethods.BtnSaveClick, "Save", 0, 0);
+            kryptonButtonPanel.Controls.Add(btnSave);
+
+            var btnRevert = CreateButton(pageId, DncMethods.BtnRevertClick, "Revert", 150, 0);
+            kryptonButtonPanel.Controls.Add(btnRevert);
+
+            kryptonBasePanel.Controls.Add(kryptonButtonPanel);
+
+            if (optionalPanel != null)
+            {
+                kryptonBasePanel.Controls.Add(optionalPanel);
+            }
+
+
+            page.Controls.Add(kryptonBasePanel);
 
             // Create a close button for the page
             ButtonSpecAny bsa = new ButtonSpecAny
@@ -712,14 +773,24 @@ namespace YAMSE
             bsa.Click += PageClose;
             page.ButtonSpecs.Add(bsa);
 
-            // Add rich text box as the contents of the page
-            page.Padding = new Padding(5);
-            //page.Controls.Add(scintillaTextEditor);
-            page.Controls.Add(tableLayoutPanel);
-
             //workspaceMain.Pages.Add(page);
             kryptonWorkspaceContent.FirstCell().Pages.Add(page);
             return page;
+        }
+
+        private static void PutOnTableLayout(IEnumerable<KryptonPageContainer> mainComponents, TableLayoutPanel tableLayoutPanel)
+        {
+            if (mainComponents == null)
+            {
+                return;
+            }
+            foreach (var pageContainer in mainComponents)
+            {
+                tableLayoutPanel.Controls.Add(pageContainer.Component, pageContainer.Column, pageContainer.Row);
+
+                tableLayoutPanel.SetColumnSpan(pageContainer.Component, pageContainer.ColumnSpan);
+                tableLayoutPanel.SetRowSpan(pageContainer.Component, pageContainer.RowSpan);
+            }
         }
 
         private TableLayoutPanel CreateDefaultLayout()
@@ -738,12 +809,12 @@ namespace YAMSE
             return tableLayoutPanel1;
         }
 
-        private Control CreateButton(KryptonPageId kryptonPageId, EventHandler eventHandler, string btnName)
+        private Control CreateButton(KryptonPageId kryptonPageId, EventHandler eventHandler, string btnName, int x, int y)
         {
             KryptonButton btnObj = new KryptonButton
             {
                 Anchor = AnchorStyles.Bottom,
-                Location = new Point(3, 486),
+                Location = new Point(x, y),
                 Name = $"btn{btnName}",
                 Size = new Size(108, 44),
                 TabIndex = 1,

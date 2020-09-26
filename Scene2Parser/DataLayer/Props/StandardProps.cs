@@ -56,7 +56,7 @@ namespace YAMSE.DataLayer
             ScalingZ = BitConverter.ToSingle(_dnc.RawData.Skip(DataBegin + 52).Take(4).ToArray(), 0);
         }
 
-        public void SaveData()
+        public virtual void SaveData()
         {
             Scene2Parser.WriteToDnc(_dnc, DataBegin, PositionX, 4);
             Scene2Parser.WriteToDnc(_dnc, DataBegin, PositionY, 8);

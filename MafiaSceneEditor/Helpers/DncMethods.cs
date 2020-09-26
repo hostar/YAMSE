@@ -26,7 +26,7 @@ namespace YAMSE
                     {
                         case DncType.Script:
                         case DncType.InitScript:
-                            Scene2Parser.UpdateStringInDnc(pageId.Dnc, pageId.ScintillaTextEditor.Text);
+                            Scene2Parser.UpdateStringInScriptDnc(pageId.Dnc, pageId.ScintillaTextEditor.Text);
                             break;
                     }
                     break;
@@ -75,7 +75,7 @@ namespace YAMSE
                 case PanelKind.Model:
                     pageId.Dnc.DncProps.RevertData();
 
-                    foreach (var container in pageId.KryptonPageContainer.Where(x => x.ComponentType == ComponentType.TextBoxes))
+                    foreach (var container in pageId.KryptonPageContainer.Where(x => x.ComponentType == ComponentType.CheckBox))
                     {
                         container.SetComponentValue(pageId.Dnc.DncProps, container.Component);
                     }

@@ -257,7 +257,7 @@ namespace YAMSE
             switch (mdiKind)
             {
                 case MdiKind.Text:
-                    Scene2Parser.UpdateStringInDnc(Dnc, scintillaTextEditor.Text);
+                    Scene2Parser.UpdateStringInScriptDnc(Dnc, scintillaTextEditor.Text);
                     break;
                 case MdiKind.Hex:
                     Dnc.RawData = hexEditor.GetAllBytes(true);
