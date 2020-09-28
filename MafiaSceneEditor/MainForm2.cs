@@ -467,7 +467,7 @@ namespace YAMSE
 
                     col++;
                     CreateTextBox(kryptonPageContainer2, col, row, modelProps.Sector, 
-                        (o) => { modelProps.Sector = o.ToString(); }, (prop, control) => { control.Text = (prop as ModelProps).Sector.ToString(); }, 3, 280);
+                        (o) => { modelProps.Sector = o.ToString(); }, (prop, control) => { control.Text = (prop as ModelProps).Sector.ToString(); }, 3, 278);
 
                     row++;
                     col = 0;
@@ -696,7 +696,45 @@ namespace YAMSE
 
         private KryptonPage CreatePageInternal(string pageName, KryptonPageId pageId, IEnumerable<KryptonPageContainer> mainComponents, TableLayoutPanel tableLayoutPanel = null, KryptonPanel optionalPanel = null)
         {
-            KryptonPanel kryptonBasePanel = new KryptonPanel { Dock = DockStyle.Fill };
+            TableLayoutPanel kryptonBasePanel = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.FromArgb(187, 206, 230), //defaultColor,
+                ColumnCount = 1,
+                RowCount = 3
+            };
+
+            bool createdDefault = false;
+            if (tableLayoutPanel == null)
+            {
+                createdDefault = true;
+                tableLayoutPanel = CreateDefaultLayout();
+            }
+
+            if (optionalPanel == null)
+            {
+                //tableLayoutPanel.Size = new Size(1200, 500);
+
+                if (createdDefault)
+                {
+                    kryptonBasePanel.RowStyles.Add(new RowStyle(SizeType.Percent, 80));
+                    kryptonBasePanel.RowStyles.Add(new RowStyle(SizeType.Percent, 20));
+                }
+                else
+                {
+                    kryptonBasePanel.RowStyles.Add(new RowStyle(SizeType.Percent, 60));
+                    kryptonBasePanel.RowStyles.Add(new RowStyle(SizeType.Percent, 40));
+                }
+            }
+            else
+            {
+                //tableLayoutPanel.Size = new Size(800, 300);
+                kryptonBasePanel.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+                kryptonBasePanel.RowStyles.Add(new RowStyle(SizeType.Percent, 20));
+                kryptonBasePanel.RowStyles.Add(new RowStyle(SizeType.Percent, 30));
+            }
+
+            kryptonBasePanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
             pageId.KryptonPageContainer = mainComponents;
 
@@ -711,56 +749,40 @@ namespace YAMSE
                 MinimumSize = new Size(200, 250)
             };
 
-            if (tableLayoutPanel == null)
-            {
-                tableLayoutPanel = CreateDefaultLayout();
-            }
-
             PutOnTableLayout(mainComponents, tableLayoutPanel);
 
             tableLayoutPanel.RowCount++;
             tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
 
-            tableLayoutPanel.Dock = DockStyle.None;
+            tableLayoutPanel.Dock = DockStyle.Fill;
             tableLayoutPanel.Location = new Point(0, 0);
 
-            int buttonTopPosition = 0;
-            if (optionalPanel == null)
-            {
-                buttonTopPosition = 800;
-                tableLayoutPanel.Size = new Size(1200, 800);
-            }
-            else
-            {
-                buttonTopPosition = 900;
-                tableLayoutPanel.Size = new Size(800, 300);
-            }
             tableLayoutPanel.Name = nameof(tableLayoutPanel);
-            //tableLayoutPanel.RowCount = 2;
-            //tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            //tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
-            //tableLayoutPanel.Size = new Size(1149, 533);
             tableLayoutPanel.TabIndex = 0;
 
             // Add rich text box as the contents of the page
             kryptonBasePanel.Padding = new Padding(5);
-            //page.Controls.Add(scintillaTextEditor);
-            kryptonBasePanel.Controls.Add(tableLayoutPanel);
+            
+            kryptonBasePanel.Controls.Add(tableLayoutPanel, 0, 0);
 
-            KryptonPanel kryptonButtonPanel = new KryptonPanel() { Top = buttonTopPosition, Left = 0, Width = 800, Height = 200, BackColor = defaultColor, ForeColor = defaultColor };
-            var btnSave = CreateButton(pageId, DncMethods.BtnSaveClick, "Save", 0, 0);
-            kryptonButtonPanel.Controls.Add(btnSave);
-
-            var btnRevert = CreateButton(pageId, DncMethods.BtnRevertClick, "Revert", 150, 0);
-            kryptonButtonPanel.Controls.Add(btnRevert);
-
-            kryptonBasePanel.Controls.Add(kryptonButtonPanel);
-
+            int kryptonButtonPanelRow = 2;
             if (optionalPanel != null)
             {
-                kryptonBasePanel.Controls.Add(optionalPanel);
+                kryptonBasePanel.Controls.Add(optionalPanel, 0, 1);
+            }
+            else
+            {
+                kryptonButtonPanelRow = 1;
             }
 
+            KryptonPanel kryptonButtonPanel = new KryptonPanel() { Dock = DockStyle.Fill, BackColor = defaultColor, ForeColor = defaultColor };
+            var btnSave = CreateButton(pageId, DncMethods.BtnSaveClick, "Save", 0, 50);
+            kryptonButtonPanel.Controls.Add(btnSave);
+
+            var btnRevert = CreateButton(pageId, DncMethods.BtnRevertClick, "Revert", 150, 50);
+            kryptonButtonPanel.Controls.Add(btnRevert);
+
+            kryptonBasePanel.Controls.Add(kryptonButtonPanel, 0, kryptonButtonPanelRow);
 
             page.Controls.Add(kryptonBasePanel);
 
@@ -813,7 +835,7 @@ namespace YAMSE
         {
             KryptonButton btnObj = new KryptonButton
             {
-                Anchor = AnchorStyles.Bottom,
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
                 Location = new Point(x, y),
                 Name = $"btn{btnName}",
                 Size = new Size(108, 44),
