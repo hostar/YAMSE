@@ -1,4 +1,5 @@
-﻿using ScintillaNET;
+﻿using ComponentFactory.Krypton.Navigator;
+using ScintillaNET;
 using System.Collections.Generic;
 using YAMSE.DataLayer;
 
@@ -40,6 +41,9 @@ namespace YAMSE
         public IEnumerable<KryptonPageContainer> KryptonPageContainer { get; set; }
 
         public WpfHexaEditor.HexEditor HexEditor { get; set; }
+
+        public KryptonPage KryptonPage { get; set; }
+        public bool IsDirty { get; set; }
 
         public override string ToString()
         {

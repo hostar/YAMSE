@@ -346,7 +346,7 @@ namespace YAMSE
             switch (panelKind)
             {
                 case PanelKind.Script:
-                    scintillaTextEditor = CreateScintilla(text);
+                    scintillaTextEditor = CreateScintilla(text, pageId);
 
                     pageId.ScintillaTextEditor = scintillaTextEditor;
 
@@ -363,7 +363,7 @@ namespace YAMSE
                     return CreatePageInternal(pageName, pageId, kryptonPageContainer);
 
                 case PanelKind.Enemy:
-                    scintillaTextEditor = CreateScintilla(text);
+                    scintillaTextEditor = CreateScintilla(text, pageId);
 
                     pageId.ScintillaTextEditor = scintillaTextEditor;
 
@@ -659,7 +659,7 @@ namespace YAMSE
             }
         }
 
-        private static Scintilla CreateScintilla(string text)
+        private static Scintilla CreateScintilla(string text, KryptonPageId pageId)
         {
             Scintilla scintillaTextEditor = new Scintilla
             {
@@ -689,6 +689,7 @@ namespace YAMSE
 
             scintillaTextEditor.TextChanged += (sender, eargs) =>
             {
+                pageId.IsDirty = true;
                 DncMethods.ScintillaTextHighlight(scintillaTextEditor.Lines[scintillaTextEditor.LineFromPosition(scintillaTextEditor.CurrentPosition)].Text, scintillaTextEditor.CurrentPosition, scintillaTextEditor);
             };
             return scintillaTextEditor;
@@ -749,6 +750,8 @@ namespace YAMSE
                 MinimumSize = new Size(200, 250)
             };
 
+            pageId.KryptonPage = page;
+
             PutOnTableLayout(mainComponents, tableLayoutPanel);
 
             tableLayoutPanel.RowCount++;
@@ -789,7 +792,7 @@ namespace YAMSE
             // Create a close button for the page
             ButtonSpecAny bsa = new ButtonSpecAny
             {
-                Tag = page,
+                Tag = pageId,
                 Type = PaletteButtonSpecStyle.Close
             };
             bsa.Click += PageClose;
@@ -851,7 +854,18 @@ namespace YAMSE
 
         private void PageClose(object sender, EventArgs e)
         {
-            KryptonPage page = (sender as ButtonSpecAny).Tag as KryptonPage;
+            var pageId = (sender as ButtonSpecAny).Tag as KryptonPageId;
+
+            if (pageId.IsDirty)
+            {
+                if (KryptonMessageBox.Show("Close without saving?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.No)
+                {
+                    return;
+                }
+            }
+
+            var page = pageId.KryptonPage;
+            
             activeDncs.Remove(page.Tag.ToString());
             try
             {

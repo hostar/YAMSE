@@ -4,6 +4,7 @@
   syntax highlighting does not work when editing - done
 
 features to add:
+  page should ask if is trying to be closed without saving - works for scripts, init scripts and enemies
   save current diagram, so it can be loaded later
   ability to click-through from diagram to script - done
 
@@ -11,9 +12,8 @@ features to add:
   searching in objects
   export of DNCs
   import of DNCs
-  mdi should ask if is trying to be closed without saving
 
-  editing of enemy script
+  editing of enemy script - done
   editing of city cars and pedestrians - low priority
 
   movable sub-forms with scripts - done
