@@ -299,7 +299,7 @@ namespace YAMSE
                 TreeNode nodeToClick = null;
                 if (nodeName != string.Empty)
                 {
-                    foreach (var node in mainForm.treeView1.Nodes)
+                    foreach (var node in mainForm.treeViewMain.Nodes)
                     {
                         var treeNode = node as TreeNode;
                         if (treeNode.Text == "Object definitions")

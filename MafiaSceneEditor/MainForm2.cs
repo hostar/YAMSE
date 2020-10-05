@@ -27,7 +27,7 @@ namespace YAMSE
         readonly KryptonSplitContainer splitContainerOuter = new KryptonSplitContainer();
         readonly KryptonRibbon kryptonRibbon = new KryptonRibbon();
 
-        internal KryptonTreeView treeView1 = new KryptonTreeView();
+        internal KryptonTreeView treeViewMain = new KryptonTreeView();
         readonly KryptonContextMenuItem kryptonContextMenuItem1 = new KryptonContextMenuItem();
         readonly KryptonContextMenuItem kryptonContextMenuItem2 = new KryptonContextMenuItem();
         readonly KryptonContextMenuItem kryptonContextMenuItem3 = new KryptonContextMenuItem();
@@ -49,7 +49,6 @@ namespace YAMSE
 
         readonly KryptonRibbonQATButton kryptonQatButtonUndo = new KryptonRibbonQATButton();
 
-        readonly TableLayoutPanel tableLayoutPanel2 = new TableLayoutPanel();
         readonly KryptonListBox listBoxOutput = new KryptonListBox();
         readonly KryptonLabel outputLabel = new KryptonLabel { Text = "Output"};
 
@@ -74,6 +73,8 @@ namespace YAMSE
 
         readonly Color defaultColor = Color.FromArgb(221, 234, 247);
 
+        private string lastSearched = "";
+
         public MainForm2()
         {
             // KryptonExplorer
@@ -85,7 +86,7 @@ namespace YAMSE
             kryptonManager.GlobalPaletteMode = PaletteModeManager.Office2010Blue;
 
             ((ISupportInitialize)kryptonWorkspaceTreeView).BeginInit();
-            //Controls.Add(kryptonWorkspaceTreeView);
+
             kryptonWorkspaceTreeView.Dock = DockStyle.Fill;
             ((ISupportInitialize)kryptonWorkspaceTreeView).EndInit();
 
@@ -119,7 +120,33 @@ namespace YAMSE
             splitContainerInner.Dock = DockStyle.Fill;
             splitContainerInner.SeparatorStyle = SeparatorStyle.HighProfile;
 
-            splitContainerInner.Panel1.Controls.Add(kryptonWorkspaceTreeView);
+            KryptonTextBox kryptonTextBoxSearch = new KryptonTextBox() { Dock = DockStyle.Fill, Text = "Search..." };
+
+            KryptonButton kryptonButtonSearch = new KryptonButton() { Width = 25 };
+            kryptonButtonSearch.Click += SearchButtonClick;
+            kryptonButtonSearch.Tag = kryptonTextBoxSearch;
+
+            TableLayoutPanel tableLayoutPanelTreeView = new TableLayoutPanel
+            {
+                BackColor = Color.FromArgb(221, 234, 247),
+                ColumnCount = 2,
+                RowCount = 2,
+                Dock = DockStyle.Fill,
+                Width = 300
+            };
+            tableLayoutPanelTreeView.RowStyles.Add(new RowStyle(SizeType.Percent, 90));
+            tableLayoutPanelTreeView.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+
+            tableLayoutPanelTreeView.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 90));
+            tableLayoutPanelTreeView.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 30));
+
+            tableLayoutPanelTreeView.Controls.Add(kryptonWorkspaceTreeView, 0, 0);
+            tableLayoutPanelTreeView.Controls.Add(kryptonTextBoxSearch, 0, 1);
+            tableLayoutPanelTreeView.Controls.Add(kryptonButtonSearch, 1, 1);
+
+            tableLayoutPanelTreeView.SetColumnSpan(kryptonWorkspaceTreeView, 2);
+
+            splitContainerInner.Panel1.Controls.Add(tableLayoutPanelTreeView);
             splitContainerInner.Panel2.Controls.Add(kryptonWorkspaceContent);
 
             splitContainerOuter.Dock = DockStyle.Fill;
@@ -128,17 +155,20 @@ namespace YAMSE
             splitContainerOuter.Orientation = Orientation.Horizontal;
             splitContainerOuter.Panel1.Controls.Add(splitContainerInner);
 
-            tableLayoutPanel2.BackColor = Color.FromArgb(221, 234, 247);
-            tableLayoutPanel2.ColumnCount = 1;
-            tableLayoutPanel2.RowCount = 2;
-            tableLayoutPanel2.Dock = DockStyle.Fill;
-            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
-            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 80F));
+            TableLayoutPanel tableLayoutPanelOutput = new TableLayoutPanel
+            {
+                BackColor = Color.FromArgb(221, 234, 247),
+                ColumnCount = 1,
+                RowCount = 2,
+                Dock = DockStyle.Fill
+            };
+            tableLayoutPanelOutput.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
+            tableLayoutPanelOutput.RowStyles.Add(new RowStyle(SizeType.Percent, 80F));
 
-            tableLayoutPanel2.Controls.Add(outputLabel, 0, 0);
-            tableLayoutPanel2.Controls.Add(listBoxOutput, 0, 1);
+            tableLayoutPanelOutput.Controls.Add(outputLabel, 0, 0);
+            tableLayoutPanelOutput.Controls.Add(listBoxOutput, 0, 1);
 
-            splitContainerOuter.Panel2.Controls.Add(tableLayoutPanel2);
+            splitContainerOuter.Panel2.Controls.Add(tableLayoutPanelOutput);
 
             splitContainerOuter.SeparatorStyle = SeparatorStyle.HighProfile;
 
@@ -279,6 +309,49 @@ namespace YAMSE
             }
         }
 
+        private void SearchButtonClick(object sender, EventArgs e)
+        {
+            KryptonTextBox kryptonTextBoxSearch = (KryptonTextBox)(sender as KryptonButton).Tag;
+
+            bool exitFor = false;
+
+            foreach (var item in treeViewMain.Nodes)
+            {
+                if (item is TreeNode treeNode)
+                {
+                    foreach (var node in treeNode.Nodes)
+                    {
+                        if (node is TreeNode treeNode2)
+                        {
+                            foreach (var node2 in treeNode2.Nodes)
+                            {
+                                if ((node2 as TreeNode).Text.StartsWith(kryptonTextBoxSearch.Text))
+                                {
+                                    var foundNode = node2 as TreeNode;
+                                    lastSearched = kryptonTextBoxSearch.Text;
+                                    exitFor = true;
+
+                                    treeNode2.Expand();
+                                    foundNode.EnsureVisible();
+                                    treeViewMain.SelectedNode = foundNode;
+                                    break;
+                                }
+                            }
+                        }
+                        if (exitFor)
+                        {
+                            //treeNode.Expand();
+                            break;
+                        }
+                    }
+                }
+                if (exitFor)
+                {
+                    break;
+                }
+            }
+        }
+
         private void kryptonWorkspace_WorkspaceCellAdding(object sender, WorkspaceCellEventArgs e)
         {
             // Do not show any navigator level buttons
@@ -319,14 +392,14 @@ namespace YAMSE
                 MinimumSize = new Size(200, 250)
             };
 
-            treeView1.Dock = DockStyle.Fill;
+            treeViewMain.Dock = DockStyle.Fill;
 
-            treeView1.AfterSelect += (sender, e) => { SelectedObjectChanged(e.Node); };
-            treeView1.NodeMouseClick += (sender, e) => { SelectedObjectChanged(e.Node); };
+            treeViewMain.AfterSelect += (sender, e) => { SelectedObjectChanged(e.Node); };
+            treeViewMain.NodeMouseClick += (sender, e) => { SelectedObjectChanged(e.Node); };
 
             // Add rich text box as the contents of the page
             page.Padding = new Padding(5);
-            page.Controls.Add(treeView1);
+            page.Controls.Add(treeViewMain);
 
             return page;
         }
@@ -1012,7 +1085,7 @@ namespace YAMSE
                         break;
                 }
 
-                treeView1.Focus();
+                treeViewMain.Focus();
             }
         }
 
@@ -1093,7 +1166,7 @@ namespace YAMSE
             Scene2Parser.LoadScene(memoryStream, ref scene2Data, listBoxOutput.Items);
 
             // put into treeview
-            treeView1.Nodes.Clear();
+            treeViewMain.Nodes.Clear();
 
             int i = 0;
 
@@ -1137,7 +1210,7 @@ namespace YAMSE
                     treeNodeParent.Text += $" [{nodeList.Count}]";
                     objectsTreeNode.Nodes.Add(treeNodeParent);
                 }
-                treeView1.Nodes.Add(objectsTreeNode);
+                treeViewMain.Nodes.Add(objectsTreeNode);
 
             }
 
