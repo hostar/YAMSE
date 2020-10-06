@@ -120,16 +120,21 @@ namespace YAMSE
             splitContainerInner.Dock = DockStyle.Fill;
             splitContainerInner.SeparatorStyle = SeparatorStyle.HighProfile;
 
-            KryptonTextBox kryptonTextBoxSearch = new KryptonTextBox() { Dock = DockStyle.Fill, Text = "Search..." };
+            Label kryptonLabelSearch = new Label { Text = "Search:", AutoSize = false, Dock = DockStyle.None };
+            kryptonLabelSearch.Font = new Font("Segoe UI", 6.5F, GraphicsUnit.Point);
+
+            KryptonTextBox kryptonTextBoxSearch = new KryptonTextBox() { Dock = DockStyle.Fill };
 
             KryptonButton kryptonButtonSearch = new KryptonButton() { Width = 25 };
+            kryptonButtonSearch.Values.Image = Resources.FindSmall;
+
             kryptonButtonSearch.Click += SearchButtonClick;
             kryptonButtonSearch.Tag = kryptonTextBoxSearch;
 
             TableLayoutPanel tableLayoutPanelTreeView = new TableLayoutPanel
             {
                 BackColor = Color.FromArgb(221, 234, 247),
-                ColumnCount = 2,
+                ColumnCount = 3,
                 RowCount = 2,
                 Dock = DockStyle.Fill,
                 Width = 300
@@ -137,14 +142,17 @@ namespace YAMSE
             tableLayoutPanelTreeView.RowStyles.Add(new RowStyle(SizeType.Percent, 90));
             tableLayoutPanelTreeView.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
 
-            tableLayoutPanelTreeView.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 90));
+            tableLayoutPanelTreeView.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 50));
+            tableLayoutPanelTreeView.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 80));
             tableLayoutPanelTreeView.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 30));
 
             tableLayoutPanelTreeView.Controls.Add(kryptonWorkspaceTreeView, 0, 0);
-            tableLayoutPanelTreeView.Controls.Add(kryptonTextBoxSearch, 0, 1);
-            tableLayoutPanelTreeView.Controls.Add(kryptonButtonSearch, 1, 1);
 
-            tableLayoutPanelTreeView.SetColumnSpan(kryptonWorkspaceTreeView, 2);
+            tableLayoutPanelTreeView.Controls.Add(kryptonLabelSearch, 0, 1);
+            tableLayoutPanelTreeView.Controls.Add(kryptonTextBoxSearch, 1, 1);
+            tableLayoutPanelTreeView.Controls.Add(kryptonButtonSearch, 2, 1);
+
+            tableLayoutPanelTreeView.SetColumnSpan(kryptonWorkspaceTreeView, 3);
 
             splitContainerInner.Panel1.Controls.Add(tableLayoutPanelTreeView);
             splitContainerInner.Panel2.Controls.Add(kryptonWorkspaceContent);
@@ -328,13 +336,17 @@ namespace YAMSE
                                 if ((node2 as TreeNode).Text.StartsWith(kryptonTextBoxSearch.Text))
                                 {
                                     var foundNode = node2 as TreeNode;
-                                    lastSearched = kryptonTextBoxSearch.Text;
-                                    exitFor = true;
 
-                                    treeNode2.Expand();
-                                    foundNode.EnsureVisible();
-                                    treeViewMain.SelectedNode = foundNode;
-                                    break;
+                                    if (lastSearched != treeNode2.Text + foundNode.Text)
+                                    {
+                                        lastSearched = treeNode2.Text + foundNode.Text;
+                                        exitFor = true;
+
+                                        treeNode2.Expand();
+                                        foundNode.EnsureVisible();
+                                        treeViewMain.SelectedNode = foundNode;
+                                        break;
+                                    }
                                 }
                             }
                         }

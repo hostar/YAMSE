@@ -61,6 +61,16 @@ namespace YAMSE {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap FindSmall {
+            get {
+                object obj = ResourceManager.GetObject("FindSmall", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to &lt;Test1 Visibility=&quot;Visible&quot; IsHitTestVisible=&quot;False&quot; xmlns=&quot;clr-namespace:YAMSE.Diagram;assembly=YAMSE&quot; 
         ///xmlns:av=&quot;http://schemas.microsoft.com/winfx/2006/xaml/presentation&quot; xmlns:dd=&quot;urn:diagram-designer-ns&quot; xmlns:ddc=&quot;clr-namespace:DiagramDesigner.Controls;assembly=DiagramDesigner&quot;&gt;
         ///	&lt;dd:DesignerItem.DragThumbTemplate&gt;
