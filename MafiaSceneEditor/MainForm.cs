@@ -407,11 +407,7 @@ namespace YAMSE
                         TreeNode treeNode = new TreeNode
                         {
                             Text = dnc.Name,
-                            Tag = new NodeTag
-                            {
-                                id = dnc.ID,
-                                nodeType = NodeType.Object
-                            }
+                            Tag = dnc
                         };
 
                         nodeList.Add(treeNode);
@@ -446,11 +442,7 @@ namespace YAMSE
                         TreeNode treeNode = new TreeNode
                         {
                             Text = dnc.Name,
-                            Tag = new NodeTag
-                            {
-                                id = dnc.ID,
-                                nodeType = NodeType.Definition
-                            }
+                            Tag = dnc
                         };
 
                         nodeList.Add(treeNode);
@@ -485,11 +477,7 @@ namespace YAMSE
                         TreeNode treeNode = new TreeNode
                         {
                             Text = dnc.Name,
-                            Tag = new NodeTag
-                            {
-                                id = dnc.ID,
-                                nodeType = NodeType.InitScript
-                            }
+                            Tag = dnc
                         };
 
                         nodeList.Add(treeNode);
@@ -540,13 +528,13 @@ namespace YAMSE
 
             if (e.Tag != null)
             {
-                switch (((NodeTag)e.Tag).nodeType)
+                switch (((Dnc)e.Tag).dncKind)
                 {
                     case NodeType.Object:
                         //elementHostHexEditor.Show();
                         elementHostDiagramEditor.Hide();
                         //hexEditor.Stream = new MemoryStream(scene2Data.objectsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault().rawData);
-                        dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.Object).Dncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+                        dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.Object).Dncs.Where(x => x.ID == ((Dnc)e.Tag).ID).FirstOrDefault();
 
                         if (mdiForms.Any(x => (string)x.Tag == CreateInnerFormTag(dnc)))
                         {
@@ -557,7 +545,7 @@ namespace YAMSE
                         break;
                     case NodeType.Definition:
 
-                        dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.Definition).Dncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+                        dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.Definition).Dncs.Where(x => x.ID == ((Dnc)e.Tag).ID).FirstOrDefault();
 
                         switch (dnc.dncType)
                         {
@@ -624,7 +612,7 @@ namespace YAMSE
                         
                         break;
                     case NodeType.InitScript:
-                        dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.InitScript).Dncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+                        dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.InitScript).Dncs.Where(x => x.ID == ((Dnc)e.Tag).ID).FirstOrDefault();
 
                         //fctb.Text = GetStringFromInitScript(dnc);
                         elementHostHexEditor.Hide();

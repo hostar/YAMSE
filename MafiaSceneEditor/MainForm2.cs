@@ -73,7 +73,7 @@ namespace YAMSE
 
         readonly Color defaultColor = Color.FromArgb(221, 234, 247);
 
-        private string lastSearched = "";
+        private int lastFound = 0;
 
         public MainForm2()
         {
@@ -124,6 +124,7 @@ namespace YAMSE
             kryptonLabelSearch.Font = new Font("Segoe UI", 6.5F, GraphicsUnit.Point);
 
             KryptonTextBox kryptonTextBoxSearch = new KryptonTextBox() { Dock = DockStyle.Fill };
+            kryptonTextBoxSearch.TextChanged += (sender, e) => { lastFound = 0; };
 
             KryptonButton kryptonButtonSearch = new KryptonButton() { Width = 25 };
             kryptonButtonSearch.Values.Image = Resources.FindSmall;
@@ -321,7 +322,14 @@ namespace YAMSE
         {
             KryptonTextBox kryptonTextBoxSearch = (KryptonTextBox)(sender as KryptonButton).Tag;
 
-            bool exitFor = false;
+            if (kryptonTextBoxSearch.Text == string.Empty)
+            {
+                return;
+            }
+
+            bool found = false;
+
+            int sectionId = 0;
 
             foreach (var item in treeViewMain.Nodes)
             {
@@ -331,16 +339,19 @@ namespace YAMSE
                     {
                         if (node is TreeNode treeNode2)
                         {
+                            sectionId++;
+                            int objectId = 0;
                             foreach (var node2 in treeNode2.Nodes)
                             {
+                                objectId++;
                                 if ((node2 as TreeNode).Text.StartsWith(kryptonTextBoxSearch.Text))
                                 {
                                     var foundNode = node2 as TreeNode;
 
-                                    if (lastSearched != treeNode2.Text + foundNode.Text)
+                                    if (lastFound < (sectionId * 100000) + objectId)
                                     {
-                                        lastSearched = treeNode2.Text + foundNode.Text;
-                                        exitFor = true;
+                                        lastFound = (sectionId * 100000) + objectId;
+                                        found = true;
 
                                         treeNode2.Expand();
                                         foundNode.EnsureVisible();
@@ -350,17 +361,21 @@ namespace YAMSE
                                 }
                             }
                         }
-                        if (exitFor)
+                        if (found)
                         {
-                            //treeNode.Expand();
                             break;
                         }
                     }
                 }
-                if (exitFor)
+                if (found)
                 {
                     break;
                 }
+            }
+
+            if (!found)
+            {
+                KryptonMessageBox.Show("End of file reached.");
             }
         }
 
@@ -996,7 +1011,7 @@ namespace YAMSE
 
             if (e.Tag != null)
             {
-                var nodeType = ((NodeTag)e.Tag).nodeType;
+                var nodeType = ((Dnc)e.Tag).dncKind;
                 switch (nodeType)
                 {
                     case NodeType.Object:
@@ -1004,7 +1019,7 @@ namespace YAMSE
                         //elementHostDiagramEditor.Hide();
                         //hexEditor.Stream = new MemoryStream(scene2Data.objectsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault().rawData);
 
-                        dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.Object).Dncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+                        dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.Object).Dncs.Where(x => x.ID == ((Dnc)e.Tag).ID).FirstOrDefault();
                         currId = DncMethods.CreatePageID(dnc);
 
                         if (activeDncs.Any(x => x == currId))
@@ -1033,7 +1048,7 @@ namespace YAMSE
                         break;
                     case NodeType.Definition:
 
-                        dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.Definition).Dncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+                        dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.Definition).Dncs.Where(x => x.ID == ((Dnc)e.Tag).ID).FirstOrDefault();
                         currId = DncMethods.CreatePageID(dnc);
 
                         if (activeDncs.Any(x => x == currId))
@@ -1071,7 +1086,7 @@ namespace YAMSE
 
                         break;
                     case NodeType.InitScript:
-                        dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.InitScript).Dncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+                        dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.InitScript).Dncs.Where(x => x.ID == ((Dnc)e.Tag).ID).FirstOrDefault();
 
                         currId = DncMethods.CreatePageID(dnc);
 
@@ -1084,7 +1099,7 @@ namespace YAMSE
                         CreatePage(dnc, PanelKind.Script, Scene2Parser.GetScriptFromDnc(dnc));
                         break;
                     default:
-                        dnc = scene2Data.Sections.Where(x => x.SectionType == NodeType.Unknown).SelectMany(x => x.Dncs).Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault();
+                        dnc = scene2Data.Sections.Where(x => x.SectionType == NodeType.Unknown).SelectMany(x => x.Dncs).Where(x => x.ID == ((Dnc)e.Tag).ID).FirstOrDefault();
                         currId = DncMethods.CreatePageID(dnc);
 
                         if (activeDncs.Any(x => x == currId))
@@ -1203,11 +1218,7 @@ namespace YAMSE
                         TreeNode treeNode = new TreeNode
                         {
                             Text = dnc.Name,
-                            Tag = new NodeTag
-                            {
-                                id = dnc.ID,
-                                nodeType = section.SectionType
-                            }
+                            Tag = dnc
                         };
 
                         nodeList.Add(treeNode);
