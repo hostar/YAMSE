@@ -1,21 +1,22 @@
 ﻿bugs to fix:
   remove shadows of connections - done
-  test diagram auto-arrange more and make diagram more useful after auto-generation
   syntax highlighting does not work when editing - done
+  test diagram auto-arrange more and make diagram more useful after auto-generation
 
 features to add:
   page should ask if is trying to be closed without saving - works for scripts, init scripts and enemies
   save current diagram, so it can be loaded later
-  ability to click-through from diagram to script - done
+  add settings of search to switch between searching from beginning or anywhere in the string
 
   adding new objects
-  searching in objects
-  export of DNCs
+  export of DNCs - in progress
   import of DNCs
 
-  editing of enemy script - done
   editing of city cars and pedestrians - low priority
 
+  ability to click-through from diagram to script - done
+  searching in objects - done
+  editing of enemy script - done
   movable sub-forms with scripts - done
   script syntax highlighting - done
   saving of data - done

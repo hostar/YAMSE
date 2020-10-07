@@ -132,6 +132,14 @@ namespace YAMSE
             kryptonButtonSearch.Click += SearchButtonClick;
             kryptonButtonSearch.Tag = kryptonTextBoxSearch;
 
+            kryptonTextBoxSearch.KeyPress += (sender, e) => {
+                if (e.KeyChar == 13)
+                {
+                    SearchButtonClick(kryptonButtonSearch, null);
+                    kryptonTextBoxSearch.Focus();
+                }
+            };
+
             TableLayoutPanel tableLayoutPanelTreeView = new TableLayoutPanel
             {
                 BackColor = Color.FromArgb(221, 234, 247),
