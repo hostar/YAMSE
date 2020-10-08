@@ -13,6 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
+using System.Windows.Input;
 using YAMSE.DataLayer;
 using YAMSE.Diagram.Classes;
 
@@ -75,6 +76,10 @@ namespace YAMSE
 
         private int lastFound = 0;
 
+        private KryptonContextMenu treeViewMenu = new KryptonContextMenu();
+
+        private TreeNode currTreeNode;
+
         public MainForm2()
         {
             // KryptonExplorer
@@ -98,24 +103,32 @@ namespace YAMSE
             kryptonWorkspaceContent.Dock = DockStyle.Fill;
 
             kryptonWorkspaceContent.ContextMenus.ShowContextMenu = false;
-            //workspaceMain.NavigatorMode = NavigatorMode.BarTabGroup;
-            //cell.Pages.Add(CreatePage(pageName));
-
-            //kryptonWorkspaceContent.Root.Children.Add(workspaceMain);
 
             kryptonWorkspaceContent.WorkspaceCellAdding += kryptonWorkspace_WorkspaceCellAdding;
 
             ((ISupportInitialize)kryptonWorkspaceContent).EndInit();
 
-            //kryptonWorkspaceContent.Root.Children.Add(CreateCell(2));
-
             Controls.Add(splitContainerOuter);
             Controls.Add(kryptonRibbon);
 
             listBoxOutput.Dock = DockStyle.Fill;
-            //listBoxOutput.Anchor = AnchorStyles.Left | AnchorStyles.Top;
-            //listBoxOutput.Location = new Point(0, 25);
-            //listBoxOutput.Size = new Size(Width, 300);
+
+            /// context menu
+            KryptonContextMenuItems kryptonContextMenuItems = new KryptonContextMenuItems();
+
+            KryptonContextMenuItems options = new KryptonContextMenuItems();
+            treeViewMenu.Items.Clear();
+            treeViewMenu.Items.Add(options);
+
+            KryptonContextMenuItem exportContextMenuItem = new KryptonContextMenuItem("Export as DNC") { Enabled = true };
+            //floatingItem.Tag = page.UniqueName;
+            exportContextMenuItem.Click += ExportDnc;
+            options.Items.Add(exportContextMenuItem);
+
+            KryptonContextMenuItem renameContextMenuItem = new KryptonContextMenuItem("Rename") { Enabled = true };
+            //floatingItem.Tag = page.UniqueName;
+            //floatingItem.Click += new EventHandler(OnDropDownFloatingClicked);
+            options.Items.Add(renameContextMenuItem);
 
             splitContainerInner.Dock = DockStyle.Fill;
             splitContainerInner.SeparatorStyle = SeparatorStyle.HighProfile;
@@ -430,9 +443,18 @@ namespace YAMSE
             treeViewMain.Dock = DockStyle.Fill;
 
             treeViewMain.AfterSelect += (sender, e) => { SelectedObjectChanged(e.Node); };
-            treeViewMain.NodeMouseClick += (sender, e) => { SelectedObjectChanged(e.Node); };
+            treeViewMain.NodeMouseClick += (sender, e) => {
+                if ((e.Button == MouseButtons.Right) && (e.Node.Tag != null))
+                {
+                    currTreeNode = e.Node;
+                    treeViewMenu.Show(treeViewMain, System.Windows.Forms.Cursor.Position);
+                }
+                else
+                {
+                    SelectedObjectChanged(e.Node);
+                }
+            };
 
-            // Add rich text box as the contents of the page
             page.Padding = new Padding(5);
             page.Controls.Add(treeViewMain);
 
@@ -1121,6 +1143,16 @@ namespace YAMSE
                 }
 
                 treeViewMain.Focus();
+            }
+        }
+
+        internal void ExportDnc(object sender, EventArgs e)
+        {
+            var dnc = currTreeNode.Tag as Dnc;
+
+            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                File.WriteAllBytes(saveFileDialog1.FileName, dnc.RawData);
             }
         }
 
