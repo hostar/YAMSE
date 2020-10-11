@@ -423,7 +423,7 @@ namespace YAMSE
             dnc.RawData = startArray.Concat(textInBytes).ToArray();
         }
 
-        private static string GetNameByID(Dnc dnc)
+        public static string GetNameByID(Dnc dnc)
         {
             switch (dnc.dncType)
             {
@@ -463,6 +463,48 @@ namespace YAMSE
                 case DncType.CityMusic:
                 case DncType.Light:
                     return GetCStringFromByteArray(dnc.RawData.Skip(20).Take(maxObjectNameLength).ToArray());
+                default:
+                    throw new InvalidOperationException(nameof(GetNameByID));
+            }
+        }
+
+        public static int GetPositionOfNameByID(Dnc dnc)
+        {
+            switch (dnc.dncType)
+            {
+                case DncType.Unknown:
+                    return 10;
+
+                case DncType.InitScript:
+
+                    return 9;
+                case DncType.MovableBridge:
+                case DncType.Car:
+                case DncType.Script:
+                case DncType.PhysicalObject:
+                case DncType.Door:
+                case DncType.Tram:
+                case DncType.GasStation:
+                case DncType.PedestrianSetup:
+                case DncType.Enemy:
+                case DncType.Plane:
+                case DncType.Player:
+                case DncType.TrafficSetup:
+                case DncType.LMAP:
+                case DncType.Sector:
+                case DncType.Wagon:
+                case DncType.Route:
+                case DncType.Clock:
+                    return 10;
+
+                case DncType.Standard:
+                case DncType.Occluder:
+                case DncType.Model:
+                case DncType.Sound:
+                case DncType.Camera:
+                case DncType.CityMusic:
+                case DncType.Light:
+                    return 20;
                 default:
                     throw new InvalidOperationException(nameof(GetNameByID));
             }

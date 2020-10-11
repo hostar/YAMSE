@@ -11,6 +11,7 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using System.Windows.Input;
@@ -121,14 +122,16 @@ namespace YAMSE
             treeViewMenu.Items.Add(options);
 
             KryptonContextMenuItem exportContextMenuItem = new KryptonContextMenuItem("Export as DNC") { Enabled = true };
-            //floatingItem.Tag = page.UniqueName;
             exportContextMenuItem.Click += ExportDnc;
             options.Items.Add(exportContextMenuItem);
 
-            KryptonContextMenuItem renameContextMenuItem = new KryptonContextMenuItem("Rename") { Enabled = true };
-            //floatingItem.Tag = page.UniqueName;
-            //floatingItem.Click += new EventHandler(OnDropDownFloatingClicked);
+            KryptonContextMenuItem renameContextMenuItem = new KryptonContextMenuItem("Rename (not implemented yet)") { Enabled = true };
+            renameContextMenuItem.Click += RenameDnc;
             options.Items.Add(renameContextMenuItem);
+
+            KryptonContextMenuItem duplicateContextMenuItem = new KryptonContextMenuItem("Duplicate (not implemented yet)") { Enabled = false };
+            //floatingItem.Click += new EventHandler(OnDropDownFloatingClicked);
+            options.Items.Add(duplicateContextMenuItem);
 
             splitContainerInner.Dock = DockStyle.Fill;
             splitContainerInner.SeparatorStyle = SeparatorStyle.HighProfile;
@@ -1153,6 +1156,36 @@ namespace YAMSE
             if (saveFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 File.WriteAllBytes(saveFileDialog1.FileName, dnc.RawData);
+            }
+        }
+
+        internal void RenameDnc(object sender, EventArgs e)
+        {
+            var dnc = currTreeNode.Tag as Dnc;
+
+            var newName = KryptonInputBox.Show("Enter new name", "Rename", dnc.Name);
+            if (newName != dnc.Name)
+            {
+                var newnameBytes = Encoding.UTF8.GetBytes(newName);
+                var pos = Scene2Parser.GetPositionOfNameByID(dnc);
+
+                var nameLenDiff = dnc.Name.Length - newName.Length;
+                byte[] rawdata = new byte[dnc.RawData.Length + nameLenDiff];
+
+                //Array.Copy(dnc.RawData, rawdata, dnc.RawData.Length);
+
+                //Todo: put name to new array and move the data so they are not rewritten
+                rawdata = dnc.RawData.Take(pos).Concat(newnameBytes).ToArray();
+                //File.WriteAllBytes(@"d:\tc\0", dnc.RawData);
+                //File.WriteAllBytes(@"d:\tc\1", rawdata);
+
+                rawdata = rawdata.Concat(dnc.RawData.Skip(pos).Skip(dnc.Name.Length).Take(dnc.RawData.Length - dnc.Name.Length - pos)).ToArray();
+                //File.WriteAllBytes(@"d:\tc\2", rawdata);
+
+                rawdata[16] = (byte)(newName.Length + 7);
+                //File.WriteAllBytes(@"d:\tc\3", rawdata);
+
+                dnc.RawData = rawdata;
             }
         }
 
