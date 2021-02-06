@@ -453,6 +453,7 @@ namespace YAMSE
                 case DncType.Wagon:
                 case DncType.Route:
                 case DncType.Clock:
+                case DncType.GhostObject:
                     return GetCStringFromByteArray(dnc.RawData.Skip(10).Take(maxObjectNameLength).ToArray());
 
                 case DncType.Standard:
@@ -676,6 +677,13 @@ namespace YAMSE
                                                                     if (firstN.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x18 }).Any())
                                                                     {
                                                                         return DncType.Route;
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        if (firstN.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x01 }).Any())
+                                                                        {
+                                                                            return DncType.GhostObject;
+                                                                        }
                                                                     }
                                                                 }
                                                             }

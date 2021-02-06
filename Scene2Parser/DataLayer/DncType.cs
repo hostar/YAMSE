@@ -32,6 +32,7 @@ namespace YAMSE.DataLayer
         Light,
         Clock,
         Wagon,
-        Route
+        Route,
+        GhostObject
     }
 }
