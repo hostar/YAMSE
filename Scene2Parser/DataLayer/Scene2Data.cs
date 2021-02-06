@@ -1,5 +1,4 @@
-﻿using Scene2Parser.DataLayer;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 

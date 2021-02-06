@@ -2,7 +2,6 @@
 using ComponentFactory.Krypton.Ribbon;
 using ComponentFactory.Krypton.Toolkit;
 using ComponentFactory.Krypton.Workspace;
-using Scene2Parser.DataLayer;
 using ScintillaNET;
 using System;
 using System.Collections.Generic;
@@ -125,7 +124,7 @@ namespace YAMSE
             exportContextMenuItem.Click += ExportDnc;
             options.Items.Add(exportContextMenuItem);
 
-            KryptonContextMenuItem renameContextMenuItem = new KryptonContextMenuItem("Rename (not implemented yet)") { Enabled = true };
+            KryptonContextMenuItem renameContextMenuItem = new KryptonContextMenuItem("Rename") { Enabled = true };
             renameContextMenuItem.Click += RenameDnc;
             options.Items.Add(renameContextMenuItem);
 
@@ -1159,34 +1158,14 @@ namespace YAMSE
             }
         }
 
-        internal void RenameDnc(object sender, EventArgs e)
+        private void RenameDnc(object sender, EventArgs e)
         {
             var dnc = currTreeNode.Tag as Dnc;
 
             var newName = KryptonInputBox.Show("Enter new name", "Rename", dnc.Name);
-            if (newName != dnc.Name)
-            {
-                var newnameBytes = Encoding.UTF8.GetBytes(newName);
-                var pos = Scene2Parser.GetPositionOfNameByID(dnc);
+            Scene2Parser.RenameDnc(dnc, newName);
 
-                var nameLenDiff = dnc.Name.Length - newName.Length;
-                byte[] rawdata = new byte[dnc.RawData.Length + nameLenDiff];
-
-                //Array.Copy(dnc.RawData, rawdata, dnc.RawData.Length);
-
-                //Todo: put name to new array and move the data so they are not rewritten
-                rawdata = dnc.RawData.Take(pos).Concat(newnameBytes).ToArray();
-                //File.WriteAllBytes(@"d:\tc\0", dnc.RawData);
-                //File.WriteAllBytes(@"d:\tc\1", rawdata);
-
-                rawdata = rawdata.Concat(dnc.RawData.Skip(pos).Skip(dnc.Name.Length).Take(dnc.RawData.Length - dnc.Name.Length - pos)).ToArray();
-                //File.WriteAllBytes(@"d:\tc\2", rawdata);
-
-                rawdata[16] = (byte)(newName.Length + 7);
-                //File.WriteAllBytes(@"d:\tc\3", rawdata);
-
-                dnc.RawData = rawdata;
-            }
+            currTreeNode.Text = newName;
         }
 
         private void AddRecentFile(string filename)
@@ -1263,7 +1242,15 @@ namespace YAMSE
         {
             scene2Data = new Scene2Data();
 
-            Scene2Parser.LoadScene(memoryStream, ref scene2Data, listBoxOutput.Items);
+            try
+            {
+                Scene2Parser.LoadScene(memoryStream, ref scene2Data, listBoxOutput.Items);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
             // put into treeview
             treeViewMain.Nodes.Clear();

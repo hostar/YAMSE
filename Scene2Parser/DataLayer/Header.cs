@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Scene2Parser.DataLayer
+namespace YAMSE.DataLayer
 {
     public class Header
     {

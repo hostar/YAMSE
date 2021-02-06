@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YAMSE", "MafiaSceneEditor\Y
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Scene2Parser", "Scene2Parser\Scene2Parser.csproj", "{F8BC1077-0434-47C0-B603-A924E8E8D983}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{02401F49-9CD6-458C-B322-3AA323190543}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{F8BC1077-0434-47C0-B603-A924E8E8D983}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F8BC1077-0434-47C0-B603-A924E8E8D983}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F8BC1077-0434-47C0-B603-A924E8E8D983}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02401F49-9CD6-458C-B322-3AA323190543}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02401F49-9CD6-458C-B322-3AA323190543}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02401F49-9CD6-458C-B322-3AA323190543}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02401F49-9CD6-458C-B322-3AA323190543}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

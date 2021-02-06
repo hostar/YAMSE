@@ -31,8 +31,16 @@ namespace YAMSE
 
             int positionIterator = 0;
 
+            int antiInfiniteLoopLastValue = 0;
+
             while (i < tmpBuff.Length)
             {
+                if ((antiInfiniteLoopLastValue == i) && (i != 0))
+                {
+                    throw new InvalidOperationException($"File corruped near 0x{i:X} position. Last object loaded: {currSection.Dncs.Last().Name}");
+                }
+                antiInfiniteLoopLastValue = i;
+
                 if (!headerParsed)
                 {
                     // parse header
@@ -496,6 +504,7 @@ namespace YAMSE
                 case DncType.Wagon:
                 case DncType.Route:
                 case DncType.Clock:
+                case DncType.GhostObject:
                     return 10;
 
                 case DncType.Standard:
@@ -717,6 +726,29 @@ namespace YAMSE
         public static void WriteArrayToDnc(byte[] inputArray, int destinationIndex, Dnc dnc)
         {
             Array.Copy(inputArray, 0, dnc.RawData, destinationIndex, inputArray.Length);
+        }
+
+        public static void RenameDnc(Dnc dnc, string newName)
+        {
+            if (newName != dnc.Name)
+            {
+                var newNameBytes = Encoding.UTF8.GetBytes(newName);
+                var pos = GetPositionOfNameByID(dnc);
+
+                var lenDiff = dnc.Name.Length > newName.Length ? dnc.Name.Length - newName.Length : newName.Length - dnc.Name.Length;
+
+                // replace binary data
+                byte[] rawData = dnc.RawData.Take(pos).Concat(newNameBytes).ToArray();
+
+                // put new data to object
+                dnc.RawData = rawData.Concat(dnc.RawData.Skip(pos).Skip(dnc.Name.Length).Take(dnc.RawData.Length - dnc.Name.Length - pos)).ToArray();
+
+                // update length data
+                dnc.RawData[pos - 4] = (byte)(dnc.RawData[pos - 4] + lenDiff);
+                dnc.RawData[0] = (byte)(dnc.RawData[0] + lenDiff);
+
+                dnc.Name = newName;
+            }
         }
 
         public static void CutZerosAtEndOfArray(Dnc dnc)
