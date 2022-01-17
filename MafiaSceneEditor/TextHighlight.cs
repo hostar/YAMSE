@@ -28,6 +28,8 @@ namespace YAMSE
             "human_addweapon",
             "console_addtext",
             "human_isweapon",
+            "human_activateweapon",
+            "enemy_move_to_frame",
             "findnearactor",
             "freeride_scoreadd",
             "setevent",
