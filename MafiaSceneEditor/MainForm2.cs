@@ -1187,7 +1187,17 @@ namespace YAMSE
                     {
                         var recent = sender as KryptonRibbonRecentDoc;
                         MemoryStream memoryStream = new MemoryStream();
-                        Stream tmpStream = File.OpenRead(recent.Text);
+
+                        Stream tmpStream = null;
+                        try
+                        {
+                            tmpStream = File.OpenRead(recent.Text);
+                        }
+                        catch (Exception ex)
+                        {
+                            listBoxOutput.Items.Add($"Error when opening file: {ex.Message}");
+                            return;
+                        }
                         
                         openFileDialog1.FileName = recent.Text;
 
