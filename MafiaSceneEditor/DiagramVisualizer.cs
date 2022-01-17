@@ -68,7 +68,7 @@ namespace YAMSE
 
             Root root = new Root();
 
-            List<RootConnection> tmpList;
+            List<RootConnection> tmpConnectionList;
 
             List<RootDesignerItem> designerItems = new List<RootDesignerItem>();
             Dictionary<string, string> guidsForNames = new Dictionary<string, string>();
@@ -95,22 +95,25 @@ namespace YAMSE
                         if (scriptMatchResult?.Groups.Count == 3)
                         {
                             var sinkName = scriptMatchResult?.Groups[2].ToString();
-                            //listBoxOutput.Items.Add($"  {sinkName}");
-
-                            connectionsForOneItem.Add(new RootConnection
+                            if (dnc.Name != sinkName)
                             {
-                                PathFinder = "OrthogonalPathFinder",
-                                Color = "#FF808080",
-                                SinkConnectorName = "Top",
-                                SinkArrowSymbol = "Arrow",
-                                zIndex = 2,
-                                ShowShadow = false,
-                                StrokeThickness = 2,
-                                SourceConnectorName = "Bottom",
-                                SourceArrowSymbol = "None",
-                                SourceID = dnc.Name,
-                                SinkID = sinkName,
-                            });
+                                //listBoxOutput.Items.Add($"  {sinkName}");
+
+                                connectionsForOneItem.Add(new RootConnection
+                                {
+                                    PathFinder = "OrthogonalPathFinder",
+                                    Color = "#FF808080",
+                                    SinkConnectorName = "Top",
+                                    SinkArrowSymbol = "Arrow",
+                                    zIndex = 0,
+                                    ShowShadow = false,
+                                    StrokeThickness = 2,
+                                    SourceConnectorName = "Bottom",
+                                    SourceArrowSymbol = "None",
+                                    SourceID = dnc.Name,
+                                    SinkID = sinkName,
+                                });
+                            }
 
                             /*
                             if (!excludedNames.Contains(scriptMatchResult?.Groups[2].ToString()))
@@ -120,10 +123,13 @@ namespace YAMSE
                             */
                         }
                     }
-                }
+                }                
 
-                var guid = AddToDesignerItems(designerItems, left, top, dnc);
-                guidsForNames.Add(dnc.Name, guid);
+                if (connectionsForOneItem.Count > 0)
+                {
+                    var guid = AddToDesignerItems(designerItems, left, top, dnc, connectionsForOneItem);
+                    guidsForNames.Add(dnc.Name, guid);
+                }
 
                 if (root.Connections == null)
                 {
@@ -131,9 +137,9 @@ namespace YAMSE
                 }
                 else
                 {
-                    tmpList = root.Connections.ToList();
-                    tmpList.AddRange(connectionsForOneItem);
-                    root.Connections = tmpList.ToArray();
+                    tmpConnectionList = root.Connections.ToList();
+                    tmpConnectionList.AddRange(connectionsForOneItem);
+                    root.Connections = tmpConnectionList.ToArray();
                 }
 
                 left += 150;
@@ -161,20 +167,21 @@ namespace YAMSE
                     item.SinkID = guidsForNames[item.SinkID];
                 }
 
-                tmpList = root.Connections.ToList();
+                tmpConnectionList = root.Connections.ToList();
                 foreach (string item in connectionForDeletion)
                 {
                     foreach (var toDelete in root.Connections.Where(x => x.SinkID == item))
                     {
-                        tmpList.Remove(toDelete);
+                        tmpConnectionList.Remove(toDelete);
                     }
                 }
-                root.Connections = tmpList.ToArray();
+                root.Connections = tmpConnectionList.ToArray();
 
                 // delete nodes without connection
                 for (int i = 0; i < designerItems.Count; i++)
                 {
                     var designerItem = designerItems[i];
+
                     if (!root.Connections.Any(x => x.SourceID == designerItem.ID) && !root.Connections.Any(x => x.SinkID == designerItem.ID))
                     {
                         designerItems.RemoveAt(i);
@@ -184,6 +191,7 @@ namespace YAMSE
                 root.DesignerItems = designerItems.ToArray();
 
                 // move nodes
+                /*
                 foreach (var grouping in root.Connections.GroupBy(x => x.SourceID))
                 {
                     if (grouping.Count() > 2)
@@ -204,12 +212,12 @@ namespace YAMSE
 
                         // listBoxOutput.Items.Add($"---------------------");
                     }
-                }
+                }*/
             }
-
+            
             // optimize nodes position
             // listBoxOutput.Items.Add($"---TOP-----");
-
+            /*
             var lastTop = 0;
 
             if (root.DesignerItems.Length == 0)
@@ -235,9 +243,10 @@ namespace YAMSE
                 }
                 lastTop = 0;
                 maxTop = root.DesignerItems.Max(x => x.Top);
-            }
+            }*/
 
             // optimize nodes position - prevent overlaps
+            
             foreach (var item in root.DesignerItems)
             {
                 foreach (var itemInner in root.DesignerItems)
@@ -248,11 +257,17 @@ namespace YAMSE
                         {
                             itemInner.Top += 150;
                         }
+                        /*
+                        if (IsNodeNear(itemInner.Left, item.Left + (int)item.Width) || IsNodeNear(itemInner.Left + (int)itemInner.Width, item.Left))
+                        {
+                            itemInner.Top += 150;
+                        }*/
                     }
                 }
             }
 
-            // optimize nodes position - check for long conenctions
+            // optimize nodes position - check for long connections
+            /*
             foreach (var item in root.Connections)
             {
                 // left
@@ -263,7 +278,7 @@ namespace YAMSE
                 {
                     root.DesignerItems.First(x => x.ID == item.SourceID).Left = root.DesignerItems.First(x => x.ID == item.SinkID).Left + 150;
                 }
-            }
+            }*/
 
             MemoryStream memoryStream = new MemoryStream();
             XmlWriter xmlWriter = XmlWriter.Create(memoryStream, new XmlWriterSettings { Encoding = Encoding.UTF8 });
@@ -285,7 +300,7 @@ namespace YAMSE
         private void MyDesignerCanvas_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             if (e.ClickCount == 2)
-            {
+            { // handle node double click
                 var grid = ((e.Source as DesignerItem).Content as Test1).Content as Grid;
                 var nodeName = string.Empty;
                 foreach (var item in grid.Children)
@@ -336,15 +351,16 @@ namespace YAMSE
             return Math.Abs(a - b) < 20;
         }
 
-        private static string AddToDesignerItems(List<RootDesignerItem> designerItems, int left, int top, Dnc script)
+        private static string AddToDesignerItems(List<RootDesignerItem> designerItems, int left, int top, Dnc dnc, List<RootConnection> connectionsForOneItem)
         {
             var guid = Guid.NewGuid().ToString();
             designerItems.Add(new RootDesignerItem
             {
-                Content = /*script.Name,*/ Resources.Test1Content.Replace("Box_placeholder", script.Name),
+                Content = Resources.Test1Content.Replace("Box_placeholder", dnc.Name).Replace("Num_connection", "Connections: " + connectionsForOneItem.Count.ToString()),
                 Left = left,
+                zIndex = 5,
                 Top = top,
-                Width = 100 + (script.Name.Length - 5) * 7,
+                Width = 100 + (dnc.Name.Length - 5) * 7,
                 Height = 70,
                 ParentID = "00000000-0000-0000-0000-000000000000",
                 ID = guid,
