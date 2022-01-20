@@ -76,8 +76,8 @@ namespace YAMSE {
         ///	&lt;dd:DesignerItem.DragThumbTemplate&gt;
         ///		&lt;av:ControlTemplate&gt;
         ///			&lt;av:Grid Background=&quot;#FFF0F8FF&quot;&gt;
-        ///				&lt;av:Path Data=&quot;M0,0L60,0 60,40 0,40z&quot; Stretch=&quot;Fill&quot; Fill=&quot;#00FFFFFF&quot; Stroke=&quot;#00FFFFFF&quot; IsHitTestVisible=&quot;True&quot;/&gt;
-        ///				&lt; [rest of string was truncated]&quot;;.
+        ///				&lt;av:Path Data=&quot;M0,0L60,0 60,40 0,40z&quot; Stretch=&quot;Fill&quot; Fill=&quot;#00FFFFFF&quot; Stroke=&quot;#00FFFFFF&quot; IsHitTestVisible=&quot;False&quot;/&gt;
+        ///				 [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string Test1Content {
             get {

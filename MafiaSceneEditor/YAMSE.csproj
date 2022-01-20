@@ -12,7 +12,7 @@
   <ItemGroup>
     <PackageReference Include="ComponentFactory.Krypton.Docking" Version="1.0.0" />
     <PackageReference Include="ComponentFactory.Krypton.Ribbon" Version="1.0.0" />
-    <PackageReference Include="DiagramDesigner" Version="2.0.0" />
+    <PackageReference Include="DiagramDesigner" Version="2.0.9" />
     <PackageReference Include="ScintillaNETCore" Version="1.0.2" />
     <PackageReference Include="WPFHexaEditor" Version="2.0.2" />
   </ItemGroup>

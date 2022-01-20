@@ -29,6 +29,8 @@ namespace YAMSE
         readonly KryptonRibbon kryptonRibbon = new KryptonRibbon();
 
         internal KryptonTreeView treeViewMain = new KryptonTreeView();
+        internal KryptonTreeView treeViewMainScriptSearch = new KryptonTreeView();
+
         readonly KryptonContextMenuItem kryptonContextMenuItem1 = new KryptonContextMenuItem();
         readonly KryptonContextMenuItem kryptonContextMenuItem2 = new KryptonContextMenuItem();
         readonly KryptonContextMenuItem kryptonContextMenuItem3 = new KryptonContextMenuItem();
@@ -37,15 +39,20 @@ namespace YAMSE
 
         readonly KryptonContextMenuSeparator kryptonContextMenuSeparator1 = new KryptonContextMenuSeparator();
 
-        readonly KryptonRibbonTab kryptonRibbonTab1 = new KryptonRibbonTab();
-        readonly KryptonRibbonGroup kryptonRibbonGroup1 = new KryptonRibbonGroup();
+        readonly KryptonRibbonTab kryptonRibbonTabTools = new KryptonRibbonTab();
+        readonly KryptonRibbonGroup kryptonRibbonGroupVisualization = new KryptonRibbonGroup();
         readonly KryptonRibbonGroupTriple kryptonRibbonGroupTriple1 = new KryptonRibbonGroupTriple();
 
-        readonly KryptonRibbonTab kryptonRibbonTab2 = new KryptonRibbonTab();
-        readonly KryptonRibbonGroup kryptonRibbonGroup2 = new KryptonRibbonGroup();
+        readonly KryptonRibbonTab kryptonRibbonTabWorkspace = new KryptonRibbonTab();
+        readonly KryptonRibbonGroup kryptonRibbonGroupArrange = new KryptonRibbonGroup();
+
         readonly KryptonRibbonGroupTriple kryptonRibbonGroupTriple2 = new KryptonRibbonGroupTriple();
 
+        readonly KryptonRibbonGroup kryptonRibbonGroupSearch = new KryptonRibbonGroup();
+        readonly KryptonRibbonGroupTriple kryptonRibbonGroupTriple3 = new KryptonRibbonGroupTriple();
+
         readonly KryptonRibbonGroupButton kryptonRibbonGroupButtonShowDiagram = new KryptonRibbonGroupButton();
+
         readonly KryptonRibbonGroupButton kryptonRibbonGroupButtonWorkspaceArrange = new KryptonRibbonGroupButton();
 
         readonly KryptonRibbonQATButton kryptonQatButtonUndo = new KryptonRibbonQATButton();
@@ -60,6 +67,8 @@ namespace YAMSE
 
         readonly List<string> activeDncs = new List<string>();
 
+        readonly Color defaultColor = Color.FromArgb(221, 234, 247);
+
         //KryptonWorkspaceCell workspaceMain = new KryptonWorkspaceCell();
 
         bool scene2FileLoaded = false;
@@ -72,13 +81,17 @@ namespace YAMSE
 
         string fNameRecent = "\\recent.list";
 
-        readonly Color defaultColor = Color.FromArgb(221, 234, 247);
-
         private int lastFound = 0;
 
         private KryptonContextMenu treeViewMenu = new KryptonContextMenu();
 
         private TreeNode currTreeNode;
+
+        private ButtonSpecAny caseSensitive = new ButtonSpecAny();
+        private ButtonSpecAny dismissResults = new ButtonSpecAny();
+
+        private KryptonTextBox kryptonTextBoxObjectSearch = new KryptonTextBox() { Dock = DockStyle.Fill };
+        private KryptonTextBox kryptonTextBoxScriptSearch = new KryptonTextBox() { Dock = DockStyle.Fill };
 
         public MainForm2()
         {
@@ -135,25 +148,63 @@ namespace YAMSE
             splitContainerInner.Dock = DockStyle.Fill;
             splitContainerInner.SeparatorStyle = SeparatorStyle.HighProfile;
 
-            Label kryptonLabelSearch = new Label { Text = "Search:", AutoSize = false, Dock = DockStyle.None };
-            kryptonLabelSearch.Font = new Font("Segoe UI", 6.5F, GraphicsUnit.Point);
+            Label kryptonLabelObjectSearch = new Label { Text = "Search\r\nobjects:", AutoSize = true, Dock = DockStyle.Fill};
+            kryptonLabelObjectSearch.Font = new Font("Segoe UI", 6F, GraphicsUnit.Point);
 
-            KryptonTextBox kryptonTextBoxSearch = new KryptonTextBox() { Dock = DockStyle.Fill };
-            kryptonTextBoxSearch.TextChanged += (sender, e) => { lastFound = 0; };
+            Label kryptonLabelScriptSearch = new Label { Text = "Search\r\nscripts:", AutoSize = true, Dock = DockStyle.Fill };
+            kryptonLabelScriptSearch.Font = new Font("Segoe UI", 6.5F, GraphicsUnit.Point);
+            
+            kryptonTextBoxObjectSearch.TextChanged += (sender, e) => { lastFound = 0; };
+            kryptonTextBoxObjectSearch.AllowButtonSpecToolTips = true;
 
-            KryptonButton kryptonButtonSearch = new KryptonButton() { Width = 25 };
-            kryptonButtonSearch.Values.Image = Resources.FindSmall;
+            caseSensitive.ToolTipBody = "Case sensitive";
+            caseSensitive.ToolTipStyle = LabelStyle.ToolTip;
+            caseSensitive.Checked = ButtonCheckState.Unchecked;
+            caseSensitive.Text = "Cc";
 
-            kryptonButtonSearch.Click += SearchButtonClick;
-            kryptonButtonSearch.Tag = kryptonTextBoxSearch;
+            kryptonTextBoxObjectSearch.ButtonSpecs.Add(caseSensitive);
 
-            kryptonTextBoxSearch.KeyPress += (sender, e) => {
+            KryptonButton kryptonButtonObjectSearch = new KryptonButton() { Width = 25 };
+            kryptonButtonObjectSearch.Values.Image = Resources.FindSmall;
+
+            kryptonButtonObjectSearch.Click += SearchObjectButtonClick;
+            kryptonButtonObjectSearch.Tag = kryptonTextBoxObjectSearch;
+
+            kryptonTextBoxObjectSearch.KeyPress += (sender, e) => {
                 if (e.KeyChar == 13)
                 {
-                    SearchButtonClick(kryptonButtonSearch, null);
-                    kryptonTextBoxSearch.Focus();
+                    SearchObjectButtonClick(kryptonButtonObjectSearch, null);
+                    kryptonTextBoxObjectSearch.Focus();
                 }
             };
+
+            // --------------
+            KryptonButton kryptonButtonScriptSearch = new KryptonButton() { Width = 25 };
+
+            kryptonTextBoxScriptSearch.KeyPress += (sender, e) => {
+                if (e.KeyChar == 13)
+                {
+                    SearchScriptsButtonClick(kryptonButtonScriptSearch, null);
+                    kryptonTextBoxScriptSearch.Focus();
+                }
+            };
+
+            kryptonButtonScriptSearch.Values.Image = Resources.FindSmall;
+
+            kryptonButtonScriptSearch.Click += SearchScriptsButtonClick;
+            kryptonButtonScriptSearch.Tag = kryptonTextBoxScriptSearch;
+            kryptonTextBoxScriptSearch.AllowButtonSpecToolTips = true;
+
+            dismissResults.Type = PaletteButtonSpecStyle.Close;
+            dismissResults.ToolTipBody = "Dismiss results";
+            dismissResults.ToolTipStyle = LabelStyle.ToolTip;
+            dismissResults.Checked = ButtonCheckState.NotCheckButton;
+            dismissResults.Click += (sender, e) => {
+                treeViewMainScriptSearch.Hide();
+                treeViewMain.Show();
+            };
+
+            kryptonTextBoxScriptSearch.ButtonSpecs.Add(dismissResults);
 
             TableLayoutPanel tableLayoutPanelTreeView = new TableLayoutPanel
             {
@@ -163,7 +214,8 @@ namespace YAMSE
                 Dock = DockStyle.Fill,
                 Width = 300
             };
-            tableLayoutPanelTreeView.RowStyles.Add(new RowStyle(SizeType.Percent, 90));
+            tableLayoutPanelTreeView.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+            tableLayoutPanelTreeView.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
             tableLayoutPanelTreeView.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
 
             tableLayoutPanelTreeView.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 50));
@@ -172,9 +224,13 @@ namespace YAMSE
 
             tableLayoutPanelTreeView.Controls.Add(kryptonWorkspaceTreeView, 0, 0);
 
-            tableLayoutPanelTreeView.Controls.Add(kryptonLabelSearch, 0, 1);
-            tableLayoutPanelTreeView.Controls.Add(kryptonTextBoxSearch, 1, 1);
-            tableLayoutPanelTreeView.Controls.Add(kryptonButtonSearch, 2, 1);
+            tableLayoutPanelTreeView.Controls.Add(kryptonLabelObjectSearch, 0, 1);
+            tableLayoutPanelTreeView.Controls.Add(kryptonTextBoxObjectSearch, 1, 1);
+            tableLayoutPanelTreeView.Controls.Add(kryptonButtonObjectSearch, 2, 1);
+
+            tableLayoutPanelTreeView.Controls.Add(kryptonLabelScriptSearch, 0, 2);
+            tableLayoutPanelTreeView.Controls.Add(kryptonTextBoxScriptSearch, 1, 2);
+            tableLayoutPanelTreeView.Controls.Add(kryptonButtonScriptSearch, 2, 2);
 
             tableLayoutPanelTreeView.SetColumnSpan(kryptonWorkspaceTreeView, 3);
 
@@ -255,8 +311,8 @@ namespace YAMSE
 
             kryptonRibbon.QATButtons.Add(kryptonQatButtonUndo);
 
-            kryptonRibbonTab1.Text = "Tools";
-            kryptonRibbonTab2.Text = "Workspace";
+            kryptonRibbonTabTools.Text = "Tools";
+            kryptonRibbonTabWorkspace.Text = "Workspace";
 
             kryptonRibbon.RibbonAppButton.AppButtonMenuItems.AddRange(new KryptonContextMenuItemBase[] {
             /*kryptonContextMenuItem1,*/
@@ -267,24 +323,26 @@ namespace YAMSE
             kryptonContextMenuItemExit});
 
             kryptonRibbon.RibbonTabs.AddRange(new KryptonRibbonTab[] {
-            kryptonRibbonTab1,
-            kryptonRibbonTab2});
+            kryptonRibbonTabTools,
+            kryptonRibbonTabWorkspace});
 
-            kryptonRibbonGroup1.DialogBoxLauncher = false;
-            kryptonRibbonGroup1.TextLine1 = "Visualization";
+            kryptonRibbonGroupVisualization.DialogBoxLauncher = false;
+            kryptonRibbonGroupVisualization.TextLine1 = "Visualization";
 
-            kryptonRibbonTab1.Groups.AddRange(new KryptonRibbonGroup[] {kryptonRibbonGroup1});
-
-            kryptonRibbonGroup1.Items.AddRange(new KryptonRibbonGroupContainer[] {kryptonRibbonGroupTriple1});
+            kryptonRibbonGroupVisualization.Items.AddRange(new KryptonRibbonGroupContainer[] {kryptonRibbonGroupTriple1});
 
             kryptonRibbonGroupButtonShowDiagram.TextLine1 = "Show diagram";
             kryptonRibbonGroupButtonShowDiagram.Click += ShowScriptDependencyDiagram;
 
             kryptonRibbonGroupTriple1.Items.AddRange(new KryptonRibbonGroupItem[] {kryptonRibbonGroupButtonShowDiagram});
 
-            kryptonRibbonGroup2.DialogBoxLauncher = false;
-            kryptonRibbonGroup2.MinimumWidth = 200;
-            kryptonRibbonGroup2.TextLine1 = "Arrange";
+            kryptonRibbonGroupArrange.DialogBoxLauncher = false;
+            kryptonRibbonGroupArrange.MinimumWidth = 200;
+            kryptonRibbonGroupArrange.TextLine1 = "Arrange";
+
+            kryptonRibbonGroupSearch.DialogBoxLauncher = false;
+            kryptonRibbonGroupSearch.MinimumWidth = 200;
+            kryptonRibbonGroupSearch.TextLine1 = "Search";
 
             kryptonRibbonGroupButtonWorkspaceArrange.Click += (sender, e) => { kryptonWorkspaceContent.ApplyGridPages(); };
             kryptonRibbonGroupButtonWorkspaceArrange.TextLine1 = "Grid";
@@ -292,11 +350,16 @@ namespace YAMSE
             kryptonRibbonGroupTriple2.Items.AddRange(new KryptonRibbonGroupItem[] {
             kryptonRibbonGroupButtonWorkspaceArrange});
 
-            kryptonRibbonGroup2.Items.AddRange(new KryptonRibbonGroupContainer[] {
+            kryptonRibbonGroupArrange.Items.AddRange(new KryptonRibbonGroupContainer[] {
             kryptonRibbonGroupTriple2});
 
-            kryptonRibbonTab2.Groups.AddRange(new KryptonRibbonGroup[] {
-            kryptonRibbonGroup2});
+            kryptonRibbonGroupSearch.Items.AddRange(new KryptonRibbonGroupContainer[] {
+            kryptonRibbonGroupTriple3});
+
+            kryptonRibbonTabWorkspace.Groups.AddRange(new KryptonRibbonGroup[] {
+            kryptonRibbonGroupArrange});
+
+            kryptonRibbonTabTools.Groups.AddRange(new KryptonRibbonGroup[] { kryptonRibbonGroupVisualization, /* kryptonRibbonGroupSearch */ });
 
             var fullPathRecent = Directory.GetCurrentDirectory() + fNameRecent;
 
@@ -341,7 +404,7 @@ namespace YAMSE
             }
         }
 
-        private void SearchButtonClick(object sender, EventArgs e)
+        private void SearchObjectButtonClick(object sender, EventArgs e)
         {
             KryptonTextBox kryptonTextBoxSearch = (KryptonTextBox)(sender as KryptonButton).Tag;
 
@@ -349,6 +412,8 @@ namespace YAMSE
             {
                 return;
             }
+
+            string textToSearch = kryptonTextBoxSearch.Text;
 
             bool found = false;
 
@@ -367,7 +432,19 @@ namespace YAMSE
                             foreach (var node2 in treeNode2.Nodes)
                             {
                                 objectId++;
-                                if ((node2 as TreeNode).Text.StartsWith(kryptonTextBoxSearch.Text))
+
+                                string currObjName = string.Empty;
+                                if (caseSensitive.Checked == ButtonCheckState.Checked)
+                                { // perform case sensitive search
+                                    currObjName = (node2 as TreeNode).Text;
+                                }
+                                else
+                                {
+                                    currObjName = (node2 as TreeNode).Text.ToLower();
+                                    textToSearch = textToSearch.ToLower();
+                                }
+
+                                if (currObjName.StartsWith(textToSearch))
                                 {
                                     var foundNode = node2 as TreeNode;
 
@@ -399,6 +476,47 @@ namespace YAMSE
             if (!found)
             {
                 KryptonMessageBox.Show("End of file reached.");
+            }
+        }
+
+        private void SearchScriptsButtonClick(object sender, EventArgs e)
+        {
+            if (scene2Data.Sections.Count == 0)
+            {
+                return;
+            }
+
+            if (kryptonTextBoxScriptSearch.Text == string.Empty)
+            {
+                return;
+            }
+
+            treeViewMain.Hide();
+            treeViewMainScriptSearch.Show();
+            treeViewMainScriptSearch.Nodes.Clear();
+
+            var dncs = scene2Data.Sections.First(x => x.SectionType == NodeType.Definition).Dncs.Where(x => (x.dncType == DncType.Script) || (x.dncType == DncType.Enemy));
+            foreach (var dnc in dncs)
+            {
+                if (Scene2Parser.GetScriptFromDnc(dnc).Contains(kryptonTextBoxScriptSearch.Text))
+                {
+                    int lNumber = 0;
+                    var split = Scene2Parser.GetScriptFromDnc(dnc).Split(Environment.NewLine);
+                    for (int i = 0; i < split.Length; i++)
+                    {
+                        if (split[i].Contains(kryptonTextBoxScriptSearch.Text))
+                        {
+                            lNumber = i + 1;
+                        }
+                    }
+                    TreeNode treeNode = new TreeNode
+                    {
+                        Text = dnc.Name + $" ({lNumber})",
+                        Tag = dnc
+                    };
+
+                    treeViewMainScriptSearch.Nodes.Add(treeNode);
+                }
             }
         }
 
@@ -459,6 +577,12 @@ namespace YAMSE
 
             page.Padding = new Padding(5);
             page.Controls.Add(treeViewMain);
+
+            treeViewMainScriptSearch.Dock = DockStyle.Fill;
+
+            treeViewMainScriptSearch.AfterSelect += (sender, e) => { SelectedObjectChanged(e.Node); };
+
+            page.Controls.Add(treeViewMainScriptSearch);
 
             return page;
         }
@@ -806,6 +930,8 @@ namespace YAMSE
             scintillaTextEditor.Styles[Style.Default].Size = 10;
 
             scintillaTextEditor.Lexer = Lexer.Null;
+
+            scintillaTextEditor.Margins[0].Width = 30;
 
             scintillaTextEditor.Text = text;
 

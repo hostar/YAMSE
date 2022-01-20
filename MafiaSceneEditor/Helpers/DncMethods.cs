@@ -19,6 +19,8 @@ namespace YAMSE
         {
             var pageId = ((KryptonButton)sender).Tag as KryptonPageId;
 
+            pageId.IsDirty = false;
+
             switch (pageId.PanelKind)
             {
                 case PanelKind.Script:
@@ -50,6 +52,8 @@ namespace YAMSE
         {
             var pageId = ((KryptonButton)sender).Tag as KryptonPageId;
 
+            pageId.IsDirty = false;
+
             switch (pageId.PanelKind)
             {
                 case PanelKind.Enemy:
@@ -58,7 +62,10 @@ namespace YAMSE
                     pageId.ScintillaTextEditor.Text = text;
                     ScintillaTextHighlight(text, 0, pageId.ScintillaTextEditor);
 
-                    pageId.Dnc.DncProps.RevertData();
+                    if (pageId.Dnc.DncProps != null)
+                    {
+                        pageId.Dnc.DncProps.RevertData();
+                    }
 
                     var propGrid = pageId.KryptonPageContainer.First(x => x.ComponentType == ComponentType.PropertyGrid).Component as PropertyGrid;
                     propGrid.Refresh();

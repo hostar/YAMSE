@@ -11,23 +11,9 @@
     <Compile Update="Diagram\Test1.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="MainForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Update="MainForm2.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="MdiScriptEdit.cs">
-      <SubType>Form</SubType>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Update="MainForm.resx">
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Update="MdiScriptEdit.resx">
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <Page Update="Diagram\MyDesigner.xaml">

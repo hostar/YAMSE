@@ -23,6 +23,7 @@ using DiagramDesigner;
 using System.Windows.Controls;
 using System.Runtime.InteropServices;
 using ComponentFactory.Krypton.Toolkit;
+using System.Windows.Input;
 
 namespace YAMSE
 {
@@ -31,6 +32,11 @@ namespace YAMSE
         readonly System.Windows.Forms.Integration.ElementHost elementHostDiagramEditor;
         readonly MyDesigner myDesigner = new MyDesigner();
         readonly MainForm2 mainForm;
+
+        readonly KryptonContextMenu contextMenuNode = new KryptonContextMenu();
+
+        DesignerItem currentNode = null;
+        RootConnection[] rootConnections;
 
         public DiagramVisualizer(MainForm2 _mainForm)
         {
@@ -53,6 +59,92 @@ namespace YAMSE
             elementHostDiagramEditor.BringToFront();
 
             mainForm = _mainForm;
+
+            KryptonContextMenuItem kryptonContextMenuItemShowOnlyDirectlyConnected = new KryptonContextMenuItem();
+            kryptonContextMenuItemShowOnlyDirectlyConnected.Text = "Show only directly connected";
+            kryptonContextMenuItemShowOnlyDirectlyConnected.Click += KryptonContextMenuItemShowOnlyDirectlyConnected_Click;
+
+            KryptonContextMenuItem kryptonContextMenuItemHideAllShowOnlyDirectlyConnected = new KryptonContextMenuItem();
+            kryptonContextMenuItemHideAllShowOnlyDirectlyConnected.Text = "Hide all and show only directly connected";
+            kryptonContextMenuItemHideAllShowOnlyDirectlyConnected.Click += KryptonContextMenuItemHideAllShowOnlyDirectlyConnected_Click;
+
+            contextMenuNode.Items.Add(new KryptonContextMenuItems(new KryptonContextMenuItemBase[] { kryptonContextMenuItemShowOnlyDirectlyConnected, kryptonContextMenuItemHideAllShowOnlyDirectlyConnected }));
+        }
+
+        private void KryptonContextMenuItemHideAllShowOnlyDirectlyConnected_Click(object sender, EventArgs e)
+        {
+            Guid id = currentNode.ID;
+            HideAllNodes(id);
+
+            KryptonContextMenuItemShowOnlyDirectlyConnected_Click(sender, e);
+        }
+
+        private void KryptonContextMenuItemShowOnlyDirectlyConnected_Click(object sender, EventArgs e)
+        {
+            Guid id = currentNode.ID;
+            string name = GetNameOfNode(currentNode);
+
+            // get ID of current node
+            foreach (var item in myDesigner.MyDesignerCanvas.Children)
+            {
+                if (item is DesignerItem designerItem)
+                {
+                    string tmpName = GetNameOfNode(designerItem);
+
+                    bool found = false;
+                    foreach (RootConnection conn in rootConnections)
+                    {
+                        if (conn.SinkID == id.ToString())
+                        {
+                            if (conn.SourceID == designerItem.ID.ToString())
+                            {
+                                found = true;
+                                break;
+                            }
+                        }
+
+                        if (conn.SourceID == id.ToString())
+                        {
+                            if (conn.SinkID == designerItem.ID.ToString())
+                            {
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (found)
+                    {
+                        designerItem.Visibility = System.Windows.Visibility.Visible;
+                    }
+                }
+            }
+        }
+
+        private void HideAllNodes(Guid id)
+        {
+            // hide everything
+            foreach (var item in myDesigner.MyDesignerCanvas.Children)
+            {
+                if (item is DesignerItem designerItem)
+                {
+                    if (designerItem.ID != id)
+                    {
+                        designerItem.Visibility = System.Windows.Visibility.Hidden;
+                    }
+                }
+
+                if (item is Connection conn)
+                { // TODO: correctly hide all edges
+                    if (conn.Sink.Connections.Any(x => x.ID == id))
+                    {
+                        conn.Visibility = System.Windows.Visibility.Hidden;
+                    }
+                    if (conn.Source.Connections.Any(x => x.ID == id))
+                    {
+                        conn.Visibility = System.Windows.Visibility.Hidden;
+                    }
+                }
+            }
         }
 
         public void ShowScriptDependencyDiagram(Scene2Data scene2Data)
@@ -295,55 +387,83 @@ namespace YAMSE
             myDesigner.MyDesignerCanvas.RestoreDiagram(XElement.Parse(reader.ReadToEnd()));
             //myDesigner.MyDesignerCanvas.MouseDown += MyDesignerCanvas_MouseDown;
             myDesigner.MyDesignerCanvas.PreviewMouseDown += MyDesignerCanvas_MouseDown;
+            //myDesigner.MyDesignerCanvas.ContextMenuOpening += MyDesignerCanvas_ContextMenuOpening;
+
+            // save connections
+            rootConnections = root.Connections.ToArray();
         }
 
         private void MyDesignerCanvas_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            if (e.ClickCount == 2)
-            { // handle node double click
-                var grid = ((e.Source as DesignerItem).Content as Test1).Content as Grid;
-                var nodeName = string.Empty;
-                foreach (var item in grid.Children)
-                {
-                    if (item is TextBlock textBlock)
-                    {
-                        nodeName = textBlock.Text;
-                    }
-                }
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                if (e.ClickCount == 2)
+                { // handle node double click
+                    string nodeName = GetNameOfNode(e);
 
-                TreeNode nodeToClick = null;
-                if (nodeName != string.Empty)
-                {
-                    foreach (var node in mainForm.treeViewMain.Nodes)
+                    TreeNode nodeToClick = null;
+                    if (nodeName != string.Empty)
                     {
-                        var treeNode = node as TreeNode;
-                        if (treeNode.Text == "Object definitions")
+                        foreach (var node in mainForm.treeViewMain.Nodes)
                         {
-                            foreach (var item in treeNode.Nodes)
+                            var treeNode = node as TreeNode;
+                            if (treeNode.Text == "Object definitions")
                             {
-                                var innerTreeNode = item as TreeNode;
-                                if (innerTreeNode.Text.Contains("Script"))
+                                foreach (var item in treeNode.Nodes)
                                 {
-                                    foreach (var item2 in innerTreeNode.Nodes)
+                                    var innerTreeNode = item as TreeNode;
+                                    if (innerTreeNode.Text.Contains("Script") || innerTreeNode.Text.Contains("Enemy"))
                                     {
-                                        var innerTreeNode2 = item2 as TreeNode;
-                                        if (innerTreeNode2.Text == nodeName)
+                                        foreach (var item2 in innerTreeNode.Nodes)
                                         {
-                                            nodeToClick = innerTreeNode2;
-                                            break;
+                                            var innerTreeNode2 = item2 as TreeNode;
+                                            if (innerTreeNode2.Text == nodeName)
+                                            {
+                                                nodeToClick = innerTreeNode2;
+                                                break;
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    if (nodeToClick != null)
-                    {
-                        mainForm.SelectedObjectChanged(nodeToClick);
+                        if (nodeToClick != null)
+                        {
+                            mainForm.SelectedObjectChanged(nodeToClick);
+                        }
                     }
                 }
             }
+
+            if (e.RightButton == MouseButtonState.Pressed)
+            {
+                e.Handled = true;
+                currentNode = (DesignerItem)e.Source;
+                contextMenuNode.Show(e.Source);
+            }
+        }
+
+        private static string GetNameOfNode(MouseButtonEventArgs e)
+        {
+            return GetNameOfNode(e.Source as DesignerItem);
+        }
+
+        private static string GetNameOfNode(DesignerItem designerItem)
+        {
+            var grid = (designerItem.Content as Test1).Content as Grid;
+            var nodeName = string.Empty;
+
+            foreach (var item in grid.Children)
+            {
+                if (item is TextBlock textBlock)
+                {
+                    nodeName = textBlock.Text;
+                    break;
+                }
+            }
+
+            return nodeName;
         }
 
         private bool IsNodeNear(int a, int b)
