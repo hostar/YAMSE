@@ -383,13 +383,11 @@ namespace YAMSE
             if (useBackup)
             {
                 return Encoding.ASCII.GetString(dnc.RawDataBackup, dataBegin + offset, Array.IndexOf(dnc.RawDataBackup, (byte)0, dnc.Name.Length + offset) - (dnc.Name.Length + offset));
-                return Encoding.ASCII.GetString(dnc.RawDataBackup.Skip(dnc.Name.Length + offset).ToArray());
             }
 
             var tmp = Array.IndexOf(dnc.RawData, (byte)0, dataBegin + offset);
             var tmp2 = tmp - (dataBegin + offset);
-            return Encoding.ASCII.GetString(dnc.RawData, dataBegin + offset, tmp2 /* - (dnc.Name.Length + offset) */);
-            return Encoding.ASCII.GetString(dnc.RawData.Skip(dnc.Name.Length + offset).ToArray());
+            return Encoding.ASCII.GetString(dnc.RawData, dataBegin + offset, tmp2);
         }
 
         public static void UpdateStringInScriptDnc(Dnc dnc, string text)
