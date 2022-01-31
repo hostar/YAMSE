@@ -2,11 +2,13 @@
 using ComponentFactory.Krypton.Ribbon;
 using ComponentFactory.Krypton.Toolkit;
 using ComponentFactory.Krypton.Workspace;
+using ICSharpCode.AvalonEdit.Highlighting;
 using ScintillaNET;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using SWM = System.Windows.Media;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -16,6 +18,9 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using YAMSE.DataLayer;
 using YAMSE.Diagram.Classes;
+using YAMSE.Helpers;
+using ICSharpCode.AvalonEdit.Search;
+//using ICSharpCode.AvalonEdit
 
 namespace YAMSE
 {
@@ -48,10 +53,14 @@ namespace YAMSE
 
         readonly KryptonRibbonGroupTriple kryptonRibbonGroupTriple2 = new KryptonRibbonGroupTriple();
 
-        readonly KryptonRibbonGroup kryptonRibbonGroupSearch = new KryptonRibbonGroup();
+        readonly KryptonRibbonGroup kryptonRibbonGroupExtarnalData = new KryptonRibbonGroup();
         readonly KryptonRibbonGroupTriple kryptonRibbonGroupTriple3 = new KryptonRibbonGroupTriple();
 
         readonly KryptonRibbonGroupButton kryptonRibbonGroupButtonShowDiagram = new KryptonRibbonGroupButton();
+
+        readonly KryptonRibbonGroupButton kryptonRibbonGroupButtonLoadDefs = new KryptonRibbonGroupButton();
+
+        readonly KryptonRibbonGroupButton kryptonRibbonGroupButtonStartGame = new KryptonRibbonGroupButton();
 
         readonly KryptonRibbonGroupButton kryptonRibbonGroupButtonWorkspaceArrange = new KryptonRibbonGroupButton();
 
@@ -64,6 +73,8 @@ namespace YAMSE
 
         readonly OpenFileDialog openFileDialog1 = new OpenFileDialog();
         readonly SaveFileDialog saveFileDialog1 = new SaveFileDialog();
+
+        readonly OpenFileDialog openFileDialog2 = new OpenFileDialog();
 
         readonly List<string> activeDncs = new List<string>();
 
@@ -82,6 +93,9 @@ namespace YAMSE
         string fNameRecent = "\\recent.list";
 
         private int lastFound = 0;
+
+        private string defFilePath = string.Empty;
+        private ImageElementGenerator imageElementGenerator;
 
         private KryptonContextMenu treeViewMenu = new KryptonContextMenu();
 
@@ -141,8 +155,8 @@ namespace YAMSE
             renameContextMenuItem.Click += RenameDnc;
             options.Items.Add(renameContextMenuItem);
 
-            KryptonContextMenuItem duplicateContextMenuItem = new KryptonContextMenuItem("Duplicate (not implemented yet)") { Enabled = false };
-            //floatingItem.Click += new EventHandler(OnDropDownFloatingClicked);
+            KryptonContextMenuItem duplicateContextMenuItem = new KryptonContextMenuItem("Duplicate") { Enabled = true };
+            duplicateContextMenuItem.Click += DuplicateDnc;
             options.Items.Add(duplicateContextMenuItem);
 
             splitContainerInner.Dock = DockStyle.Fill;
@@ -277,6 +291,20 @@ namespace YAMSE
             diagramVisualizer = new DiagramVisualizer(this);
         }
 
+        private void DuplicateDnc(object sender, EventArgs e)
+        {
+            var dnc = currTreeNode.Tag as Dnc;
+
+            var newName = KryptonInputBox.Show("Enter new name", "Duplicate", dnc.Name);
+            Dnc newDnc = Scene2Parser.DuplicateDnc(dnc, newName);
+
+            var dncsInSection = scene2Data.Sections.First(x => x.SectionType == dnc.dncKind).Dncs;
+            int highestIDinCat = dncsInSection.OrderBy(x => x.ID).Last().ID;
+            newDnc.ID = highestIDinCat;
+
+            dncsInSection.Add(newDnc);
+        }
+
         private void InitRibbon()
         {
             ComponentResourceManager resources = new ComponentResourceManager(typeof(MainForm2));
@@ -336,13 +364,21 @@ namespace YAMSE
 
             kryptonRibbonGroupTriple1.Items.AddRange(new KryptonRibbonGroupItem[] {kryptonRibbonGroupButtonShowDiagram});
 
+            kryptonRibbonGroupButtonLoadDefs.TextLine1 = "Load def file";
+            kryptonRibbonGroupButtonLoadDefs.Click += LoadDefFile;
+
+            kryptonRibbonGroupButtonStartGame.TextLine1 = "Start game";
+            kryptonRibbonGroupButtonStartGame.Click += StartGame;
+
+            kryptonRibbonGroupTriple3.Items.AddRange(new KryptonRibbonGroupItem[] { kryptonRibbonGroupButtonLoadDefs, kryptonRibbonGroupButtonStartGame });
+
             kryptonRibbonGroupArrange.DialogBoxLauncher = false;
             kryptonRibbonGroupArrange.MinimumWidth = 200;
             kryptonRibbonGroupArrange.TextLine1 = "Arrange";
 
-            kryptonRibbonGroupSearch.DialogBoxLauncher = false;
-            kryptonRibbonGroupSearch.MinimumWidth = 200;
-            kryptonRibbonGroupSearch.TextLine1 = "Search";
+            kryptonRibbonGroupExtarnalData.DialogBoxLauncher = false;
+            kryptonRibbonGroupExtarnalData.MinimumWidth = 200;
+            kryptonRibbonGroupExtarnalData.TextLine1 = "Misc";
 
             kryptonRibbonGroupButtonWorkspaceArrange.Click += (sender, e) => { kryptonWorkspaceContent.ApplyGridPages(); };
             kryptonRibbonGroupButtonWorkspaceArrange.TextLine1 = "Grid";
@@ -353,13 +389,13 @@ namespace YAMSE
             kryptonRibbonGroupArrange.Items.AddRange(new KryptonRibbonGroupContainer[] {
             kryptonRibbonGroupTriple2});
 
-            kryptonRibbonGroupSearch.Items.AddRange(new KryptonRibbonGroupContainer[] {
+            kryptonRibbonGroupExtarnalData.Items.AddRange(new KryptonRibbonGroupContainer[] {
             kryptonRibbonGroupTriple3});
 
             kryptonRibbonTabWorkspace.Groups.AddRange(new KryptonRibbonGroup[] {
             kryptonRibbonGroupArrange});
 
-            kryptonRibbonTabTools.Groups.AddRange(new KryptonRibbonGroup[] { kryptonRibbonGroupVisualization, /* kryptonRibbonGroupSearch */ });
+            kryptonRibbonTabTools.Groups.AddRange(new KryptonRibbonGroup[] { kryptonRibbonGroupVisualization, kryptonRibbonGroupExtarnalData });
 
             var fullPathRecent = Directory.GetCurrentDirectory() + fNameRecent;
 
@@ -381,7 +417,7 @@ namespace YAMSE
                 switch (pageId.PanelKind)
                 {
                     case PanelKind.Script:
-                        pageId.ScintillaTextEditor.Undo();
+                        //pageId.ScintillaTextEditor.Undo();
                         break;
                     case PanelKind.Hex:
                         pageId.HexEditor.Undo();
@@ -595,23 +631,27 @@ namespace YAMSE
 
             List<KryptonPageContainer> kryptonPageContainer = new List<KryptonPageContainer>();
 
-            Scintilla scintillaTextEditor;
-
             TableLayoutPanel tableLayoutPanel;
+            TextEditorWrapper textEditorWrapper;
 
             switch (panelKind)
             {
                 case PanelKind.Script:
-                    scintillaTextEditor = CreateScintilla(text, pageId);
+                    textEditorWrapper = CreateAvalonEdit(text, pageId, this);
 
-                    pageId.ScintillaTextEditor = scintillaTextEditor;
+                    if (imageElementGenerator != null)
+                    {
+                        textEditorWrapper.SetElementGenerator(imageElementGenerator);
+                    }
+
+                    pageId.TextEditor = textEditorWrapper;
 
                     kryptonPageContainer.Add(
                         new KryptonPageContainer
                         {
                             Column = 0,
                             ColumnSpan = 4,
-                            Component = scintillaTextEditor,
+                            Component = textEditorWrapper.ElementHost,
                             ComponentType = ComponentType.TextEditor,
                             RowSpan = 2
                         });
@@ -619,9 +659,14 @@ namespace YAMSE
                     return CreatePageInternal(pageName, pageId, kryptonPageContainer);
 
                 case PanelKind.Enemy:
-                    scintillaTextEditor = CreateScintilla(text, pageId);
+                    textEditorWrapper = CreateAvalonEdit(text, pageId, this);
 
-                    pageId.ScintillaTextEditor = scintillaTextEditor;
+                    if (imageElementGenerator != null)
+                    {
+                        textEditorWrapper.SetElementGenerator(imageElementGenerator);
+                    }
+
+                    pageId.TextEditor = textEditorWrapper;
 
                     EnemyProps enemyProps = dnc.DncProps as EnemyProps;
 
@@ -641,7 +686,7 @@ namespace YAMSE
                         {
                             Column = 0,
                             ColumnSpan = 2,
-                            Component = scintillaTextEditor,
+                            Component = textEditorWrapper.ElementHost,
                             ComponentType = ComponentType.TextEditor,
                             RowSpan = 1
                         });
@@ -684,7 +729,7 @@ namespace YAMSE
                     return CreatePageInternal(pageName, pageId, kryptonPageContainer);
 
                 case PanelKind.Standard:
-                    CreateDefaultTextBoxes(kryptonPageContainer, dnc);
+                    CreateDefaultTextBoxes(kryptonPageContainer, pageId, dnc);
 
                     tableLayoutPanel = new TableLayoutPanel
                     {
@@ -706,7 +751,7 @@ namespace YAMSE
                     return CreatePageInternal(pageName, pageId, kryptonPageContainer, tableLayoutPanel);
 
                 case PanelKind.Model:
-                    CreateDefaultTextBoxes(kryptonPageContainer, dnc);
+                    CreateDefaultTextBoxes(kryptonPageContainer, pageId, dnc);
 
                     ModelProps modelProps = dnc.DncProps as ModelProps;
 
@@ -719,11 +764,11 @@ namespace YAMSE
 
                     col++;
                     CreateCheckBox(kryptonPageContainer2, col, row, string.Empty, modelProps.HaveSector,
-                        (o) => { modelProps.HaveSector = (bool)o; }, (prop, control) => { (control as CheckBox).Checked = (prop as ModelProps).HaveSector; }, width: 16);
+                        (o, control) => { modelProps.HaveSector = (bool)o; }, (prop, control) => { (control as CheckBox).Checked = (prop as ModelProps).HaveSector; }, width: 16);
 
                     col++;
                     CreateTextBox(kryptonPageContainer2, col, row, modelProps.Sector, 
-                        (o) => { modelProps.Sector = o.ToString(); }, (prop, control) => { control.Text = (prop as ModelProps).Sector.ToString(); }, 3, 278);
+                        (o, control) => { modelProps.Sector = o.ToString(); }, (prop, control) => { control.Text = (prop as ModelProps).Sector.ToString(); }, 3, 278);
 
                     row++;
                     col = 0;
@@ -731,7 +776,7 @@ namespace YAMSE
 
                     col++;
                     CreateTextBox(kryptonPageContainer2, col, row, modelProps.Model, 
-                        (o) => { modelProps.Model = o.ToString(); }, (prop, control) => { control.Text = (prop as ModelProps).Model.ToString(); }, 3, 300);
+                        (o, control) => { modelProps.Model = o.ToString(); }, (prop, control) => { control.Text = (prop as ModelProps).Model.ToString(); }, 3, 300);
 
                     TableLayoutPanel tableLayoutOptionalPanel = new TableLayoutPanel
                     {
@@ -789,7 +834,7 @@ namespace YAMSE
 
                     if (!string.IsNullOrWhiteSpace(textBox.Text))
                     {
-                        setterFunction(textBox.Text);
+                        setterFunction(textBox.Text, textBox);
                     }
                 };
 
@@ -811,7 +856,7 @@ namespace YAMSE
                 var checkBox = new CheckBox() { Text = initText, Checked = isChecked, Width = width };
                 checkBox.CheckedChanged += (sender, e) =>
                 {
-                    setterFunction(checkBox.Checked);
+                    setterFunction(checkBox.Checked, checkBox);
                 };
 
                 kryptonPageContainer.Add(
@@ -827,7 +872,15 @@ namespace YAMSE
                                         });
             }
 
-            static void CreateDefaultTextBoxes(List<KryptonPageContainer> kryptonPageContainer, Dnc dnc)
+            static void AddAsterisk(Control control)
+            {
+                if (!control.Text.EndsWith('*'))
+                {
+                    control.Text += '*';
+                }
+            }
+
+            static void CreateDefaultTextBoxes(List<KryptonPageContainer> kryptonPageContainer, KryptonPageId pageId, Dnc dnc)
             {
                 int col = 0;
                 int row = 0;
@@ -851,15 +904,15 @@ namespace YAMSE
                 col++;
                 row = 1;
 
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionX.ToString(), (o) => { standardProps.PositionX = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).PositionX.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionX.ToString(), (o, control) => { standardProps.PositionX = Convert.ToSingle(o); AddAsterisk(pageId.KryptonPage); }, (prop, control) => { control.Text = (prop as StandardProps).PositionX.ToString(); });
 
                 row++;
 
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionY.ToString(), (o) => { standardProps.PositionY = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).PositionY.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionY.ToString(), (o, control) => { standardProps.PositionY = Convert.ToSingle(o); AddAsterisk(pageId.KryptonPage); }, (prop, control) => { control.Text = (prop as StandardProps).PositionY.ToString(); });
 
                 row++;
 
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionZ.ToString(), (o) => { standardProps.PositionZ = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).PositionZ.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionZ.ToString(), (o, control) => { standardProps.PositionZ = Convert.ToSingle(o); AddAsterisk(pageId.KryptonPage); }, (prop, control) => { control.Text = (prop as StandardProps).PositionZ.ToString(); });
 
                 col++;
                 row = 0;
@@ -879,13 +932,13 @@ namespace YAMSE
                 col++;
 
                 row = 1;
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationX.ToString(), (o) => { standardProps.RotationX = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).RotationX.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationX.ToString(), (o, control) => { standardProps.RotationX = Convert.ToSingle(o); AddAsterisk(pageId.KryptonPage); }, (prop, control) => { control.Text = (prop as StandardProps).RotationX.ToString(); });
 
                 row++;
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationY.ToString(), (o) => { standardProps.RotationY = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).RotationY.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationY.ToString(), (o, control) => { standardProps.RotationY = Convert.ToSingle(o); AddAsterisk(pageId.KryptonPage); }, (prop, control) => { control.Text = (prop as StandardProps).RotationY.ToString(); });
 
                 row++;
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationZ.ToString(), (o) => { standardProps.RotationZ = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).RotationZ.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationZ.ToString(), (o, control) => { standardProps.RotationZ = Convert.ToSingle(o); AddAsterisk(pageId.KryptonPage); }, (prop, control) => { control.Text = (prop as StandardProps).RotationZ.ToString(); });
 
                 col++;
                 row = 0;
@@ -905,14 +958,75 @@ namespace YAMSE
                 col++;
 
                 row = 1;
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingX.ToString(), (o) => { standardProps.ScalingX = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).ScalingX.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingX.ToString(), (o, control) => { standardProps.ScalingX = Convert.ToSingle(o); AddAsterisk(pageId.KryptonPage); }, (prop, control) => { control.Text = (prop as StandardProps).ScalingX.ToString(); });
 
                 row++;
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingY.ToString(), (o) => { standardProps.ScalingY = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).ScalingY.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingY.ToString(), (o, control) => { standardProps.ScalingY = Convert.ToSingle(o); AddAsterisk(pageId.KryptonPage); }, (prop, control) => { control.Text = (prop as StandardProps).ScalingY.ToString(); });
 
                 row++;
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingZ.ToString(), (o) => { standardProps.ScalingZ = Convert.ToSingle(o); }, (prop, control) => { control.Text = (prop as StandardProps).ScalingZ.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingZ.ToString(), (o, control) => { standardProps.ScalingZ = Convert.ToSingle(o); AddAsterisk(pageId.KryptonPage); }, (prop, control) => { control.Text = (prop as StandardProps).ScalingZ.ToString(); });
             }
+        }
+
+        private static TextEditorWrapper CreateAvalonEdit(string text, KryptonPageId pageId, Form parentForm)
+        {
+            ICSharpCode.AvalonEdit.TextEditor avalonEdit = new ICSharpCode.AvalonEdit.TextEditor();
+            avalonEdit.Text = text;
+
+            var avalonEditElementHost = new System.Windows.Forms.Integration.ElementHost
+            {
+                Dock = DockStyle.Fill,
+                Child = avalonEdit,
+                Anchor = AnchorStyles.Left | AnchorStyles.Bottom | AnchorStyles.Top | AnchorStyles.Right
+            };
+            avalonEditElementHost.Name = nameof(avalonEditElementHost);
+            avalonEditElementHost.Parent = parentForm;
+
+            RichTextModel richTextModel = new RichTextModel();
+            RichTextColorizer richTextColorizer = new RichTextColorizer(richTextModel);
+            
+            avalonEdit.TextArea.TextView.LineTransformers.Add(richTextColorizer);
+            avalonEdit.ShowLineNumbers = true;
+
+            SearchPanel.Install(avalonEdit);
+
+            //HighlightingEngine highlightingEngine = new HighlightingEngine(highlightingRuleSet);
+
+
+            //avalonEdit.SyntaxHighlighting.MainRuleSet.Rules.Add(new HighlightingRule() { Color = red, Regex = new System.Text.RegularExpressions.Regex("dim_flt") });
+
+            avalonEdit.TextChanged += (sender, eargs) =>
+            {
+                if (!pageId.IsDirty)
+                {
+                    pageId.KryptonPage.Text += "*";
+                    pageId.IsDirty = true;
+                }
+
+                //richTextModel.ApplyHighlighting(0, 20, new HighlightingColor() { Foreground = new SimpleHighlightingBrush((SWM.Color)SWM.ColorConverter.ConvertFromString("Red")) });
+                //avalonEdit.TextArea.TextView.Redraw(0, 20);
+
+                //avalonEdit.TextArea.TextView.InvalidateLayer(ICSharpCode.AvalonEdit.Rendering.KnownLayer.Caret);
+                //avalonEdit.Document.Lines
+
+                //DncMethods.ScintillaTextHighlight(scintillaTextEditor.Lines[scintillaTextEditor.LineFromPosition(scintillaTextEditor.CurrentPosition)].Text, scintillaTextEditor.CurrentPosition, scintillaTextEditor);
+
+            };
+
+            //avalonEdit.Document.
+
+            //HighlightingManager.Instance.RegisterHighlighting("mafiascript", new string[] { ".bin" }, new MafiaHighlight());
+            avalonEdit.SyntaxHighlighting = new MafiaHighlight();
+
+            //avalonEdit.TextArea.TextView.BackgroundRenderers
+            //avalonEdit.TextArea.TextView.ElementGenerators.
+            //avalonEdit.
+
+            //parentForm.Controls.Add(avalonEditElementHost);
+
+            //avalonEditElementHost.Show();
+            //avalonEditElementHost.BringToFront();
+            return new TextEditorWrapper { Editor = avalonEdit, ElementHost = avalonEditElementHost };
         }
 
         private static Scintilla CreateScintilla(string text, KryptonPageId pageId)
@@ -1174,7 +1288,7 @@ namespace YAMSE
                 {
                     case NodeType.Object:
                         //elementHostHexEditor.Show();
-                        //elementHostDiagramEditor.Hide();
+                        //avalonEditElementHost.Hide();
                         //hexEditor.Stream = new MemoryStream(scene2Data.objectsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault().rawData);
 
                         dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.Object).Dncs.Where(x => x.ID == ((Dnc)e.Tag).ID).FirstOrDefault();
@@ -1184,8 +1298,6 @@ namespace YAMSE
                         {
                             return;
                         }
-
-                        
 
                         switch (dnc.dncType)
                         {
@@ -1471,5 +1583,41 @@ namespace YAMSE
             diagramVisualizer.ShowScriptDependencyDiagram(scene2Data);
         }
         #endregion
+
+        #region Def
+        private void LoadDefFile(object sender, EventArgs e)
+        {
+            if (openFileDialog2.ShowDialog() == DialogResult.OK)
+            {
+                defFilePath = openFileDialog2.FileName;
+                imageElementGenerator = new ImageElementGenerator(defFilePath);
+            }
+        }
+        #endregion
+
+        private void StartGame(object sender, EventArgs e)
+        {
+            if (openFileDialog1.FileName != string.Empty)
+            {
+                string scenePath = openFileDialog1.FileName;
+                scenePath = Path.GetDirectoryName(scenePath);
+
+                while(!File.Exists(scenePath + "\\Game.exe"))
+                {
+                    if (scenePath.Length <= 4)
+                    {
+                        KryptonMessageBox.Show("Game was not found in parent folder of currently opened scene file.");
+                        return;
+                    }
+                    scenePath = Directory.GetParent(scenePath).FullName;
+                }
+
+                System.Diagnostics.Process.Start(scenePath + "\\Game.exe");
+            }
+            else
+            {
+                KryptonMessageBox.Show("Open scene file first.");
+            }
+        }
     }
 }

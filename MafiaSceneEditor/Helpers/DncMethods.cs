@@ -10,7 +10,7 @@ using YAMSE.Interfaces;
 
 namespace YAMSE
 {
-    public delegate void CallbackSetPropValue(object value);
+    public delegate void CallbackSetPropValue(object value, Control control);
     public delegate void CallbackSetComponentValue(IDncProps prop, Control control);
 
     public class DncMethods
@@ -18,6 +18,8 @@ namespace YAMSE
         public static void BtnSaveClick(object sender, EventArgs eventArgs)
         {
             var pageId = ((KryptonButton)sender).Tag as KryptonPageId;
+
+            pageId.KryptonPage.Text = pageId.KryptonPage.Text.Substring(0, pageId.KryptonPage.Text.Length - 1);
 
             pageId.IsDirty = false;
 
@@ -27,8 +29,10 @@ namespace YAMSE
                     switch (pageId.Dnc.dncType)
                     {
                         case DncType.Script:
+                            Scene2Parser.UpdateStringInScriptDnc(pageId.Dnc, pageId.TextEditor.GetText());
+                            break;
                         case DncType.InitScript:
-                            Scene2Parser.UpdateStringInScriptDnc(pageId.Dnc, pageId.ScintillaTextEditor.Text);
+                            Scene2Parser.UpdateStringInInitScriptDnc(pageId.Dnc, pageId.TextEditor.GetText());
                             break;
                     }
                     break;
@@ -36,7 +40,7 @@ namespace YAMSE
                     pageId.Dnc.RawData = pageId.HexEditor.GetAllBytes(true);
                     break;
                 case PanelKind.Enemy:
-                    Scene2Parser.UpdateStringInEnemyDnc(pageId.Dnc, pageId.ScintillaTextEditor.Text);
+                    Scene2Parser.UpdateStringInEnemyDnc(pageId.Dnc, pageId.TextEditor.GetText());
                     pageId.Dnc.DncProps.SaveData();
                     break;
                 case PanelKind.Standard:
@@ -59,8 +63,7 @@ namespace YAMSE
                 case PanelKind.Enemy:
                 case PanelKind.Script:
                     var text = Scene2Parser.GetScriptFromDnc(pageId.Dnc, true);
-                    pageId.ScintillaTextEditor.Text = text;
-                    ScintillaTextHighlight(text, 0, pageId.ScintillaTextEditor);
+                    pageId.TextEditor.SetText(text);
 
                     if (pageId.Dnc.DncProps != null)
                     {
@@ -132,19 +135,19 @@ namespace YAMSE
                 var toAdd = currIndex - index;
 
                 scintillaTextEditor.StartStyling(currIndex);
-                if (TextHighlight.Commands.Contains(wordLower))
+                if (MafiaKeywords.Commands.Contains(wordLower))
                 {
                     scintillaTextEditor.SetStyling(wordLower.Length, 1);
                 }
-                if (TextHighlight.Keywords.Contains(wordLower))
+                if (MafiaKeywords.Keywords.Contains(wordLower))
                 {
                     scintillaTextEditor.SetStyling(wordLower.Length, 3);
                 }
-                if (TextHighlight.Declaration.Contains(wordLower))
+                if (MafiaKeywords.Declaration.Contains(wordLower))
                 {
                     scintillaTextEditor.SetStyling(wordLower.Length, 2);
                 }
-                if (wordLower.StartsWith(TextHighlight.Comment))
+                if (wordLower.StartsWith(MafiaKeywords.Comment))
                 {
                     var currLineLen = scintillaTextEditor.Lines[scintillaTextEditor.LineFromPosition(currIndex)].Length;
                     scintillaTextEditor.SetStyling(currLineLen, 4);
@@ -154,5 +157,6 @@ namespace YAMSE
                 index += toAdd;
             }
         }
+
     }
 }

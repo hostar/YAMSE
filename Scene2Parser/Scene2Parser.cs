@@ -141,7 +141,7 @@ namespace YAMSE
             }
         }
 
-        private static void LoadDnc(byte[] tmpBuff, ref int i, ref int objectID, int IdLen, Scene2Section currSection)
+        private static void LoadDnc(byte[] inputBuff, ref int i, ref int objectID, int IdLen, Scene2Section currSection)
         {
             Dnc currDnc = new Dnc
             {
@@ -149,10 +149,10 @@ namespace YAMSE
             };
 
             // get length
-            int lenCurr = BitConverter.ToInt32(tmpBuff.Skip(i).Skip(IdLen).Take(4).ToArray(), 0) - IdLen;
+            int lenCurr = BitConverter.ToInt32(inputBuff.Skip(i).Skip(IdLen).Take(4).ToArray(), 0) - IdLen;
 
-            currDnc.objectIDArr = tmpBuff.Skip(i).Take(IdLen).ToArray();
-            currDnc.RawData = tmpBuff.Skip(i).Skip(IdLen).Take(lenCurr).ToArray();
+            currDnc.objectIDArr = inputBuff.Skip(i).Take(IdLen).ToArray();
+            currDnc.RawData = inputBuff.Skip(i).Skip(IdLen).Take(lenCurr).ToArray();
 
             currDnc.RawDataBackup = new byte[currDnc.RawData.Length];
             currDnc.RawData.CopyTo(currDnc.RawDataBackup, 0);
@@ -378,6 +378,30 @@ namespace YAMSE
             return Encoding.UTF8.GetString(dnc.RawData.Skip(dnc.Name.Length + offset).ToArray());
         }
 
+        public static Dnc DuplicateDnc(Dnc dnc, string newName)
+        {
+            var newNameBytes = Encoding.UTF8.GetBytes(newName);
+            var pos = GetPositionOfNameByID(dnc);
+
+            var lenDiff = dnc.Name.Length > newName.Length ? dnc.Name.Length - newName.Length : newName.Length - dnc.Name.Length;
+
+            Dnc newDnc = new Dnc { dncKind = dnc.dncKind, DncProps = dnc.DncProps, dncType = dnc.dncType, objectIDArr = dnc.objectIDArr };
+
+            // replace binary data
+            byte[] rawData = dnc.RawData.Take(pos).Concat(newNameBytes).ToArray();
+
+            // put new data to object
+            newDnc.RawData = rawData.Concat(dnc.RawData.Skip(pos).Skip(dnc.Name.Length).Take(dnc.RawData.Length - dnc.Name.Length - pos)).ToArray();
+
+            // update length data
+            newDnc.RawData[pos - 4] = (byte)(dnc.RawData[pos - 4] + lenDiff);
+            newDnc.RawData[0] = (byte)(dnc.RawData[0] + lenDiff);
+
+            newDnc.Name = newName;
+            newDnc.RawDataBackup = dnc.RawDataBackup;
+            return newDnc;
+        }
+
         public static string GetStringFromDnc(Dnc dnc, int dataBegin, int offset, bool useBackup = false)
         {
             if (useBackup)
@@ -398,6 +422,38 @@ namespace YAMSE
         public static void UpdateStringInEnemyDnc(Dnc dnc, string text)
         {
             UpdateStringInDnc(dnc, text, 110);
+        }
+
+        public static void UpdateStringInInitScriptDnc(Dnc dnc, string text)
+        {
+            var startArray = dnc.RawData.Take(dnc.Name.Length + 13).ToArray();
+
+            // recalculate array length
+            var textInBytes = Encoding.UTF8.GetBytes(text);
+            var bytesLen = BitConverter.GetBytes(textInBytes.Length + startArray.Length + IdLen);
+
+            for (int i = 0; i < bytesLen.Length; i++)
+            {
+                startArray[i] = bytesLen[i];
+            }
+
+            // recalculate additional size
+            /*
+            bytesLen = BitConverter.GetBytes(textInBytes.Length);
+            for (int i = 0; i < bytesLen.Length; i++)
+            {
+                startArray[dnc.Name.Length + 9 + i] = bytesLen[i];
+            }
+            */
+
+            /*
+            bytesLen = BitConverter.GetBytes(textInBytes.Length + 20);
+            for (int i = 0; i < bytesLen.Length; i++)
+            {
+                startArray[dnc.Name.Length + 23 + i] = bytesLen[i];
+            }*/
+
+            dnc.RawData = startArray.Concat(textInBytes).ToArray();
         }
 
         private static void UpdateStringInDnc(Dnc dnc, string text, int offset)

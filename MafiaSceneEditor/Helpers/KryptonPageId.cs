@@ -2,6 +2,7 @@
 using ScintillaNET;
 using System.Collections.Generic;
 using YAMSE.DataLayer;
+using YAMSE.Helpers;
 
 namespace YAMSE
 {
@@ -36,7 +37,7 @@ namespace YAMSE
             get => pageId;
         }
 
-        public Scintilla ScintillaTextEditor { get; set; }
+        public TextEditorWrapper TextEditor { get; set; }
 
         public IEnumerable<KryptonPageContainer> KryptonPageContainer { get; set; }
 
