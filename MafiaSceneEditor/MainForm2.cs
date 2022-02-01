@@ -3,24 +3,19 @@ using ComponentFactory.Krypton.Ribbon;
 using ComponentFactory.Krypton.Toolkit;
 using ComponentFactory.Krypton.Workspace;
 using ICSharpCode.AvalonEdit.Highlighting;
-using ScintillaNET;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
-using SWM = System.Windows.Media;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Windows.Forms;
-using System.Windows.Input;
 using YAMSE.DataLayer;
-using YAMSE.Diagram.Classes;
 using YAMSE.Helpers;
 using ICSharpCode.AvalonEdit.Search;
-//using ICSharpCode.AvalonEdit
+using System.Diagnostics;
 
 namespace YAMSE
 {
@@ -53,14 +48,18 @@ namespace YAMSE
 
         readonly KryptonRibbonGroupTriple kryptonRibbonGroupTriple2 = new KryptonRibbonGroupTriple();
 
-        readonly KryptonRibbonGroup kryptonRibbonGroupExtarnalData = new KryptonRibbonGroup();
+        readonly KryptonRibbonGroup kryptonRibbonGroupExternalData = new KryptonRibbonGroup();
         readonly KryptonRibbonGroupTriple kryptonRibbonGroupTriple3 = new KryptonRibbonGroupTriple();
+        readonly KryptonRibbonGroupTriple kryptonRibbonGroupTriple4 = new KryptonRibbonGroupTriple();
 
         readonly KryptonRibbonGroupButton kryptonRibbonGroupButtonShowDiagram = new KryptonRibbonGroupButton();
 
         readonly KryptonRibbonGroupButton kryptonRibbonGroupButtonLoadDefs = new KryptonRibbonGroupButton();
 
         readonly KryptonRibbonGroupButton kryptonRibbonGroupButtonStartGame = new KryptonRibbonGroupButton();
+        readonly KryptonRibbonGroupButton kryptonRibbonGroupButtonStartMafiaCon = new KryptonRibbonGroupButton();
+
+        readonly KryptonRibbonGroupButton kryptonRibbonGroupButtonImportDnc = new KryptonRibbonGroupButton();
 
         readonly KryptonRibbonGroupButton kryptonRibbonGroupButtonWorkspaceArrange = new KryptonRibbonGroupButton();
 
@@ -75,6 +74,7 @@ namespace YAMSE
         readonly SaveFileDialog saveFileDialog1 = new SaveFileDialog();
 
         readonly OpenFileDialog openFileDialog2 = new OpenFileDialog();
+        readonly OpenFileDialog openFileDialogDnc = new OpenFileDialog();
 
         readonly List<string> activeDncs = new List<string>();
 
@@ -370,15 +370,22 @@ namespace YAMSE
             kryptonRibbonGroupButtonStartGame.TextLine1 = "Start game";
             kryptonRibbonGroupButtonStartGame.Click += StartGame;
 
-            kryptonRibbonGroupTriple3.Items.AddRange(new KryptonRibbonGroupItem[] { kryptonRibbonGroupButtonLoadDefs, kryptonRibbonGroupButtonStartGame });
+            kryptonRibbonGroupButtonStartMafiaCon.TextLine1 = "Start MafiaCon";
+            kryptonRibbonGroupButtonStartMafiaCon.Click += StartMafiaCon;
+
+            kryptonRibbonGroupButtonImportDnc.TextLine1 = "Import DNC";
+            kryptonRibbonGroupButtonImportDnc.Click += ImportDnc;
+
+            kryptonRibbonGroupTriple3.Items.AddRange(new KryptonRibbonGroupItem[] { kryptonRibbonGroupButtonImportDnc, kryptonRibbonGroupButtonLoadDefs, kryptonRibbonGroupButtonStartGame });
+            kryptonRibbonGroupTriple4.Items.AddRange(new KryptonRibbonGroupItem[] { kryptonRibbonGroupButtonStartMafiaCon });
 
             kryptonRibbonGroupArrange.DialogBoxLauncher = false;
             kryptonRibbonGroupArrange.MinimumWidth = 200;
             kryptonRibbonGroupArrange.TextLine1 = "Arrange";
 
-            kryptonRibbonGroupExtarnalData.DialogBoxLauncher = false;
-            kryptonRibbonGroupExtarnalData.MinimumWidth = 200;
-            kryptonRibbonGroupExtarnalData.TextLine1 = "Misc";
+            kryptonRibbonGroupExternalData.DialogBoxLauncher = false;
+            kryptonRibbonGroupExternalData.MinimumWidth = 200;
+            kryptonRibbonGroupExternalData.TextLine1 = "Misc";
 
             kryptonRibbonGroupButtonWorkspaceArrange.Click += (sender, e) => { kryptonWorkspaceContent.ApplyGridPages(); };
             kryptonRibbonGroupButtonWorkspaceArrange.TextLine1 = "Grid";
@@ -389,13 +396,13 @@ namespace YAMSE
             kryptonRibbonGroupArrange.Items.AddRange(new KryptonRibbonGroupContainer[] {
             kryptonRibbonGroupTriple2});
 
-            kryptonRibbonGroupExtarnalData.Items.AddRange(new KryptonRibbonGroupContainer[] {
-            kryptonRibbonGroupTriple3});
+            kryptonRibbonGroupExternalData.Items.AddRange(new KryptonRibbonGroupContainer[] {
+            kryptonRibbonGroupTriple3, kryptonRibbonGroupTriple4});
 
             kryptonRibbonTabWorkspace.Groups.AddRange(new KryptonRibbonGroup[] {
             kryptonRibbonGroupArrange});
 
-            kryptonRibbonTabTools.Groups.AddRange(new KryptonRibbonGroup[] { kryptonRibbonGroupVisualization, kryptonRibbonGroupExtarnalData });
+            kryptonRibbonTabTools.Groups.AddRange(new KryptonRibbonGroup[] { kryptonRibbonGroupVisualization, kryptonRibbonGroupExternalData });
 
             var fullPathRecent = Directory.GetCurrentDirectory() + fNameRecent;
 
@@ -404,6 +411,105 @@ namespace YAMSE
                 foreach (var path in File.ReadAllLines(fullPathRecent))
                 {
                     AddRecentFile(path);
+                }
+            }
+        }
+
+        private void ImportDnc(object sender, EventArgs e)
+        {
+            if (openFileDialogDnc.ShowDialog() == DialogResult.OK)
+            {
+                var bytes = File.ReadAllBytes(openFileDialogDnc.FileName);
+                Dnc currDnc = new Dnc
+                {
+                    dncType = DncType.Unknown,
+                    dncKind = NodeType.Unknown,
+                    RawData = bytes.Skip(2).ToArray(),
+                    RawDataBackup = bytes.Skip(2).ToArray(),
+                    objectIDArr = bytes.Take(2).ToArray()
+                };
+
+                currDnc.dncType = Scene2Parser.GetObjectDefinitionType(currDnc);
+                if (currDnc.dncType == DncType.Unknown)
+                {
+                    currDnc.dncType = Scene2Parser.GetObjectType(currDnc);
+                    if (currDnc.dncType == DncType.Unknown)
+                    {
+                        currDnc.dncType = Scene2Parser.TestIfInitScript(currDnc);
+                        if (currDnc.dncType != DncType.Unknown)
+                        {
+                            currDnc.dncKind = NodeType.InitScript;
+                        }
+                    }
+                    else
+                    {
+                        currDnc.dncKind = NodeType.Object;
+                    }
+                }
+                else
+                {
+                    currDnc.dncKind = NodeType.Definition;
+                }
+
+                currDnc.Name = Scene2Parser.GetNameOfDnc(currDnc);
+                Scene2Parser.PopulateProps(currDnc);
+
+                foreach (var item in treeViewMain.Nodes)
+                {
+                    if (item is TreeNode treeNode)
+                    {
+                        switch (currDnc.dncKind)
+                        {
+                            case NodeType.Object:
+                                if (treeNode.Text == Scene2Parser.SectionNameObjects)
+                                {
+                                    CreateNewNode(currDnc, treeNode);
+                                }
+                                break;
+                            case NodeType.Definition:
+                                if (treeNode.Text == Scene2Parser.SectionNameDefs)
+                                {
+                                    CreateNewNode(currDnc, treeNode);
+                                }
+                                break;
+                            case NodeType.InitScript:
+                                if (treeNode.Text == Scene2Parser.SectionNameObjects)
+                                {
+                                    CreateNewNode(currDnc, treeNode);
+                                }
+                                break;
+                            case NodeType.Unknown:
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+
+                var section = scene2Data.Sections.First(x => x.SectionType == currDnc.dncKind);
+
+                if (section != null)
+                {
+                    section.Dncs.Add(currDnc);
+                }
+            }
+        }
+
+        private static void CreateNewNode(Dnc currDnc, TreeNode treeNode)
+        {
+            foreach (var itemIn in treeNode.Nodes)
+            {
+                if (itemIn is TreeNode treeNodeIn)
+                {
+                    if (treeNodeIn.Name == currDnc.dncType.ToString())
+                    {
+                        TreeNode treeNodeNew = new TreeNode
+                        {
+                            Text = currDnc.Name,
+                            Tag = currDnc
+                        };
+                        treeNodeIn.Nodes.Add(treeNodeNew);
+                    }
                 }
             }
         }
@@ -1029,44 +1135,6 @@ namespace YAMSE
             return new TextEditorWrapper { Editor = avalonEdit, ElementHost = avalonEditElementHost };
         }
 
-        private static Scintilla CreateScintilla(string text, KryptonPageId pageId)
-        {
-            Scintilla scintillaTextEditor = new Scintilla
-            {
-                //WrapMode = WrapMode.Word, 
-                //IndentationGuides = IndentView.LookBoth, 
-                //Parent = mainPanel, 
-                Dock = DockStyle.Fill,
-                ScrollWidth = 200
-            };
-
-            scintillaTextEditor.Styles[Style.Default].Font = "Consolas";
-            scintillaTextEditor.Styles[Style.Default].Size = 10;
-
-            scintillaTextEditor.Lexer = Lexer.Null;
-
-            scintillaTextEditor.Margins[0].Width = 30;
-
-            scintillaTextEditor.Text = text;
-
-            try
-            {
-                scintillaTextEditor.Styles[1].ForeColor = Color.Blue;
-                scintillaTextEditor.Styles[2].ForeColor = Color.Crimson;
-                scintillaTextEditor.Styles[3].ForeColor = Color.Blue;
-                scintillaTextEditor.Styles[4].ForeColor = Color.Green;
-                DncMethods.ScintillaTextHighlight(text, 0, scintillaTextEditor);
-            }
-            catch { }
-
-            scintillaTextEditor.TextChanged += (sender, eargs) =>
-            {
-                pageId.IsDirty = true;
-                DncMethods.ScintillaTextHighlight(scintillaTextEditor.Lines[scintillaTextEditor.LineFromPosition(scintillaTextEditor.CurrentPosition)].Text, scintillaTextEditor.CurrentPosition, scintillaTextEditor);
-            };
-            return scintillaTextEditor;
-        }
-
         private KryptonPage CreatePageInternal(string pageName, KryptonPageId pageId, IEnumerable<KryptonPageContainer> mainComponents, TableLayoutPanel tableLayoutPanel = null, KryptonPanel optionalPanel = null)
         {
             TableLayoutPanel kryptonBasePanel = new TableLayoutPanel
@@ -1273,25 +1341,15 @@ namespace YAMSE
             Dnc dnc;
             string currId = string.Empty;
 
-            /*
-            if (currentTreeNode?.GetHashCode() == e.GetHashCode())
-            {
-                return;
-            }
-            */
             currentTreeNode = e;
 
             if (e.Tag != null)
             {
+                dnc = e.Tag as Dnc;
                 var nodeType = ((Dnc)e.Tag).dncKind;
                 switch (nodeType)
                 {
                     case NodeType.Object:
-                        //elementHostHexEditor.Show();
-                        //avalonEditElementHost.Hide();
-                        //hexEditor.Stream = new MemoryStream(scene2Data.objectsDncs.Where(x => x.ID == ((NodeTag)e.Tag).id).FirstOrDefault().rawData);
-
-                        dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.Object).Dncs.Where(x => x.ID == ((Dnc)e.Tag).ID).FirstOrDefault();
                         currId = DncMethods.CreatePageID(dnc);
 
                         if (activeDncs.Any(x => x == currId))
@@ -1317,8 +1375,6 @@ namespace YAMSE
 
                         break;
                     case NodeType.Definition:
-
-                        dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.Definition).Dncs.Where(x => x.ID == ((Dnc)e.Tag).ID).FirstOrDefault();
                         currId = DncMethods.CreatePageID(dnc);
 
                         if (activeDncs.Any(x => x == currId))
@@ -1356,8 +1412,6 @@ namespace YAMSE
 
                         break;
                     case NodeType.InitScript:
-                        dnc = scene2Data.Sections.First(x => x.SectionType == NodeType.InitScript).Dncs.Where(x => x.ID == ((Dnc)e.Tag).ID).FirstOrDefault();
-
                         currId = DncMethods.CreatePageID(dnc);
 
                         if (activeDncs.Any(x => x == currId))
@@ -1512,6 +1566,7 @@ namespace YAMSE
                 foreach (IGrouping<DncType, Dnc> item in section.Dncs.GroupBy(x => x.dncType))
                 {
                     TreeNode treeNodeParent = new TreeNode(item.Key.ToString());
+                    treeNodeParent.Name = item.Key.ToString();
 
                     if (item.Key == DncType.Unknown)
                     {
@@ -1595,24 +1650,38 @@ namespace YAMSE
         }
         #endregion
 
+        private void StartMafiaCon(object sender, EventArgs e)
+        {
+            StartExternalAppInParent("MafiaCon.exe");
+        }
+
         private void StartGame(object sender, EventArgs e)
+        {
+            StartExternalAppInParent("Game.exe");
+        }
+
+        private void StartExternalAppInParent(string appName)
         {
             if (openFileDialog1.FileName != string.Empty)
             {
                 string scenePath = openFileDialog1.FileName;
                 scenePath = Path.GetDirectoryName(scenePath);
 
-                while(!File.Exists(scenePath + "\\Game.exe"))
+                while (!File.Exists(scenePath + $"\\{appName}"))
                 {
                     if (scenePath.Length <= 4)
                     {
-                        KryptonMessageBox.Show("Game was not found in parent folder of currently opened scene file.");
+                        KryptonMessageBox.Show($"{appName} was not found in parent folder of currently opened scene file.");
                         return;
                     }
                     scenePath = Directory.GetParent(scenePath).FullName;
                 }
 
-                System.Diagnostics.Process.Start(scenePath + "\\Game.exe");
+                ProcessStartInfo processStartInfo = new ProcessStartInfo($"{scenePath}\\{appName}")
+                {
+                    WorkingDirectory = scenePath,
+                };
+                Process.Start(processStartInfo);
             }
             else
             {

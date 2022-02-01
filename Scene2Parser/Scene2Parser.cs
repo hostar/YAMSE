@@ -12,6 +12,10 @@ namespace YAMSE
         private const int maxObjectNameLength = 50;
         private const int IdLen = 2; // length of ID
 
+        public static string SectionNameObjects = "Objects";
+        public static string SectionNameDefs = "Object definitions";
+        public static string SectionNameInitScripts = "Init scripts";
+
         public static void LoadScene(MemoryStream inputStream, ref Scene2Data scene2Data, IList loggingList)
         {
             byte[] tmpBuff = inputStream.ToArray();
@@ -57,7 +61,7 @@ namespace YAMSE
                         scene2Data.Header.Size = tmpBuff.Skip(2).Take(4).ToList();
                         scene2Data.Header.Content = tmpBuff.Skip(6).Take(i - 6).ToList();
 
-                        ParseKnownSection(scene2Data, loggingList, tmpBuff, ref i, ref currSection, ref positionIterator, "Loading objects...", "Objects", NodeType.Object);
+                        ParseKnownSection(scene2Data, loggingList, tmpBuff, ref i, ref currSection, ref positionIterator, "Loading objects...", SectionNameObjects, NodeType.Object);
                     }
                     else
                     {
@@ -121,14 +125,14 @@ namespace YAMSE
                         {
                             sectionEnded = false;
 
-                            ParseKnownSection(scene2Data, loggingList, tmpBuff, ref i, ref currSection, ref positionIterator, "Loading object definitions...", "Object definitions", NodeType.Definition);
+                            ParseKnownSection(scene2Data, loggingList, tmpBuff, ref i, ref currSection, ref positionIterator, "Loading object definitions...", SectionNameDefs, NodeType.Definition);
                         }
 
                         // init scripts
                         if (tmpBuff[i] == 0x50 && tmpBuff[i + 1] == 0xAE)
                         {
                             sectionEnded = false;
-                            ParseKnownSection(scene2Data, loggingList, tmpBuff, ref i, ref currSection, ref positionIterator, "Loading init scripts...", "Init scripts", NodeType.InitScript);
+                            ParseKnownSection(scene2Data, loggingList, tmpBuff, ref i, ref currSection, ref positionIterator, "Loading init scripts...", SectionNameInitScripts, NodeType.InitScript);
                         }
 
                         if (sectionEnded)
@@ -166,7 +170,7 @@ namespace YAMSE
             }
 
             currDnc.ID = objectID;
-            currDnc.Name = GetNameByID(currDnc);
+            currDnc.Name = GetNameOfDnc(currDnc);
 
             PopulateProps(currDnc);
 
@@ -176,7 +180,7 @@ namespace YAMSE
             i = i + IdLen + lenCurr;
         }
 
-        private static void PopulateProps(Dnc currDnc)
+        public static void PopulateProps(Dnc currDnc)
         {
             switch (currDnc.dncType)
             {
@@ -485,7 +489,7 @@ namespace YAMSE
             dnc.RawData = startArray.Concat(textInBytes).ToArray();
         }
 
-        public static string GetNameByID(Dnc dnc)
+        public static string GetNameOfDnc(Dnc dnc)
         {
             switch (dnc.dncType)
             {
@@ -527,7 +531,7 @@ namespace YAMSE
                 case DncType.Light:
                     return GetCStringFromByteArray(dnc.RawData.Skip(20).Take(maxObjectNameLength).ToArray());
                 default:
-                    throw new InvalidOperationException(nameof(GetNameByID));
+                    throw new InvalidOperationException(nameof(GetNameOfDnc));
             }
         }
 
@@ -570,16 +574,32 @@ namespace YAMSE
                 case DncType.Light:
                     return 20;
                 default:
-                    throw new InvalidOperationException(nameof(GetNameByID));
+                    throw new InvalidOperationException(nameof(GetNameOfDnc));
             }
         }
 
         private static string GetCStringFromByteArray(byte[] arr)
         {
-            return Encoding.ASCII.GetString(arr, 0, Array.IndexOf(arr, (byte)0));
+            var fixedArr = CutStartingZeros(arr);
+            return Encoding.ASCII.GetString(fixedArr, 0, Array.IndexOf(fixedArr, (byte)0));
         }
 
-        private static DncType GetObjectType(Dnc dnc)
+        private static byte[] CutStartingZeros(byte[] arr)
+        {
+            int index = 0;
+            for (int i = 0; i < arr.Length; i++)
+            {
+                if (arr[i] != 0)
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            return arr.Skip(index).ToArray();
+        }
+
+        public static DncType GetObjectType(Dnc dnc)
         {
             if (dnc.RawData[4] == 0x10)
             { // either LMAP or sector
@@ -645,7 +665,7 @@ namespace YAMSE
             }
         }
 
-        private static DncType GetObjectDefinitionType(Dnc dnc)
+        public static DncType GetObjectDefinitionType(Dnc dnc)
         {
             if (dnc.RawData.Skip(4).Take(1).ToArray().FindIndexOf(new byte[] { 0x01 /*, 0x0d */ }).Any())
             {
@@ -761,6 +781,18 @@ namespace YAMSE
                         }
                     }
                 }
+                return DncType.Unknown;
+            }
+        }
+
+        public static DncType TestIfInitScript(Dnc dnc)
+        {
+            if (dnc.RawData[0] == 0x51 && dnc.RawData[1] == 0xAE)
+            {
+                return DncType.InitScript;
+            }
+            else
+            {
                 return DncType.Unknown;
             }
         }
