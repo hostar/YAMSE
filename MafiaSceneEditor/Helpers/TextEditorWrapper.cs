@@ -28,5 +28,10 @@ namespace YAMSE.Helpers
         {
             Editor.TextArea.TextView.ElementGenerators.Add(imageElementGenerator);
         }
+
+        public void Undo()
+        {
+            Editor.Undo();
+        }
     }
 }
