@@ -59,6 +59,8 @@ namespace YAMSE
         readonly KryptonRibbonGroupButton kryptonRibbonGroupButtonStartGame = new KryptonRibbonGroupButton();
         readonly KryptonRibbonGroupButton kryptonRibbonGroupButtonStartMafiaCon = new KryptonRibbonGroupButton();
 
+        readonly KryptonRibbonGroupButton kryptonRibbonGroupButtonSelectFileForComparison = new KryptonRibbonGroupButton();
+
         readonly KryptonRibbonGroupButton kryptonRibbonGroupButtonImportDnc = new KryptonRibbonGroupButton();
 
         readonly KryptonRibbonGroupButton kryptonRibbonGroupButtonWorkspaceArrange = new KryptonRibbonGroupButton();
@@ -76,6 +78,8 @@ namespace YAMSE
         readonly OpenFileDialog openFileDialog2 = new OpenFileDialog();
         readonly OpenFileDialog openFileDialogDnc = new OpenFileDialog();
 
+        readonly OpenFileDialog openFileDialogSecond = new OpenFileDialog();
+
         //readonly List<string> activeDncs = new List<string>(); // TODO: transform this to class allowing to create and remove pages programmatically
 
         //KryptonWorkspaceCell workspaceMain = new KryptonWorkspaceCell();
@@ -83,6 +87,7 @@ namespace YAMSE
         bool scene2FileLoaded = false;
 
         private Scene2Data scene2Data = new Scene2Data();
+        private Scene2Data scene2DataSecond = new Scene2Data();
 
         private DiagramVisualizer diagramVisualizer;
 
@@ -416,11 +421,14 @@ namespace YAMSE
             kryptonRibbonGroupButtonStartMafiaCon.TextLine1 = "Start MafiaCon";
             kryptonRibbonGroupButtonStartMafiaCon.Click += StartMafiaCon;
 
-            kryptonRibbonGroupButtonImportDnc.TextLine1 = "Import DNC";
-            kryptonRibbonGroupButtonImportDnc.Click += ImportDnc;
+            kryptonRibbonGroupButtonStartMafiaCon.TextLine1 = "Start MafiaCon";
+            kryptonRibbonGroupButtonStartMafiaCon.Click += StartMafiaCon;
+
+            kryptonRibbonGroupButtonSelectFileForComparison.TextLine1 = "Load scene file for compare";
+            kryptonRibbonGroupButtonSelectFileForComparison.Click += SecondScene2FileLoad;
 
             kryptonRibbonGroupTriple3.Items.AddRange(new KryptonRibbonGroupItem[] { kryptonRibbonGroupButtonImportDnc, kryptonRibbonGroupButtonLoadDefs, kryptonRibbonGroupButtonStartGame });
-            kryptonRibbonGroupTriple4.Items.AddRange(new KryptonRibbonGroupItem[] { kryptonRibbonGroupButtonStartMafiaCon });
+            kryptonRibbonGroupTriple4.Items.AddRange(new KryptonRibbonGroupItem[] { kryptonRibbonGroupButtonStartMafiaCon, kryptonRibbonGroupButtonSelectFileForComparison });
 
             kryptonRibbonGroupArrange.DialogBoxLauncher = false;
             kryptonRibbonGroupArrange.MinimumWidth = 200;
@@ -872,7 +880,8 @@ namespace YAMSE
                         tmpStream.CopyTo(memoryStream);
                         tmpStream.Close();
 
-                        Scene2LoadInternal(memoryStream);
+                        scene2Data = Scene2LoadInternal(memoryStream);
+                        PutIntoTreeview(scene2Data);
 
                         ActiveDncs.RemoveAll();
 
@@ -906,7 +915,8 @@ namespace YAMSE
                 tmpStream.CopyTo(memoryStream);
                 tmpStream.Close();
 
-                Scene2LoadInternal(memoryStream);
+                scene2Data = Scene2LoadInternal(memoryStream);
+                PutIntoTreeview(scene2Data);
 
                 ActiveDncs.RemoveAll();
 
@@ -916,9 +926,32 @@ namespace YAMSE
             }
         }
 
-        private void Scene2LoadInternal(MemoryStream memoryStream)
+        private void SecondScene2FileLoad(object sender, EventArgs e)
         {
-            scene2Data = new Scene2Data();
+            if (!scene2FileLoaded)
+            {
+                KryptonMessageBox.Show("First open Scene2 file.");
+                return;
+            }
+
+            if (openFileDialogSecond.ShowDialog() == DialogResult.OK)
+            {
+                listBoxOutput.Items.Add("Loading file...");
+
+                MemoryStream memoryStream = new MemoryStream();
+                Stream tmpStream = openFileDialogSecond.OpenFile();
+                tmpStream.CopyTo(memoryStream);
+                tmpStream.Close();
+
+                scene2DataSecond = Scene2LoadInternal(memoryStream);
+
+                Compare();
+            }
+        }
+
+        private Scene2Data Scene2LoadInternal(MemoryStream memoryStream)
+        {
+            var scene2Data = new Scene2Data();
 
             try
             {
@@ -927,9 +960,13 @@ namespace YAMSE
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                return scene2Data;
             }
+            return scene2Data;
+        }
 
+        private void PutIntoTreeview(Scene2Data scene2Data)
+        {
             // put into treeview
             treeViewMain.Nodes.Clear();
 
@@ -999,6 +1036,92 @@ namespace YAMSE
                 }
             }
         }
+
+        #region Compare
+        private void Compare()
+        {
+            List<string> diffs = new List<string>();
+            var orderedOriginal = scene2Data.Sections.OrderBy(x => x.SectionName).ToList();
+            var orderedSecond = scene2DataSecond.Sections.OrderBy(x => x.SectionName).ToList();
+
+            var equalityComparer = new EqualityComparer();
+
+            int len = 0;
+            if (orderedOriginal.Count < orderedSecond.Count)
+            {
+                len = orderedOriginal.Count;
+            }
+            else
+            {
+                len = orderedSecond.Count;
+            }
+
+            for (int i = 0; i < len; i++)
+            {
+                diffs.Add(orderedOriginal[i].SectionName);
+                diffs.Add("------------------------");
+
+                var orderedDncs1 = orderedOriginal[i].Dncs.OrderBy(x => x.dncKind).ToList();
+                var orderedDncs2 = orderedSecond[i].Dncs.OrderBy(x => x.dncKind).ToList();
+
+                int lenDnc = 0;
+                List<Dnc> longerDnc;
+                
+                IEnumerable<Dnc> except_result;
+                if (orderedDncs1.Count < orderedDncs2.Count)
+                {
+                    lenDnc = orderedDncs1.Count;
+                    longerDnc = orderedDncs2;
+                    except_result = longerDnc.Except(orderedDncs1, equalityComparer);
+                }
+                else
+                {
+                    lenDnc = orderedDncs2.Count;
+                    longerDnc = orderedDncs1;
+                    except_result = longerDnc.Except(orderedDncs2, equalityComparer);
+                }
+
+                foreach (var item in except_result)
+                {
+                    diffs.Add($"  {item.Name} ({item.dncType})");
+                }
+
+                /*
+                for (int j = 0; j < lenDnc; j++)
+                {
+                    if (orderedDncs1[j].Name == orderedDncs2[j].Name)
+                    {
+                        if (!DncMethods.RawDataEqual(orderedDncs1[j], orderedDncs2[j]))
+                        {
+                            diffs.Add($"{orderedDncs1[j].Name} - different data length");
+                        }
+                    }
+                    else
+                    {
+                        diffs.Add($"{orderedDncs1[j].Name} - different names");
+                    }
+                }
+
+                int diffLen = Math.Abs(orderedDncs1.Count - orderedDncs2.Count);
+                for (int k = lenDnc; k < lenDnc + diffLen; k++)
+                {
+                    diffs.Add($"{longerDnc[k].Name} - missing in the other");
+                }
+                */
+
+                diffs.Add("------------------------");
+            }
+
+            if (diffs.Count > 0)
+            {
+                KryptonTaskDialog.Show("", "Differences found:", string.Join(Environment.NewLine, diffs), MessageBoxIcon.Information, TaskDialogButtons.OK);
+            }
+            else
+            {
+                KryptonMessageBox.Show("No difference found.");
+            }
+        }
+        #endregion
 
         #region Diagram
         private void ShowScriptDependencyDiagram(object sender, EventArgs e)

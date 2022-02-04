@@ -15,11 +15,20 @@ namespace YAMSE
 
     public class DncMethods
     {
+        public static void RemoveAsterisk(Control control)
+        {
+            if (control.Text.EndsWith('*'))
+            {
+                control.Text = control.Text.Substring(0, control.Text.Length - 1);
+            }
+        }
+
         public static void BtnSaveClick(object sender, EventArgs eventArgs)
         {
             var pageId = ((KryptonButton)sender).Tag as KryptonPageId;
 
-            pageId.KryptonPage.Text = pageId.KryptonPage.Text.Substring(0, pageId.KryptonPage.Text.Length - 1);
+            //pageId.KryptonPage.Text = Active
+            RemoveAsterisk(pageId.KryptonPage);
 
             pageId.IsDirty = false;
 
@@ -158,5 +167,31 @@ namespace YAMSE
             }
         }
 
+        public static bool RawDataEqual(Dnc dnc1, Dnc dnc2)
+        {
+            if (dnc1.RawData.Length != dnc2.RawData.Length)
+            {
+                return false;
+            }
+
+            int len;
+            if (dnc1.RawData.Length < dnc2.RawData.Length)
+            {
+                len = dnc1.RawData.Length;
+            }
+            else
+            {
+                len = dnc2.RawData.Length;
+            }
+
+            for (int i = 0; i < len; i++)
+            {
+                if (dnc1.RawData[i] != dnc2.RawData[i])
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 }
