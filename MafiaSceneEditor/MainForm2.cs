@@ -885,6 +885,8 @@ namespace YAMSE
 
                         ActiveDncs.RemoveAll();
 
+                        SetFormTitle(openFileDialog1.FileName);
+
                         scene2FileLoaded = true;
                     };
                 recentDoc.Text = filename;
@@ -923,7 +925,14 @@ namespace YAMSE
                 scene2FileLoaded = true;
 
                 AddRecentFile(openFileDialog1.FileName);
+                SetFormTitle(openFileDialog1.FileName);
+
             }
+        }
+
+        private void SetFormTitle(string title)
+        {
+            Text = $"YAMSE ({title})";
         }
 
         private void SecondScene2FileLoad(object sender, EventArgs e)
