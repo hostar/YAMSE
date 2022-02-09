@@ -24,6 +24,7 @@ using System.Windows.Controls;
 using System.Runtime.InteropServices;
 using ComponentFactory.Krypton.Toolkit;
 using System.Windows.Input;
+using YAMSE.Helpers;
 
 namespace YAMSE
 {
@@ -175,7 +176,7 @@ namespace YAMSE
             {
                 // get references from scripts
                 // findactor xx, "name"
-                string[] strings = Scene2Parser.GetScriptFromDnc(dnc).Split("\r\n");
+                string[] strings = Scene2Parser.GetScriptFromDnc(dnc).SplitByCorrect();
 
                 //listBoxOutput.Items.Add(script.name);
 
