@@ -304,15 +304,18 @@ namespace YAMSE
             var dnc = currTreeNode.Tag as Dnc;
 
             var newName = KryptonInputBox.Show("Enter new name", "Duplicate", dnc.Name);
-            Dnc newDnc = Scene2Parser.DuplicateDnc(dnc, newName);
+            if (newName != string.Empty)
+            {
+                Dnc newDnc = Scene2Parser.DuplicateDnc(dnc, newName);
 
-            var dncsInSection = scene2Data.Sections.First(x => x.SectionType == dnc.dncKind).Dncs;
-            int highestIDinCat = dncsInSection.OrderBy(x => x.ID).Last().ID;
-            newDnc.ID = highestIDinCat;
+                var dncsInSection = scene2Data.Sections.First(x => x.SectionType == dnc.dncKind).Dncs;
+                int highestIDinCat = dncsInSection.OrderBy(x => x.ID).Last().ID;
+                newDnc.ID = highestIDinCat;
 
-            dncsInSection.Add(newDnc);
+                dncsInSection.Add(newDnc);
 
-            InsertIntoTree(newDnc);
+                InsertIntoTree(newDnc);
+            }
         }
 
         private void RemoveDnc(object sender, EventArgs e)
@@ -839,9 +842,11 @@ namespace YAMSE
             var dnc = currTreeNode.Tag as Dnc;
 
             var newName = KryptonInputBox.Show("Enter new name", "Rename", dnc.Name);
-            Scene2Parser.RenameDnc(dnc, newName);
-
-            currTreeNode.Text = newName;
+            if (newName != string.Empty)
+            {
+                Scene2Parser.RenameDnc(dnc, newName);
+                currTreeNode.Text = newName;
+            }
         }
 
         private void AddRecentFile(string filename)

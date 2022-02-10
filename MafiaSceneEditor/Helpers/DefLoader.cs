@@ -21,7 +21,7 @@ namespace YAMSE.Helpers
 
             fs.Read(buffer);
 
-            int read_result = 0;
+            int read_result;
 
             IList<int> list = new List<int>();
             for (int i = 0; i < (len - 1); i++)
@@ -32,6 +32,7 @@ namespace YAMSE.Helpers
                     break;
                 }
                 int id = BitConverter.ToInt32(buffer);
+                id--;
 
                 read_result = fs.Read(buffer);
                 if (ShouldStopRead(read_result))
