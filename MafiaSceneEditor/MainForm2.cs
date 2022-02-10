@@ -70,6 +70,8 @@ namespace YAMSE
         readonly KryptonListBox listBoxOutput = new KryptonListBox();
         readonly KryptonLabel outputLabel = new KryptonLabel { Text = "Output"};
 
+        readonly Logging logging;
+
         TreeNode currentTreeNode;
 
         readonly OpenFileDialog openFileDialog1 = new OpenFileDialog();
@@ -297,6 +299,8 @@ namespace YAMSE
             diagramVisualizer = new DiagramVisualizer(this);
 
             ActiveDncs.SetObjects(this, kryptonWorkspaceContent);
+
+            logging = new Logging(listBoxOutput.Items);
         }
 
         private void DuplicateDnc(object sender, EventArgs e)
@@ -876,7 +880,7 @@ namespace YAMSE
                         }
                         catch (Exception ex)
                         {
-                            listBoxOutput.Items.Add($"Error when opening file: {ex.Message}");
+                            logging.Add($"Error when opening file: {ex.Message}");
                             return;
                         }
                         
@@ -915,7 +919,7 @@ namespace YAMSE
         {
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                listBoxOutput.Items.Add("Loading file...");
+                logging.Add("Loading file...");
 
                 MemoryStream memoryStream = new MemoryStream();
                 Stream tmpStream = openFileDialog1.OpenFile();
@@ -950,7 +954,7 @@ namespace YAMSE
 
             if (openFileDialogSecond.ShowDialog() == DialogResult.OK)
             {
-                listBoxOutput.Items.Add("Loading file...");
+                logging.Add("Loading file...");
 
                 MemoryStream memoryStream = new MemoryStream();
                 Stream tmpStream = openFileDialogSecond.OpenFile();
@@ -969,7 +973,7 @@ namespace YAMSE
 
             try
             {
-                Scene2Parser.LoadScene(memoryStream, ref scene2Data, listBoxOutput.Items);
+                Scene2Parser.LoadScene(memoryStream, ref scene2Data, logging);
             }
             catch (Exception ex)
             {
@@ -1027,7 +1031,7 @@ namespace YAMSE
 
             }
 
-            listBoxOutput.Items.Add("Loading of file done.");
+            logging.Add("Loading of file done.");
         }
 
         private void Scene2FileSave(object sender, EventArgs e)
@@ -1035,7 +1039,7 @@ namespace YAMSE
             if (scene2FileLoaded)
             {
                 var tmpStream = new FileStream(openFileDialog1.FileName, FileMode.Create);
-                Scene2Parser.SaveScene(tmpStream, ref scene2Data, listBoxOutput.Items);
+                Scene2Parser.SaveScene(tmpStream, ref scene2Data, logging);
                 tmpStream.Close();
             }
         }
@@ -1046,7 +1050,7 @@ namespace YAMSE
             {
                 if (saveFileDialog1.ShowDialog() == DialogResult.OK)
                 {
-                    Scene2Parser.SaveScene(saveFileDialog1.OpenFile(), ref scene2Data, listBoxOutput.Items);
+                    Scene2Parser.SaveScene(saveFileDialog1.OpenFile(), ref scene2Data, logging);
                 }
             }
         }
