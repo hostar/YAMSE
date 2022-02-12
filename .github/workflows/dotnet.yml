@@ -24,7 +24,9 @@ jobs:
     - name: Test
       run: dotnet test --no-build --verbosity normal
     - name: List files
-      uses: the-coding-turtle/ga-file-list@v0.2
+      uses: jitterbit/get-changed-files@v1
+      with:
+        format: 'csv'
     - name: Archive Release
       uses: thedoctor0/zip-release@master
       with:
