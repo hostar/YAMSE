@@ -1,5 +1,4 @@
-﻿using ScintillaNET;
-using System.Windows.Forms;
+﻿using System.Windows.Forms;
 using YAMSE.DataLayer;
 
 namespace YAMSE
