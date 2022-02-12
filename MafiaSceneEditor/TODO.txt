@@ -5,12 +5,13 @@
 
 features to add:
   page should ask if is trying to be closed without saving - works for scripts, init scripts and enemies
+    standard objects are being changed instantly - fix it to save only after clocking "save" button
   save current diagram, so it can be loaded later
-  add settings of search to switch between searching from beginning or anywhere in the string
+  add settings of search to switch between searching from beginning or anywhere in the string - maybe not
 
   adding new objects
-  export of DNCs - in progress
-  import of DNCs
+  export of DNCs - needs testing
+  import of DNCs - should work
 
   editing of city cars and pedestrians - low priority
 
