@@ -23,15 +23,8 @@ jobs:
       run: dotnet build --no-restore --configuration Release
     - name: Test
       run: dotnet test --no-build --verbosity normal --configuration Release
-    - name: Archive Release
-      uses: thedoctor0/zip-release@master
-      with:
-        type: 'zip'
-        filename: 'YAMSE.zip'
-        directory: ./MafiaSceneEditor/bin/Release/*.zip
-        path: .
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.4
       with:
         name: EXE
-        path: ./*.zip
+        path: ./MafiaSceneEditor/bin/Release/.*
