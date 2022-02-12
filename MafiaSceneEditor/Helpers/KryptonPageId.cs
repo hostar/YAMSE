@@ -1,5 +1,4 @@
 ﻿using ComponentFactory.Krypton.Navigator;
-using ScintillaNET;
 using System.Collections.Generic;
 using YAMSE.DataLayer;
 using YAMSE.Helpers;

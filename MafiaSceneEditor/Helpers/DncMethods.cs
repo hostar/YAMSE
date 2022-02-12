@@ -110,63 +110,6 @@ namespace YAMSE
             return $"{dnc.dncKind} ; {dnc.dncType} ; {dnc.Name}";
         }
 
-        public static void ScintillaTextHighlight(string textInput, int startPosition, ScintillaNET.Scintilla scintillaTextEditor)
-        {
-            int index = startPosition;
-
-            scintillaTextEditor.StartStyling(index);
-
-            foreach (var word in textInput.Split(null))
-            {
-                var wordLower = word.ToLower();
-                if (string.IsNullOrWhiteSpace(wordLower))
-                {
-                    continue;
-                }
-                //Debug.WriteLine(word);
-
-                var currIndex = scintillaTextEditor.Text.IndexOf(word, index, (scintillaTextEditor.Text.Length - index) <= 20 ? (scintillaTextEditor.Text.Length - index) : 20);
-
-                int repeat = 0;
-                while (currIndex == -1)
-                {
-                    index = scintillaTextEditor.Lines[scintillaTextEditor.LineFromPosition(index)].Position;
-                    currIndex = scintillaTextEditor.Text.IndexOf(word, index);
-
-                    repeat++;
-
-                    if (repeat == 20)
-                    {
-                        break;
-                    }
-                }
-
-                var toAdd = currIndex - index;
-
-                scintillaTextEditor.StartStyling(currIndex);
-                if (MafiaKeywords.Commands.Contains(wordLower))
-                {
-                    scintillaTextEditor.SetStyling(wordLower.Length, 1);
-                }
-                if (MafiaKeywords.Keywords.Contains(wordLower))
-                {
-                    scintillaTextEditor.SetStyling(wordLower.Length, 3);
-                }
-                if (MafiaKeywords.Declaration.Contains(wordLower))
-                {
-                    scintillaTextEditor.SetStyling(wordLower.Length, 2);
-                }
-                if (wordLower.StartsWith(MafiaKeywords.Comment))
-                {
-                    var currLineLen = scintillaTextEditor.Lines[scintillaTextEditor.LineFromPosition(currIndex)].Length;
-                    scintillaTextEditor.SetStyling(currLineLen, 4);
-                }
-
-                index += wordLower.Length;
-                index += toAdd;
-            }
-        }
-
         public static bool RawDataEqual(Dnc dnc1, Dnc dnc2)
         {
             if (dnc1.RawData.Length != dnc2.RawData.Length)
