@@ -27,4 +27,4 @@ jobs:
       uses: actions/upload-artifact@v2.2.4
       with:
         name: EXE
-        path: ./MafiaSceneEditor/bin/Release/.*
+        path: ./YAMSE/MafiaSceneEditor/bin/Release/netcoreapp3.1/.*
