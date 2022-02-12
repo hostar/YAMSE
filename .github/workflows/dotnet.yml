@@ -33,10 +33,10 @@ jobs:
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.4
       with:
-        name: EXE
+        name: YAMSE
         path: ./*.zip
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.4
       with:
-        name: EXE
-        path: MafiaSceneEditor/bin/Release/netcoreapp3.1/.*
+        name: YAMSE2
+        path: YAMSE/MafiaSceneEditor/bin/Release/netcoreapp3.1/.*
