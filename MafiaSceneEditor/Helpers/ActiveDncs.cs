@@ -390,7 +390,7 @@ namespace YAMSE.Helpers
                 CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionX.ToString(), 
                 (o, control) =>
                 {
-                    CheckAndSet(o, standardProps, standardProps.PositionX);
+                    standardProps.PositionX = CheckAndSet(o, standardProps, standardProps.PositionX, pageId);
                     AddAsterisk(pageId.KryptonPage);
                 }, 
                 (prop, control) => {
@@ -402,7 +402,7 @@ namespace YAMSE.Helpers
                 CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionY.ToString(),
                 (o, control) => 
                 {
-                    CheckAndSet(o, standardProps, standardProps.PositionY);
+                    standardProps.PositionY = CheckAndSet(o, standardProps, standardProps.PositionY, pageId);
                     AddAsterisk(pageId.KryptonPage);
                 },
                 (prop, control) => 
@@ -415,7 +415,7 @@ namespace YAMSE.Helpers
                 CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionZ.ToString(),
                 (o, control) => 
                 {
-                    CheckAndSet(o, standardProps, standardProps.PositionZ);
+                    standardProps.PositionZ = CheckAndSet(o, standardProps, standardProps.PositionZ, pageId);
                     AddAsterisk(pageId.KryptonPage);
                 },
                 (prop, control) => 
@@ -444,7 +444,7 @@ namespace YAMSE.Helpers
                 CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationX.ToString(),
                 (o, control) => 
                 {
-                    CheckAndSet(o, standardProps, standardProps.RotationX);
+                    standardProps.RotationX = CheckAndSet(o, standardProps, standardProps.RotationX, pageId);
                     AddAsterisk(pageId.KryptonPage);
                 },
                 (prop, control) => 
@@ -456,7 +456,7 @@ namespace YAMSE.Helpers
                 CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationY.ToString(),
                 (o, control) => 
                 {
-                    CheckAndSet(o, standardProps, standardProps.RotationY);
+                    standardProps.RotationY = CheckAndSet(o, standardProps, standardProps.RotationY, pageId);
                     AddAsterisk(pageId.KryptonPage);
                 },
                 (prop, control) => 
@@ -468,7 +468,7 @@ namespace YAMSE.Helpers
                 CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationZ.ToString(),
                 (o, control) => 
                 {
-                    CheckAndSet(o, standardProps, standardProps.RotationZ);
+                    standardProps.RotationZ = CheckAndSet(o, standardProps, standardProps.RotationZ, pageId);
                     AddAsterisk(pageId.KryptonPage);
                 },
                 (prop, control) => 
@@ -497,7 +497,7 @@ namespace YAMSE.Helpers
                 CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingX.ToString(),
                 (o, control) => 
                 {
-                    CheckAndSet(o, standardProps, standardProps.ScalingX);
+                    standardProps.ScalingX = CheckAndSet(o, standardProps, standardProps.ScalingX, pageId);
                     AddAsterisk(pageId.KryptonPage);
                 },
                 (prop, control) => 
@@ -509,7 +509,7 @@ namespace YAMSE.Helpers
                 CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingY.ToString(),
                 (o, control) => 
                 {
-                    CheckAndSet(o, standardProps, standardProps.ScalingY);
+                    standardProps.ScalingY = CheckAndSet(o, standardProps, standardProps.ScalingY, pageId);
                     AddAsterisk(pageId.KryptonPage);
                 },
                 (prop, control) => 
@@ -521,7 +521,7 @@ namespace YAMSE.Helpers
                 CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingZ.ToString(),
                 (o, control) => 
                 {
-                    CheckAndSet(o, standardProps, standardProps.ScalingZ);
+                    standardProps.ScalingZ = CheckAndSet(o, standardProps, standardProps.ScalingZ, pageId);
                     AddAsterisk(pageId.KryptonPage);
                 },
                 (prop, control) => 
@@ -531,13 +531,15 @@ namespace YAMSE.Helpers
             }
         }
 
-        private static void CheckAndSet(object o, StandardProps standardProps, float toBeSet)
+        private static float CheckAndSet(object o, StandardProps standardProps, float originalValue, KryptonPageId pageId)
         {
             float parsed;
             if (float.TryParse(o.ToString(), out parsed))
             {
-                toBeSet = Convert.ToSingle(parsed);
+                pageId.IsDirty = true;
+                return Convert.ToSingle(parsed);
             }
+            return originalValue;
         }
 
         private static TextEditorWrapper CreateAvalonEdit(string text, KryptonPageId pageId, Form parentForm)
