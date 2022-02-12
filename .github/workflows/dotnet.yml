@@ -29,7 +29,7 @@ jobs:
         type: 'zip'
         filename: 'YAMSE.zip'
         directory: .
-        path: netcoreapp3.1
+        path: .
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.4
       with:
