@@ -9,7 +9,7 @@ on:
 jobs:
   build:
 
-    runs-on: windows-2016
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v2
@@ -23,3 +23,16 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
+    - uses: actions/checkout@master
+    - name: Archive Release
+      uses: thedoctor0/zip-release@master
+      with:
+        type: 'zip'
+        filename: 'YAMSE.zip'
+        directory: ./MafiaSceneEditor/bin/Release/.*
+        path: netcoreapp3.1
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v2.2.4
+      with:
+        name: EXE
+        path: ./MafiaSceneEditor/bin/Release/*.zip
