@@ -23,16 +23,12 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
-    - name: List files
-      uses: jitterbit/get-changed-files@v1
-      with:
-        format: 'csv'
     - name: Archive Release
       uses: thedoctor0/zip-release@master
       with:
         type: 'zip'
         filename: 'YAMSE.zip'
-        directory: ./MafiaSceneEditor/bin/Release/.*
+        directory: .
         path: netcoreapp3.1
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.4
