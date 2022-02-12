@@ -16,6 +16,7 @@ using YAMSE.DataLayer;
 using YAMSE.Helpers;
 using ICSharpCode.AvalonEdit.Search;
 using System.Diagnostics;
+using ComponentFactory.Krypton.Docking;
 
 namespace YAMSE
 {
@@ -133,7 +134,7 @@ namespace YAMSE
             ((ISupportInitialize)kryptonWorkspaceContent).BeginInit();
             kryptonWorkspaceContent.Dock = DockStyle.Fill;
 
-            kryptonWorkspaceContent.ContextMenus.ShowContextMenu = false;
+            kryptonWorkspaceContent.ContextMenus.ShowContextMenu = true;
 
             kryptonWorkspaceContent.WorkspaceCellAdding += kryptonWorkspace_WorkspaceCellAdding;
 
@@ -183,7 +184,6 @@ namespace YAMSE
             caseSensitive.ToolTipStyle = LabelStyle.ToolTip;
             caseSensitive.Checked = ButtonCheckState.Unchecked;
             caseSensitive.Text = "Cc";
-
             kryptonTextBoxObjectSearch.ButtonSpecs.Add(caseSensitive);
 
             KryptonButton kryptonButtonObjectSearch = new KryptonButton() { Width = 25 };
@@ -671,7 +671,7 @@ namespace YAMSE
                                     textToSearch = textToSearch.ToLower();
                                 }
 
-                                if (currObjName.StartsWith(textToSearch))
+                                if (currObjName.Contains(textToSearch))
                                 {
                                     var foundNode = node2 as TreeNode;
 
@@ -755,6 +755,14 @@ namespace YAMSE
 
             // Do not need the secondary header for header modes
             e.Cell.Header.HeaderVisibleSecondary = false;
+            e.Cell.CloseAction += (sender, e) =>
+            {
+                var x = e.Item.Tag;
+                if (x is KryptonPageId pageId)
+                {
+                    ActiveDncs.Remove(pageId.Dnc);
+                }
+            };
         }
 
         private KryptonWorkspaceCell CreateCell(string pageName, NavigatorMode mode = NavigatorMode.BarTabGroup)

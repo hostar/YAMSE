@@ -94,7 +94,7 @@ namespace YAMSE.Helpers
 
         private static KryptonPage CreatePage(Dnc dnc, PanelKind panelKind)
         {
-            string pageName = dnc.Name;
+            string pageName = $"{dnc.Name}";
 
             var pageId = new KryptonPageId { Dnc = dnc, PanelKind = panelKind };
 
@@ -102,6 +102,7 @@ namespace YAMSE.Helpers
 
             TableLayoutPanel tableLayoutPanel;
             TextEditorWrapper textEditorWrapper;
+            KryptonPage page;
 
             switch (panelKind)
             {
@@ -125,7 +126,11 @@ namespace YAMSE.Helpers
                             RowSpan = 2
                         });
 
-                    return CreatePageInternal(pageName, pageId, kryptonPageContainer);
+                    pageId.KryptonPageContainer = kryptonPageContainer;
+
+                    page = CreatePageOnly(pageName, pageId);
+                    pageId.KryptonPage = page;
+                    return CreatePageInternal(page, pageId, kryptonPageContainer);
 
                 case PanelKind.Enemy:
                     textEditorWrapper = CreateAvalonEdit(Scene2Parser.GetScriptFromDnc(dnc), pageId, _this);
@@ -160,7 +165,11 @@ namespace YAMSE.Helpers
                             RowSpan = 1
                         });
 
-                    return CreatePageInternal(pageName, pageId, kryptonPageContainer);
+                    pageId.KryptonPageContainer = kryptonPageContainer;
+
+                    page = CreatePageOnly(pageName, pageId);
+                    pageId.KryptonPage = page;
+                    return CreatePageInternal(page, pageId, kryptonPageContainer);
 
                 case PanelKind.Hex:
 
@@ -195,7 +204,9 @@ namespace YAMSE.Helpers
                             RowSpan = 1
                         });
 
-                    return CreatePageInternal(pageName, pageId, kryptonPageContainer);
+                    page = CreatePageOnly(pageName, pageId);
+                    pageId.KryptonPage = page;
+                    return CreatePageInternal(page, pageId, kryptonPageContainer);
 
                 case PanelKind.Standard:
                     CreateDefaultTextBoxes(kryptonPageContainer, pageId, dnc);
@@ -217,7 +228,9 @@ namespace YAMSE.Helpers
                     tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20));
                     tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200));
 
-                    return CreatePageInternal(pageName, pageId, kryptonPageContainer, tableLayoutPanel);
+                    page = CreatePageOnly(pageName, pageId);
+                    pageId.KryptonPage = page;
+                    return CreatePageInternal(page, pageId, kryptonPageContainer, tableLayoutPanel);
 
                 case PanelKind.Model:
                     CreateDefaultTextBoxes(kryptonPageContainer, pageId, dnc);
@@ -275,7 +288,9 @@ namespace YAMSE.Helpers
                     tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20));
                     tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200));
 
-                    return CreatePageInternal(pageName, pageId, kryptonPageContainer, tableLayoutPanel, kryptonPanel);
+                    page = CreatePageOnly(pageName, pageId);
+                    pageId.KryptonPage = page;
+                    return CreatePageInternal(page, pageId, kryptonPageContainer, tableLayoutPanel, kryptonPanel);
 
                 default:
                     throw new InvalidOperationException(nameof(CreatePage));
@@ -498,7 +513,7 @@ namespace YAMSE.Helpers
             return new TextEditorWrapper { Editor = avalonEdit, ElementHost = avalonEditElementHost };
         }
 
-        private static KryptonPage CreatePageInternal(string pageName, KryptonPageId pageId, IEnumerable<KryptonPageContainer> mainComponents, TableLayoutPanel tableLayoutPanel = null, KryptonPanel optionalPanel = null)
+        private static KryptonPage CreatePageInternal(KryptonPage page, KryptonPageId pageId, IEnumerable<KryptonPageContainer> mainComponents, TableLayoutPanel tableLayoutPanel = null, KryptonPanel optionalPanel = null)
         {
             TableLayoutPanel kryptonBasePanel = new TableLayoutPanel
             {
@@ -539,21 +554,6 @@ namespace YAMSE.Helpers
             }
 
             kryptonBasePanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-
-            pageId.KryptonPageContainer = mainComponents;
-
-            // Create a new page and give it a name and image
-            KryptonPage page = new KryptonPage
-            {
-                Text = pageName,
-                TextTitle = pageName,
-                TextDescription = pageName,
-                Tag = pageId,
-                //page.ImageSmall = imageList.Images[_count % imageList.Images.Count];
-                MinimumSize = new Size(200, 250)
-            };
-
-            pageId.KryptonPage = page;
 
             PutOnTableLayout(mainComponents, tableLayoutPanel);
 
@@ -602,6 +602,22 @@ namespace YAMSE.Helpers
             page.ButtonSpecs.Add(bsa);
 
             kryptonWorkspace.FirstCell().Pages.Add(page);
+            return page;
+        }
+
+        private static KryptonPage CreatePageOnly(string pageName, KryptonPageId pageId)
+        {
+            // Create a new page and give it a name and image
+            KryptonPage page = new KryptonPage
+            {
+                Text = pageName,
+                TextTitle = pageName,
+                TextDescription = pageName,
+                Tag = pageId,
+                ImageSmall = DncMethods.PageKindToGlyph(pageId.PanelKind),
+                //page.ImageSmall = imageList.Images[_count % imageList.Images.Count];
+                MinimumSize = new Size(200, 250)
+            };
             return page;
         }
 
