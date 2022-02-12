@@ -315,7 +315,6 @@ namespace YAMSE.Helpers
                 var textBox = new KryptonTextBox() { Text = init, Width = width };
                 textBox.TextChanged += (sender, e) =>
                 {
-
                     if (!string.IsNullOrWhiteSpace(textBox.Text))
                     {
                         setterFunction(textBox.Text, textBox);
@@ -388,15 +387,41 @@ namespace YAMSE.Helpers
                 col++;
                 row = 1;
 
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionX.ToString(), (o, control) => { standardProps.PositionX = Convert.ToSingle(o); AddAsterisk(pageId.KryptonPage); }, (prop, control) => { control.Text = (prop as StandardProps).PositionX.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionX.ToString(), 
+                (o, control) =>
+                {
+                    CheckAndSet(o, standardProps, standardProps.PositionX);
+                    AddAsterisk(pageId.KryptonPage);
+                }, 
+                (prop, control) => {
+                    control.Text = (prop as StandardProps).PositionX.ToString(); 
+                });
 
                 row++;
 
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionY.ToString(), (o, control) => { standardProps.PositionY = Convert.ToSingle(o); AddAsterisk(pageId.KryptonPage); }, (prop, control) => { control.Text = (prop as StandardProps).PositionY.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionY.ToString(),
+                (o, control) => 
+                {
+                    CheckAndSet(o, standardProps, standardProps.PositionY);
+                    AddAsterisk(pageId.KryptonPage);
+                },
+                (prop, control) => 
+                {
+                    control.Text = (prop as StandardProps).PositionY.ToString();
+                });
 
                 row++;
 
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionZ.ToString(), (o, control) => { standardProps.PositionZ = Convert.ToSingle(o); AddAsterisk(pageId.KryptonPage); }, (prop, control) => { control.Text = (prop as StandardProps).PositionZ.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionZ.ToString(),
+                (o, control) => 
+                {
+                    CheckAndSet(o, standardProps, standardProps.PositionZ);
+                    AddAsterisk(pageId.KryptonPage);
+                },
+                (prop, control) => 
+                {
+                    control.Text = (prop as StandardProps).PositionZ.ToString();
+                });
 
                 col++;
                 row = 0;
@@ -416,13 +441,40 @@ namespace YAMSE.Helpers
                 col++;
 
                 row = 1;
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationX.ToString(), (o, control) => { standardProps.RotationX = Convert.ToSingle(o); AddAsterisk(pageId.KryptonPage); }, (prop, control) => { control.Text = (prop as StandardProps).RotationX.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationX.ToString(),
+                (o, control) => 
+                {
+                    CheckAndSet(o, standardProps, standardProps.RotationX);
+                    AddAsterisk(pageId.KryptonPage);
+                },
+                (prop, control) => 
+                {
+                    control.Text = (prop as StandardProps).RotationX.ToString();
+                });
 
                 row++;
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationY.ToString(), (o, control) => { standardProps.RotationY = Convert.ToSingle(o); AddAsterisk(pageId.KryptonPage); }, (prop, control) => { control.Text = (prop as StandardProps).RotationY.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationY.ToString(),
+                (o, control) => 
+                {
+                    CheckAndSet(o, standardProps, standardProps.RotationY);
+                    AddAsterisk(pageId.KryptonPage);
+                },
+                (prop, control) => 
+                {
+                    control.Text = (prop as StandardProps).RotationY.ToString();
+                });
 
                 row++;
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationZ.ToString(), (o, control) => { standardProps.RotationZ = Convert.ToSingle(o); AddAsterisk(pageId.KryptonPage); }, (prop, control) => { control.Text = (prop as StandardProps).RotationZ.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationZ.ToString(),
+                (o, control) => 
+                {
+                    CheckAndSet(o, standardProps, standardProps.RotationZ);
+                    AddAsterisk(pageId.KryptonPage);
+                },
+                (prop, control) => 
+                {
+                    control.Text = (prop as StandardProps).RotationZ.ToString();
+                });
 
                 col++;
                 row = 0;
@@ -442,13 +494,49 @@ namespace YAMSE.Helpers
                 col++;
 
                 row = 1;
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingX.ToString(), (o, control) => { standardProps.ScalingX = Convert.ToSingle(o); AddAsterisk(pageId.KryptonPage); }, (prop, control) => { control.Text = (prop as StandardProps).ScalingX.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingX.ToString(),
+                (o, control) => 
+                {
+                    CheckAndSet(o, standardProps, standardProps.ScalingX);
+                    AddAsterisk(pageId.KryptonPage);
+                },
+                (prop, control) => 
+                {
+                    control.Text = (prop as StandardProps).ScalingX.ToString();
+                });
 
                 row++;
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingY.ToString(), (o, control) => { standardProps.ScalingY = Convert.ToSingle(o); AddAsterisk(pageId.KryptonPage); }, (prop, control) => { control.Text = (prop as StandardProps).ScalingY.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingY.ToString(),
+                (o, control) => 
+                {
+                    CheckAndSet(o, standardProps, standardProps.ScalingY);
+                    AddAsterisk(pageId.KryptonPage);
+                },
+                (prop, control) => 
+                {
+                    control.Text = (prop as StandardProps).ScalingY.ToString();
+                });
 
                 row++;
-                CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingZ.ToString(), (o, control) => { standardProps.ScalingZ = Convert.ToSingle(o); AddAsterisk(pageId.KryptonPage); }, (prop, control) => { control.Text = (prop as StandardProps).ScalingZ.ToString(); });
+                CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingZ.ToString(),
+                (o, control) => 
+                {
+                    CheckAndSet(o, standardProps, standardProps.ScalingZ);
+                    AddAsterisk(pageId.KryptonPage);
+                },
+                (prop, control) => 
+                {
+                    control.Text = (prop as StandardProps).ScalingZ.ToString();
+                });
+            }
+        }
+
+        private static void CheckAndSet(object o, StandardProps standardProps, float toBeSet)
+        {
+            float parsed;
+            if (float.TryParse(o.ToString(), out parsed))
+            {
+                toBeSet = Convert.ToSingle(parsed);
             }
         }
 
