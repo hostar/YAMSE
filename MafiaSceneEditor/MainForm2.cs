@@ -36,6 +36,7 @@ namespace YAMSE
         readonly KryptonContextMenuItem kryptonContextMenuItem2 = new KryptonContextMenuItem();
         readonly KryptonContextMenuItem kryptonContextMenuItem3 = new KryptonContextMenuItem();
         readonly KryptonContextMenuItem kryptonContextMenuItem4 = new KryptonContextMenuItem();
+        readonly KryptonContextMenuItem kryptonContextMenuItemAbout = new KryptonContextMenuItem();
         readonly KryptonContextMenuItem kryptonContextMenuItemExit = new KryptonContextMenuItem();
 
         readonly KryptonContextMenuSeparator kryptonContextMenuSeparator1 = new KryptonContextMenuSeparator();
@@ -383,6 +384,10 @@ namespace YAMSE
             kryptonContextMenuItemExit.Image = (Image)resources.GetObject("ImageExit");
             kryptonContextMenuItemExit.Click += (sender, e) => { Close(); };
 
+            kryptonContextMenuItemAbout.Text = "About";
+            kryptonContextMenuItemAbout.Image = Resources.help;
+            kryptonContextMenuItemAbout.Click += (sender, e) => { KryptonMessageBox.Show(Resources.AboutFormContent); };
+
             kryptonRibbon.HideRibbonSize = new Size(100, 250);
             kryptonRibbon.QATLocation = QATLocation.Below;
             kryptonRibbon.QATUserChange = false;
@@ -403,6 +408,7 @@ namespace YAMSE
             kryptonContextMenuItem3,
             kryptonContextMenuItem4,
             kryptonContextMenuSeparator1,
+            kryptonContextMenuItemAbout,
             kryptonContextMenuItemExit});
 
             kryptonRibbon.RibbonTabs.AddRange(new KryptonRibbonTab[] {
@@ -415,11 +421,13 @@ namespace YAMSE
             kryptonRibbonGroupVisualization.Items.AddRange(new KryptonRibbonGroupContainer[] {kryptonRibbonGroupTriple1});
 
             kryptonRibbonGroupButtonShowDiagram.TextLine1 = "Show diagram";
+            kryptonRibbonGroupButtonShowDiagram.ImageLarge = Resources.hierarchical_structure;
             kryptonRibbonGroupButtonShowDiagram.Click += ShowScriptDependencyDiagram;
 
             kryptonRibbonGroupTriple1.Items.AddRange(new KryptonRibbonGroupItem[] {kryptonRibbonGroupButtonShowDiagram});
 
             kryptonRibbonGroupButtonLoadDefs.TextLine1 = "Load def file";
+            kryptonRibbonGroupButtonLoadDefs.ImageLarge = Resources.language;
             kryptonRibbonGroupButtonLoadDefs.Click += LoadDefFile;
 
             kryptonRibbonGroupButtonStartGame.TextLine1 = "Start game";
@@ -428,10 +436,11 @@ namespace YAMSE
             kryptonRibbonGroupButtonStartMafiaCon.TextLine1 = "Start MafiaCon";
             kryptonRibbonGroupButtonStartMafiaCon.Click += StartMafiaCon;
 
-            kryptonRibbonGroupButtonStartMafiaCon.TextLine1 = "Start MafiaCon";
-            kryptonRibbonGroupButtonStartMafiaCon.Click += StartMafiaCon;
+            kryptonRibbonGroupButtonImportDnc.TextLine1 = "Import DNC";
+            kryptonRibbonGroupButtonImportDnc.Click += ImportDnc;
 
             kryptonRibbonGroupButtonSelectFileForComparison.TextLine1 = "Load scene file for compare";
+            kryptonRibbonGroupButtonSelectFileForComparison.ImageLarge = Resources.compare;
             kryptonRibbonGroupButtonSelectFileForComparison.Click += SecondScene2FileLoad;
 
             kryptonRibbonGroupTriple3.Items.AddRange(new KryptonRibbonGroupItem[] { kryptonRibbonGroupButtonImportDnc, kryptonRibbonGroupButtonLoadDefs, kryptonRibbonGroupButtonStartGame });
@@ -446,6 +455,7 @@ namespace YAMSE
             kryptonRibbonGroupExternalData.TextLine1 = "Misc";
 
             kryptonRibbonGroupButtonWorkspaceArrange.Click += (sender, e) => { kryptonWorkspaceContent.ApplyGridPages(); };
+            kryptonRibbonGroupButtonWorkspaceArrange.ImageLarge = Resources.grid;
             kryptonRibbonGroupButtonWorkspaceArrange.TextLine1 = "Grid";
 
             kryptonRibbonGroupTriple2.Items.AddRange(new KryptonRibbonGroupItem[] {
