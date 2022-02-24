@@ -807,6 +807,10 @@ namespace YAMSE.Helpers
         private static void ClosePage(Dnc dnc)
         {
             KryptonWorkspaceCell currCell = kryptonWorkspace.FirstCell();
+            if (currCell == null)
+            {
+                return;
+            }
 
             var page = currCell.Pages.FirstOrDefault(page => ((KryptonPageId)page.Tag).PageId == DncMethods.CreatePageID(dnc));
             while (page == null)

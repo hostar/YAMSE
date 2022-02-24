@@ -191,5 +191,27 @@ namespace YAMSE
             }
             return true;
         }
+
+        public static int RawDataEqualGetDiffOffset(Dnc dnc1, Dnc dnc2)
+        {
+            int len;
+            if (dnc1.RawData.Length < dnc2.RawData.Length)
+            {
+                len = dnc1.RawData.Length;
+            }
+            else
+            {
+                len = dnc2.RawData.Length;
+            }
+
+            for (int i = 0; i < len; i++)
+            {
+                if (dnc1.RawData[i] != dnc2.RawData[i])
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
     }
 }

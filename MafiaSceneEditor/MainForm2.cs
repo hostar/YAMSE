@@ -77,7 +77,7 @@ namespace YAMSE
         TreeNode currentTreeNode;
 
         readonly OpenFileDialog openFileDialog1 = new OpenFileDialog();
-        readonly SaveFileDialog saveFileDialog1 = new SaveFileDialog();
+        readonly SaveFileDialog saveFileDialogExport = new SaveFileDialog();
 
         readonly OpenFileDialog openFileDialog2 = new OpenFileDialog();
         readonly OpenFileDialog openFileDialogDnc = new OpenFileDialog();
@@ -510,7 +510,7 @@ namespace YAMSE
                         }
                         else
                         {
-                            KryptonMessageBox.Show("Import of unknown DNCs is not supported yet.");
+                            KryptonMessageBox.Show("Unknown DNC type. Cannot import.");
                         }
                     }
                     else
@@ -525,13 +525,61 @@ namespace YAMSE
 
                 currDnc.Name = Scene2Parser.GetNameOfDnc(currDnc);
                 Scene2Parser.PopulateProps(currDnc);
-                InsertIntoTree(currDnc);
 
                 var section = scene2Data.Sections.First(x => x.SectionType == currDnc.dncKind);
 
                 if (section != null)
                 {
+                    var existingDnc = section.Dncs.FirstOrDefault(x => x.Name == currDnc.Name);
+                    if (existingDnc != null)
+                    { // dnc with same name already exist
+                        section.Dncs.Remove(existingDnc);
+                        ReplaceInTree(currDnc);
+                    }
+                    else
+                    {
+                        InsertIntoTree(currDnc);
+                    }
                     section.Dncs.Add(currDnc);
+                }
+                KryptonMessageBox.Show($"Import successful - name: {currDnc.Name} , type: {currDnc.dncType}");
+            }
+        }
+
+        private void ReplaceInTree(Dnc dnc)
+        {
+            foreach (var item in treeViewMain.Nodes)
+            {
+                if (item is TreeNode treeNode)
+                {
+                    switch (dnc.dncKind)
+                    {
+                        case NodeType.Object:
+                            if (treeNode.Text == Scene2Parser.SectionNameObjects)
+                            {
+                                ReplaceNode(dnc, treeNode);
+                                return;
+                            }
+                            break;
+                        case NodeType.Definition:
+                            if (treeNode.Text == Scene2Parser.SectionNameDefs)
+                            {
+                                ReplaceNode(dnc, treeNode);
+                                return;
+                            }
+                            break;
+                        case NodeType.InitScript:
+                            if (treeNode.Text == Scene2Parser.SectionNameObjects)
+                            {
+                                ReplaceNode(dnc, treeNode);
+                                return;
+                            }
+                            break;
+                        case NodeType.Unknown:
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
         }
@@ -548,20 +596,23 @@ namespace YAMSE
                             if (treeNode.Text == Scene2Parser.SectionNameObjects)
                             {
                                 CreateAndEnsure(dnc, treeNode);
+                                return;
                             }
-                            return;
+                            break;
                         case NodeType.Definition:
                             if (treeNode.Text == Scene2Parser.SectionNameDefs)
                             {
                                 CreateAndEnsure(dnc, treeNode);
+                                return;
                             }
-                            return;
+                            break;
                         case NodeType.InitScript:
                             if (treeNode.Text == Scene2Parser.SectionNameObjects)
                             {
                                 CreateAndEnsure(dnc, treeNode);
+                                return;
                             }
-                            return;
+                            break;
                         case NodeType.Unknown:
                             break;
                         default:
@@ -607,6 +658,31 @@ namespace YAMSE
                 }
             }
             return null;
+        }
+
+        private static void ReplaceNode(Dnc currDnc, TreeNode treeNode)
+        {
+            foreach (var itemIn in treeNode.Nodes)
+            {
+                if (itemIn is TreeNode treeNodeIn)
+                {
+                    if (treeNodeIn.Name == currDnc.dncType.ToString())
+                    {
+                        foreach (var node in treeNodeIn.Nodes)
+                        {
+                            if (node is TreeNode treeNode2)
+                            {
+                                if (treeNode2.Text == currDnc.Name)
+                                {
+                                    Dnc dnc = (Dnc)treeNode2.Tag;
+                                    currDnc.ID = dnc.ID;
+                                    treeNode2.Tag = currDnc;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         private void KryptonQatButtonUndo_Click(object sender, EventArgs e)
@@ -850,12 +926,13 @@ namespace YAMSE
         {
             var dnc = currTreeNode.Tag as Dnc;
 
-            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+            saveFileDialogExport.FileName = $"{dnc.Name}.dnc";
+            if (saveFileDialogExport.ShowDialog() == DialogResult.OK)
             {
                 var tmpArr = new byte[dnc.RawData.Length + dnc.objectIDArr.Length];
                 dnc.objectIDArr.CopyTo(tmpArr, 0);
                 dnc.RawData.CopyTo(tmpArr, dnc.objectIDArr.Length);
-                File.WriteAllBytes(saveFileDialog1.FileName, tmpArr);
+                File.WriteAllBytes(saveFileDialogExport.FileName, tmpArr);
             }
         }
 
@@ -1066,9 +1143,9 @@ namespace YAMSE
         {
             if (scene2FileLoaded)
             {
-                if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+                if (saveFileDialogExport.ShowDialog() == DialogResult.OK)
                 {
-                    Scene2Parser.SaveScene(saveFileDialog1.OpenFile(), ref scene2Data, logging);
+                    Scene2Parser.SaveScene(saveFileDialogExport.OpenFile(), ref scene2Data, logging);
                 }
             }
         }
@@ -1117,7 +1194,7 @@ namespace YAMSE
                     except_result = longerDnc.Except(orderedDncs2, equalityComparer);
                 }
 
-                foreach (var item in except_result)
+                foreach (var item in except_result.OrderBy(x => x.Name))
                 {
                     diffs.Add($"  {item.Name} ({item.dncType})");
                 }

@@ -477,13 +477,25 @@ namespace YAMSE
             bytesLen = BitConverter.GetBytes(textInBytes.Length);
             for (int i = 0; i < bytesLen.Length; i++)
             {
-                startArray[dnc.Name.Length + 37 + i] = bytesLen[i];
+                startArray[dnc.Name.Length + (offset - 4) + i] = bytesLen[i];
             }
 
-            bytesLen = BitConverter.GetBytes(textInBytes.Length + 20);
-            for (int i = 0; i < bytesLen.Length; i++)
+            if (dnc.dncType != DncType.Enemy)
             {
-                startArray[dnc.Name.Length + 23 + i] = bytesLen[i];
+                bytesLen = BitConverter.GetBytes(textInBytes.Length + 20);
+                for (int i = 0; i < bytesLen.Length; i++)
+                {
+                    startArray[dnc.Name.Length + (offset - 18) + i] = bytesLen[i];
+                }
+            }
+
+            if (dnc.dncType == DncType.Enemy)
+            {
+                bytesLen = BitConverter.GetBytes(textInBytes.Length + 2 + 87);
+                for (int i = 0; i < bytesLen.Length; i++)
+                {
+                    startArray[dnc.Name.Length + (offset - 87) + i] = bytesLen[i];
+                }
             }
 
             dnc.RawData = startArray.Concat(textInBytes).ToArray();

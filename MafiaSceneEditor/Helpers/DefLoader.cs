@@ -75,6 +75,10 @@ namespace YAMSE.Helpers
             {
                 stringBuilder.Append((char)tmp);
                 tmp = fileStream.ReadByte();
+                if (tmp == -1)
+                {
+                    break;
+                }
             }
             return stringBuilder.ToString();
         }
