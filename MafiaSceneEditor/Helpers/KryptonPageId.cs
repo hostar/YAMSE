@@ -11,6 +11,7 @@ namespace YAMSE
         Enemy,
         Standard,
         Model,
+        Header,
         Hex
     }
 

@@ -5,6 +5,7 @@
         Object,
         Definition,
         InitScript,
+        Header,
         Unknown
     }
 }

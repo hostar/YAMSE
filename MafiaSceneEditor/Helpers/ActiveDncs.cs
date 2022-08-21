@@ -87,6 +87,10 @@ namespace YAMSE.Helpers
                     }
                 case NodeType.InitScript:
                     return PanelKind.Script;
+                case NodeType.Header:
+                    return PanelKind.Header;
+                case NodeType.Unknown:
+                    return PanelKind.Hex;
                 default:
                     return PanelKind.Hex;
             }
@@ -291,7 +295,103 @@ namespace YAMSE.Helpers
                     page = CreatePageOnly(pageName, pageId);
                     pageId.KryptonPage = page;
                     return CreatePageInternal(page, pageId, kryptonPageContainer, tableLayoutPanel, kryptonPanel);
+                case PanelKind.Header:
+                    HeaderProps headerProps = dnc.DncProps as HeaderProps;
 
+                    row = 0;
+                    col = 0;
+                    CreateLabel(kryptonPageContainer, col, row, 1, "View distance");
+
+                    col++;
+                   
+                    CreateTextBox(kryptonPageContainer, col, row, headerProps.ViewDistance.ToString(),
+                    (o, control) =>
+                    {
+                        headerProps.ViewDistance = CheckFloatAndSet(o, headerProps.ViewDistance, pageId);
+                        AddAsterisk(pageId.KryptonPage);
+                    },
+                    (prop, control) => {
+                        control.Text = (prop as HeaderProps).ViewDistance.ToString();
+                    }, colSpan: 1);
+
+                    row++;
+                    col = 0;
+
+                    CreateLabel(kryptonPageContainer, col, row, 1, "Camera distance");
+
+                    col++;
+
+                    CreateTextBox(kryptonPageContainer, col, row, headerProps.CameraDistance.ToString(),
+                    (o, control) =>
+                    {
+                        headerProps.CameraDistance = CheckFloatAndSet(o, headerProps.CameraDistance, pageId);
+                        AddAsterisk(pageId.KryptonPage);
+                    },
+                    (prop, control) => {
+                        control.Text = (prop as HeaderProps).ViewDistance.ToString();
+                    }, colSpan: 1);
+
+                    row++;
+                    col = 0;
+
+                    CreateLabel(kryptonPageContainer, col, row, 1, "Near clipping");
+
+                    col++;
+
+                    CreateTextBox(kryptonPageContainer, col, row, headerProps.NearClipping.ToString(),
+                    (o, control) =>
+                    {
+                        headerProps.NearClipping = CheckFloatAndSet(o, headerProps.NearClipping, pageId);
+                        AddAsterisk(pageId.KryptonPage);
+                    },
+                    (prop, control) => {
+                        control.Text = (prop as HeaderProps).ViewDistance.ToString();
+                    }, colSpan: 1);
+
+                    row++;
+                    col = 0;
+
+                    CreateLabel(kryptonPageContainer, col, row, 1, "Far clipping");
+
+                    col++;
+
+                    CreateTextBox(kryptonPageContainer, col, row, headerProps.FarClipping.ToString(),
+                    (o, control) =>
+                    {
+                        headerProps.FarClipping = CheckFloatAndSet(o, headerProps.FarClipping, pageId);
+                        AddAsterisk(pageId.KryptonPage);
+                    },
+                    (prop, control) => {
+                        control.Text = (prop as HeaderProps).ViewDistance.ToString();
+                    }, colSpan: 1);
+
+                    KryptonPanel kryptonPanelHeader = new KryptonPanel { Top = 0, Left = 0, Size = new Size(1000, 200) };
+
+                    row++;
+                    col = 0;
+                    CreateLabel(kryptonPageContainer, col, row, 1, "Description and signature");
+
+                    col++;
+                    CreateTextBox(kryptonPageContainer, col, row, headerProps.Text,
+                        (o, control) => { headerProps.Text = o.ToString(); }, 
+                        (prop, control) => { control.Text = (prop as HeaderProps).Text; }, 1, 1000);
+
+                    tableLayoutPanel = new TableLayoutPanel
+                    {
+                        BackColor = Color.FromArgb(187, 206, 230),
+                        ColumnCount = 2,
+                        RowCount = 2
+                    };
+                    tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+                    tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+                    //tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 400));
+
+                    tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200));
+                    tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 1000));
+
+                    page = CreatePageOnly(pageName, pageId);
+                    pageId.KryptonPage = page;
+                    return CreatePageInternal(page, pageId, kryptonPageContainer, tableLayoutPanel, kryptonPanelHeader);
                 default:
                     throw new InvalidOperationException(nameof(CreatePage));
             }
@@ -355,6 +455,7 @@ namespace YAMSE.Helpers
                                         });
             }
 
+            // Marks tab as modified
             static void AddAsterisk(Control control)
             {
                 if (!control.Text.EndsWith('*'))
@@ -390,7 +491,7 @@ namespace YAMSE.Helpers
                 CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionX.ToString(), 
                 (o, control) =>
                 {
-                    standardProps.PositionX = CheckAndSet(o, standardProps, standardProps.PositionX, pageId);
+                    standardProps.PositionX = CheckFloatAndSet(o, standardProps.PositionX, pageId);
                     AddAsterisk(pageId.KryptonPage);
                 }, 
                 (prop, control) => {
@@ -402,7 +503,7 @@ namespace YAMSE.Helpers
                 CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionY.ToString(),
                 (o, control) => 
                 {
-                    standardProps.PositionY = CheckAndSet(o, standardProps, standardProps.PositionY, pageId);
+                    standardProps.PositionY = CheckFloatAndSet(o, standardProps.PositionY, pageId);
                     AddAsterisk(pageId.KryptonPage);
                 },
                 (prop, control) => 
@@ -415,7 +516,7 @@ namespace YAMSE.Helpers
                 CreateTextBox(kryptonPageContainer, col, row, standardProps.PositionZ.ToString(),
                 (o, control) => 
                 {
-                    standardProps.PositionZ = CheckAndSet(o, standardProps, standardProps.PositionZ, pageId);
+                    standardProps.PositionZ = CheckFloatAndSet(o, standardProps.PositionZ, pageId);
                     AddAsterisk(pageId.KryptonPage);
                 },
                 (prop, control) => 
@@ -444,7 +545,7 @@ namespace YAMSE.Helpers
                 CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationX.ToString(),
                 (o, control) => 
                 {
-                    standardProps.RotationX = CheckAndSet(o, standardProps, standardProps.RotationX, pageId);
+                    standardProps.RotationX = CheckFloatAndSet(o, standardProps.RotationX, pageId);
                     AddAsterisk(pageId.KryptonPage);
                 },
                 (prop, control) => 
@@ -456,7 +557,7 @@ namespace YAMSE.Helpers
                 CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationY.ToString(),
                 (o, control) => 
                 {
-                    standardProps.RotationY = CheckAndSet(o, standardProps, standardProps.RotationY, pageId);
+                    standardProps.RotationY = CheckFloatAndSet(o, standardProps.RotationY, pageId);
                     AddAsterisk(pageId.KryptonPage);
                 },
                 (prop, control) => 
@@ -468,7 +569,7 @@ namespace YAMSE.Helpers
                 CreateTextBox(kryptonPageContainer, col, row, standardProps.RotationZ.ToString(),
                 (o, control) => 
                 {
-                    standardProps.RotationZ = CheckAndSet(o, standardProps, standardProps.RotationZ, pageId);
+                    standardProps.RotationZ = CheckFloatAndSet(o, standardProps.RotationZ, pageId);
                     AddAsterisk(pageId.KryptonPage);
                 },
                 (prop, control) => 
@@ -497,7 +598,7 @@ namespace YAMSE.Helpers
                 CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingX.ToString(),
                 (o, control) => 
                 {
-                    standardProps.ScalingX = CheckAndSet(o, standardProps, standardProps.ScalingX, pageId);
+                    standardProps.ScalingX = CheckFloatAndSet(o, standardProps.ScalingX, pageId);
                     AddAsterisk(pageId.KryptonPage);
                 },
                 (prop, control) => 
@@ -509,7 +610,7 @@ namespace YAMSE.Helpers
                 CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingY.ToString(),
                 (o, control) => 
                 {
-                    standardProps.ScalingY = CheckAndSet(o, standardProps, standardProps.ScalingY, pageId);
+                    standardProps.ScalingY = CheckFloatAndSet(o, standardProps.ScalingY, pageId);
                     AddAsterisk(pageId.KryptonPage);
                 },
                 (prop, control) => 
@@ -521,7 +622,7 @@ namespace YAMSE.Helpers
                 CreateTextBox(kryptonPageContainer, col, row, standardProps.ScalingZ.ToString(),
                 (o, control) => 
                 {
-                    standardProps.ScalingZ = CheckAndSet(o, standardProps, standardProps.ScalingZ, pageId);
+                    standardProps.ScalingZ = CheckFloatAndSet(o, standardProps.ScalingZ, pageId);
                     AddAsterisk(pageId.KryptonPage);
                 },
                 (prop, control) => 
@@ -531,10 +632,10 @@ namespace YAMSE.Helpers
             }
         }
 
-        private static float CheckAndSet(object o, StandardProps standardProps, float originalValue, KryptonPageId pageId)
+        private static float CheckFloatAndSet(object obj, float originalValue, KryptonPageId pageId)
         {
             float parsed;
-            if (float.TryParse(o.ToString(), out parsed))
+            if (float.TryParse(obj.ToString(), out parsed))
             {
                 pageId.IsDirty = true;
                 return Convert.ToSingle(parsed);

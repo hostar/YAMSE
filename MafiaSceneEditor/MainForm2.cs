@@ -1085,6 +1085,10 @@ namespace YAMSE
 
             int i = 0;
 
+            // add header
+            TreeNode objectsTreeNodeHeader = new TreeNode("Header") { Tag = scene2Data.Header.Content };
+            treeViewMain.Nodes.Add(objectsTreeNodeHeader);
+
             foreach (Scene2Section section in scene2Data.Sections)
             {
                 TreeNode objectsTreeNode = new TreeNode(section.SectionName);
@@ -1102,17 +1106,7 @@ namespace YAMSE
                     i = 0;
 
                     List<TreeNode> nodeList = new List<TreeNode>();
-                    foreach (Dnc dnc in item)
-                    {
-                        TreeNode treeNode = new TreeNode
-                        {
-                            Text = dnc.Name,
-                            Tag = dnc
-                        };
-
-                        nodeList.Add(treeNode);
-                        i++;
-                    }
+                    i = AddAllItems(i, item, nodeList);
 
                     // sort nodes
                     nodeList = nodeList.OrderBy(x => x.Text).ToList();
@@ -1127,6 +1121,23 @@ namespace YAMSE
             }
 
             logging.Add("Loading of file done.");
+
+            static int AddAllItems(int i, IGrouping<DncType, Dnc> item, List<TreeNode> nodeList)
+            {
+                foreach (Dnc dnc in item)
+                {
+                    TreeNode treeNode = new TreeNode
+                    {
+                        Text = dnc.Name,
+                        Tag = dnc
+                    };
+
+                    nodeList.Add(treeNode);
+                    i++;
+                }
+
+                return i;
+            }
         }
 
         private void Scene2FileSave(object sender, EventArgs e)

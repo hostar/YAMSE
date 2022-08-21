@@ -109,6 +109,7 @@ namespace YAMSE
                     break;
                 case PanelKind.Standard:
                 case PanelKind.Model:
+                case PanelKind.Header:
                     pageId.Dnc.DncProps.SaveData();
                     break;
                 default:

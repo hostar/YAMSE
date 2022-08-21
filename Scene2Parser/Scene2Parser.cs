@@ -4,6 +4,7 @@ using System.Collections;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Collections.Generic;
 
 namespace YAMSE
 {
@@ -37,11 +38,15 @@ namespace YAMSE
 
             int antiInfiniteLoopLastValue = 0;
 
+            bool headerParsingBeforeText = true;
+            bool headerParsingText = false;
+            bool headerParsingAfterText = false;
+
             while (i < tmpBuff.Length)
             {
                 if ((antiInfiniteLoopLastValue == i) && (i != 0))
                 {
-                    throw new InvalidOperationException($"File corruped near 0x{i:X} position. Last object loaded: {currSection.Dncs.Last().Name}");
+                    throw new InvalidOperationException($"File corrupted near 0x{i:X} position. Last object loaded: {currSection.Dncs.Last().Name}");
                 }
                 antiInfiniteLoopLastValue = i;
 
@@ -53,19 +58,51 @@ namespace YAMSE
                         loggingList.Add("Loading header...");
                         loadingHeaderShown = true;
                     }
-                    if (tmpBuff[i] == 0 && tmpBuff[i + 1] == 0x40)
+
+                    if (headerParsingBeforeText)
                     {
-                        headerParsed = true;
-
-                        scene2Data.Header.Magic = tmpBuff.Take(2).ToList();
-                        scene2Data.Header.Size = tmpBuff.Skip(2).Take(4).ToList();
-                        scene2Data.Header.Content = tmpBuff.Skip(6).Take(i - 6).ToList();
-
-                        ParseKnownSection(scene2Data, loggingList, tmpBuff, ref i, ref currSection, ref positionIterator, "Loading objects...", SectionNameObjects, NodeType.Object);
+                        i += 16;
+                        headerParsingBeforeText = false;
+                        headerParsingText = true;
                     }
-                    else
+
+                    if (headerParsingText)
                     {
-                        i++;
+                        if (tmpBuff[i] == 0) // TODO: use HeaderLength instead
+                        {
+                            headerParsingAfterText = true;
+                            i += 68;
+                        }
+                        else
+                        {
+                            i++;
+                        }
+                    }
+
+                    if (headerParsingAfterText)
+                    {
+                        if (tmpBuff[i] == 0 && tmpBuff[i + 1] == 0x40)
+                        {
+                            headerParsed = true;
+
+                            scene2Data.Header.Magic = tmpBuff.Take(2).ToList();
+                            scene2Data.Header.Size = tmpBuff.Skip(2).Take(4).ToList();
+                            scene2Data.Header.Content = new Dnc()
+                            {
+                                Name = "Header",
+                                dncKind = NodeType.Header,
+                                RawData = tmpBuff.Skip(6).Take(i - 6).ToArray(),
+                                RawDataBackup = tmpBuff.Skip(6).Take(i - 6).ToArray()
+                            };
+
+                            scene2Data.Header.Content.DncProps = new HeaderProps(scene2Data.Header.Content);
+
+                            ParseKnownSection(scene2Data, loggingList, tmpBuff, ref i, ref currSection, ref positionIterator, "Loading objects...", SectionNameObjects, NodeType.Object);
+                        }
+                        else
+                        {
+                            i++;
+                        }
                     }
                 }
                 else
@@ -322,7 +359,7 @@ namespace YAMSE
             outputStream.Write(scene2Data.Header.Magic.ToArray(), 0, scene2Data.Header.Magic.ToArray().Length);
 
             // calculate file size
-            var fileSize = 6 + scene2Data.Header.Content.Count + (scene2Data.Sections.Count * 6);
+            var fileSize = 6 + scene2Data.Header.Content.RawData.Count() + (scene2Data.Sections.Count * 6);
 
             fileSize += scene2Data.Sections.SelectMany(x => x.Dncs).Sum(x => x.RawData.Length);
             fileSize += scene2Data.Sections.SelectMany(x => x.Dncs).Count() * 2;
@@ -330,7 +367,7 @@ namespace YAMSE
             var fileSizeArr = BitConverter.GetBytes(fileSize);
             outputStream.Write(fileSizeArr, 0, fileSizeArr.Length);
 
-            outputStream.Write(scene2Data.Header.Content.ToArray(), 0, scene2Data.Header.Content.ToArray().Length);
+            outputStream.Write(scene2Data.Header.Content.RawData.ToArray(), 0, scene2Data.Header.Content.RawData.ToArray().Length);
 
             foreach (var section in scene2Data.Sections.OrderBy(x => x.Position))
             {
@@ -460,7 +497,7 @@ namespace YAMSE
             dnc.RawData = startArray.Concat(textInBytes).ToArray();
         }
 
-        private static void UpdateStringInDnc(Dnc dnc, string text, int offset)
+        public static void UpdateStringInDnc(Dnc dnc, string text, int offset)
         {
             var startArray = dnc.RawData.Take(dnc.Name.Length + offset).ToArray();
 
@@ -532,6 +569,7 @@ namespace YAMSE
                 case DncType.Route:
                 case DncType.Clock:
                 case DncType.GhostObject:
+                case DncType.Zidle:
                     return GetCStringFromByteArray(dnc.RawData.Skip(10).Take(maxObjectNameLength).ToArray());
 
                 case DncType.Standard:
@@ -779,6 +817,13 @@ namespace YAMSE
                                                                         {
                                                                             return DncType.GhostObject;
                                                                         }
+                                                                        else
+                                                                        {
+                                                                            if (firstN.FindIndexOf(new byte[] { 0x22, 0xAE, 0x0A, 0x00, 0x00, 0x00, 0x09 }).Any())
+                                                                            {
+                                                                                return DncType.Zidle;
+                                                                            }
+                                                                        }
                                                                     }
                                                                 }
                                                             }
@@ -862,6 +907,18 @@ namespace YAMSE
             }
 
             dnc.RawData = dnc.RawData.Take(notZeroIndex).ToArray();
+        }
+
+        public static int SearchForByteSequence(byte[] dncRawData, byte[] seq)
+        {
+            for (int i = 0; i < dncRawData.Length; i++)
+            {
+                if (dncRawData.Skip(i).Take(4).SequenceEqual(seq))
+                {
+                    return i;
+                }
+            }
+            return -1;
         }
     }
 }

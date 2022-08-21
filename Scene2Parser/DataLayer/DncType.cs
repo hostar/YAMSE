@@ -33,6 +33,7 @@ namespace YAMSE.DataLayer
         Clock,
         Wagon,
         Route,
-        GhostObject
+        GhostObject,
+        Zidle
     }
 }
