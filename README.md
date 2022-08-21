@@ -3,7 +3,7 @@
 
 Editor for Scene2.bin files for game Mafia: The City of Lost Heaven
 
-Download here: https://github.com/hostar/YAMSE/releases/tag/v0.1-beta3
+Download here: https://github.com/hostar/YAMSE/releases/tag/v0.2
 
 ## Building
 Open SLN in Visual Studio and run it with F5.
